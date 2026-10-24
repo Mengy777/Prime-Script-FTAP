@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.7.0"
+local VERSION="1.7.1"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -1181,13 +1181,6 @@ local function buildVisualSystems()
         local hi=own(make("Highlight",{Name="PV_Highlight",Adornee=target,DepthMode=Enum.HighlightDepthMode.AlwaysOnTop},espRoot))
         local bill=own(make("BillboardGui",{Name="PV_Name",Adornee=part,AlwaysOnTop=true,Size=UDim2.fromOffset(240,38),StudsOffsetWorldSpace=Vector3.new(0,3,0)},espRoot))
         local text=make("TextLabel",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,TextColor3=white,TextStrokeTransparency=0,Font=Enum.Font.BuilderSans,TextSize=14},bill)
-        if category=="Players" and owner then
-            bill.Size=UDim2.fromOffset(360,38)
-            make("ImageLabel",{Name="PV_Avatar",Image=playerHeadshot(owner),BackgroundTransparency=1,
-                Size=UDim2.fromOffset(22,22),Position=UDim2.new(0,0,0.5,-11)},bill)
-            text.Position=UDim2.fromOffset(28,0) text.Size=UDim2.new(1,-28,1,0)
-            text.TextTruncate=Enum.TextTruncate.AtEnd
-        end
         local entry={target=target,category=category,owner=owner,part=part,hi=hi,bill=bill,text=text,objects={hi,bill}}
         if category=="Server" or category=="Sticky" then
             local selection=own(make("SelectionBox",{Adornee=part,Color3=white,SurfaceTransparency=1,LineThickness=0.03},espRoot))
@@ -1247,7 +1240,7 @@ local function buildVisualSystems()
                     local hi=e.hi hi.Enabled=cfg.highlight and not e.proxy hi.FillColor=fillColor hi.OutlineColor=cfg.outline hi.FillTransparency=cfg.fillAlpha hi.OutlineTransparency=cfg.outlineAlpha
                     e.bill.Enabled=cfg.names e.bill.StudsOffsetWorldSpace=Vector3.new(0,cfg.offset,0)
                     if e.category=="Server" then e.owner=nearestOwner(e.part) end
-                    local title=e.owner and (e.category=="Players" and playerLabel(e.owner) or e.owner.DisplayName) or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
+                    local title=e.owner and e.owner.DisplayName or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
                     if cfg.icon then title="[+] "..title end
                     e.text.Text=title e.text.TextSize=cfg.size e.text.TextColor3=cfg.text e.text.TextStrokeColor3=cfg.textOutline e.text.TextStrokeTransparency=cfg.textStroke
                     local font=cfg.font=="Code" and Enum.Font.Code or cfg.font=="Roboto" and Enum.Font.Roboto or cfg.bold and Enum.Font.BuilderSansBold or Enum.Font.BuilderSans
@@ -1342,11 +1335,25 @@ local function buildVisualSystems()
         ["Chain 3"]="rbxassetid://128466395060514",["Chain 4"]="rbxassetid://73368670987191",Pulse="rbxassetid://82163767314193",Rope="rbxassetid://78999022056924",
         Dots="rbxassetid://9169659357",Bubbles="rbxassetid://1249690853",Spring="rbxassetid://18837732116",Gamepass="rbxassetid://8933355899",Default="rbxassetid://8933346550"}
     local lineBeams={}
+    local lineSignals={}
+    local function clearLineSignals()
+        for _,signals in pairs(lineSignals) do for _,connection in ipairs(signals) do connection:Disconnect() end end
+        lineSignals={}
+    end
+    local function sameLineValue(property,current,wanted)
+        if current==wanted then return true end
+        if property~="Color" then return false end
+        local a,b=current.Keypoints,wanted.Keypoints
+        if not a or not b or #a~=#b then return false end
+        for i,point in ipairs(a) do if point.Time~=b[i].Time or point.Value~=b[i].Value then return false end end
+        return true
+    end
     local function lineRainbowColor()
         return ColorSequence.new(Color3.fromHSV((os.clock()*0.12)%1,1,1))
     end
     local function applyLine()
         job("Grab line rainbow")
+        clearLineSignals()
         unpatch("line") lineBeams={}
         if not controls.lineEnabled then return end
         local grab=Workspace:FindFirstChild("GrabParts")
@@ -1354,10 +1361,22 @@ local function buildVisualSystems()
         local tint=controls.lineRainbow and lineRainbowColor() or ColorSequence.new(controls.lineColor or white)
         for _,beam in ipairs(grab:GetDescendants()) do
             if beam:IsA("Beam") then
-                lineBeams[beam]=true
-                patch("line",beam,"Texture",lineTextures[controls.lineTexture] or imageId(controls.lineImage))
-                patch("line",beam,"Color",tint)
-                patch("line",beam,"TextureSpeed",controls.lineSpeed or 1)
+                local desired={Texture=lineTextures[controls.lineTexture] or imageId(controls.lineImage),Color=tint,TextureSpeed=controls.lineSpeed or 1}
+                lineBeams[beam]=desired
+                for property,value in pairs(desired) do patch("line",beam,property,value) end
+                local applying=false
+                local signals={}
+                lineSignals[beam]=signals
+                for _,property in ipairs({"Texture","Color","TextureSpeed"}) do
+                    table.insert(signals,beam:GetPropertyChangedSignal(property):Connect(function()
+                        if applying or not alive or not controls.lineEnabled or not beam:IsDescendantOf(grab) then return end
+                        if sameLineValue(property,beam[property],desired[property]) then return end
+                        applying=true
+                        local ok,err=pcall(patch,"line",beam,property,desired[property])
+                        applying=false
+                        if not ok then warn("Prime Visuals line: "..tostring(err)) end
+                    end))
+                end
             end
         end
         if controls.lineRainbow and next(lineBeams) then
@@ -1365,8 +1384,13 @@ local function buildVisualSystems()
             job("Grab line rainbow",Run.Heartbeat,function(dt)
                 elapsed=elapsed+dt if elapsed<1/30 then return end elapsed=0
                 local color=lineRainbowColor()
-                for beam in pairs(lineBeams) do
-                    if beam:IsDescendantOf(grab) then patch("line",beam,"Color",color) else lineBeams[beam]=nil end
+                for beam,desired in pairs(lineBeams) do
+                    if beam:IsDescendantOf(grab) then
+                        desired.Color=color patch("line",beam,"Color",color)
+                    else
+                        for _,connection in ipairs(lineSignals[beam] or {}) do connection:Disconnect() end
+                        lineSignals[beam]=nil lineBeams[beam]=nil
+                    end
                 end
                 if not next(lineBeams) then job("Grab line rainbow") end
             end)
@@ -1445,9 +1469,9 @@ local function buildVisualSystems()
         toggle(g,"lineEnabled","Custom line",false,function(on)
             job("Grab line") applyLine()
             if on then job("Grab line",Workspace.DescendantAdded,function(o)
-                if o:IsA("Beam") then task.defer(function()
+                if o:IsA("Beam") or o.Name=="GrabParts" then task.defer(function()
                     local grab=Workspace:FindFirstChild("GrabParts")
-                    if alive and controls.lineEnabled and grab and o:IsDescendantOf(grab) then applyLine() end
+                    if alive and controls.lineEnabled and grab and (o==grab or o:IsDescendantOf(grab)) then applyLine() end
                 end) end
             end) end
         end)
@@ -1743,12 +1767,14 @@ local function buildVisualSystems()
             if not alive then return end
             if controls.camThird then updateThirdPerson(true) end
             if controls.characterEnabled then paintCharacter() end
+            if controls.lineEnabled then applyLine() end
             if controls.waterEnabled and controls.waterSolid then updateSwimming() end
         end)
     end)
     cleanupExtra=function()
         alive=false
         for _,c in pairs(jobs) do c:Disconnect() end jobs={}
+        clearLineSignals()
         for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
         if mannequins then mannequins:Destroy() end
         restoreWater()
