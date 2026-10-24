@@ -1,8 +1,12 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.0.0"
+local VERSION="1.1.0"
 local sessionStarted=os.clock()
 -- Pre-1.0 version numbers reconstruct development stages; original release dates were not recorded.
 local RELEASE_HISTORY={
+    {version="1.1.0",date="2026-10-24",ru="Радужное свечение окна",en="Animated rainbow window glow",items={
+        {ru="Добавлено мягкое радужное свечение по внешнему контуру окна с плавным переливом цветов.",en="Added a soft rainbow halo around the outer window with smoothly changing colors."},
+        {ru="Свечение следует за перетаскиванием и масштабом UI, скрывается вместе с меню и удаляется при сбросе или полном закрытии.",en="The glow follows window dragging and UI scale, hides with the menu, and is cleaned up on reset or unload."},
+    }},
     {version="1.0.0",date="2026-10-24",ru="Главная и история версий",en="Home and version history",items={
         {ru="Добавлена первая вкладка «Главная»: аватар, приветствие, ник игрока и автор @876osamuha.",en="Added Home as the first tab: avatar, greeting, player identity and author @876osamuha."},
         {ru="Добавлены сведения о сборке, статус доступа, статистика производительности и сессии.",en="Added build information, access status, performance and session statistics."},
@@ -1581,6 +1585,54 @@ local function buildVisualSystems()
                 end
             end)
         end
+    end
+
+    -- A soft, animated spectrum behind the window; no glow overlays on the controls.
+    do
+        local main=nativeWindow.MainFrame
+        local glow=own(make("Frame",{Name="PrimeRainbowGlow",BackgroundTransparency=1,BorderSizePixel=0,
+            Active=false,Visible=false,ZIndex=math.max(0,main.ZIndex-1)},main.Parent))
+        local nativeScale=main:FindFirstChildOfClass("UIScale")
+        local glowScale=make("UIScale",{Scale=nativeScale and nativeScale.Scale or 1},glow)
+        local gradients={}
+        local colors={}
+        for index=0,8 do
+            table.insert(colors,ColorSequenceKeypoint.new(index/8,Color3.fromHSV((0.72+index/8)%1,0.78,1)))
+        end
+        local spectrum=ColorSequence.new(colors)
+        local function ring(spread,thickness,transparency)
+            local frame=make("Frame",{Name="GlowRing",Position=UDim2.fromOffset(-spread,-spread),
+                Size=UDim2.new(1,spread*2,1,spread*2),BackgroundTransparency=1,BorderSizePixel=0,Active=false,ZIndex=glow.ZIndex},glow)
+            make("UICorner",{CornerRadius=UDim.new(0,6+spread)},frame)
+            local stroke=make("UIStroke",{ApplyStrokeMode=Enum.ApplyStrokeMode.Border,Color=Color3.new(1,1,1),
+                Thickness=thickness,Transparency=transparency},frame)
+            local gradient=make("UIGradient",{Color=spectrum,Rotation=0},stroke)
+            table.insert(gradients,gradient)
+        end
+        for index=14,1,-1 do
+            local distance=index/14
+            ring(1+index*1.15,2.3,0.56+0.425*distance^0.7)
+        end
+        ring(0.7,1.25,0.22)
+        local function sync()
+            if not alive or not glow.Parent then return end
+            glow.Visible=Library.Toggled and main.Visible and main.Parent~=nil
+            glow.Position=main.Position
+            glow.Size=main.Size
+            glow.AnchorPoint=main.AnchorPoint
+            glow.Rotation=main.Rotation
+            if nativeScale then glowScale.Scale=nativeScale.Scale end
+        end
+        for _,property in ipairs({"Position","Size","AnchorPoint","Rotation","Visible"}) do listen(main:GetPropertyChangedSignal(property),sync) end
+        if nativeScale then listen(nativeScale:GetPropertyChangedSignal("Scale"),sync) end
+        sync()
+        local phase=0
+        job("Rainbow window glow",Run.RenderStepped,function(dt)
+            sync()
+            if not glow.Visible then return end
+            phase=(phase+math.clamp(dt,0,0.1)*16)%360
+            for _,gradient in ipairs(gradients) do gradient.Rotation=phase end
+        end)
     end
 
     building=false
