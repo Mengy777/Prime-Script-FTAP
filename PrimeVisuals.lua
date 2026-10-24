@@ -228,11 +228,13 @@ local function animate(obj,seconds,props)
     t:Play()
     return t
 end
-local purple=Color3.fromRGB(155,99,255)
-local white=Color3.fromRGB(225,225,230)
-local muted=Color3.fromRGB(157,153,168)
-local border=Color3.fromRGB(65,51,84)
-local black=Color3.new(0,0,0)
+local purple=Color3.fromRGB(160,106,255)
+local white=Color3.fromRGB(230,228,237)
+local muted=Color3.fromRGB(132,128,145)
+local border=Color3.fromRGB(38,36,44)
+local black=Color3.fromRGB(9,9,11)
+local surface=Color3.fromRGB(14,14,17)
+local selectedSurface=Color3.fromRGB(31,23,44)
 local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,DisplayOrder=1000,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},playerGui)
 -- Resonance window defaults: 720x600 at 100%, clamped to viewport minus 64.
 local viewport=Workspace.CurrentCamera and Workspace.CurrentCamera.ViewportSize or Vector2.new(1280,720)
@@ -240,7 +242,7 @@ local maxWidth,maxHeight=math.max(1,viewport.X-64),math.max(1,viewport.Y-64)
 local windowWidth=math.clamp(720,math.min(256,maxWidth),maxWidth)
 local windowHeight=math.clamp(600,math.min(360,maxHeight),maxHeight)
 local panel=make("CanvasGroup",{Size=UDim2.fromOffset(windowWidth,windowHeight),Position=UDim2.new(0.5,-windowWidth/2,0.5,-windowHeight/2),BackgroundColor3=black,BorderSizePixel=0,GroupTransparency=1},gui)
-make("UIStroke",{Color=purple,Thickness=1,Transparency=0.2},panel)
+make("UIStroke",{Color=purple,Thickness=1,Transparency=0.45},panel)
 local function label(parent,text,x,y,w,h,size,color)
     return make("TextLabel",{Text=text,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundTransparency=1,TextColor3=color or white,Font=Enum.Font.BuilderSans,TextSize=size,TextXAlignment=Enum.TextXAlignment.Left},parent)
 end
@@ -259,14 +261,15 @@ line(logo,9,18,1,7,purple)
 line(logo,1,7,9,0,purple)
 line(logo,1,7,17,7,purple,1)
 line(logo,9,0,9,18,purple,1)
-local brand=label(header,"Prime Visuals",54,8,235,24,16)
+local brand=label(header,"View",54,1,235,22,15)
 brand.Font=Enum.Font.BuilderSansBold
-local heading=label(header,"Camera",0,9,112,22,14,muted)
+local subtitle=label(header,"Camera",54,22,235,12,10,muted)
+local heading=label(header,"Prime Visuals",0,9,112,22,12,muted)
 heading.AnchorPoint=Vector2.new(1,0)
 heading.Position=UDim2.new(1,-14,0,10)
 heading.TextXAlignment=Enum.TextXAlignment.Right
 make("Frame",{Position=UDim2.fromOffset(0,38),Size=UDim2.new(1,0,0,1),BackgroundColor3=border,BorderSizePixel=0},panel)
-local rail=make("ScrollingFrame",{Position=UDim2.fromOffset(0,39),Size=UDim2.new(0,130,1,-39),CanvasSize=UDim2.fromOffset(0,362),ScrollBarThickness=0,BackgroundColor3=black,BorderSizePixel=0},panel)
+local rail=make("ScrollingFrame",{Position=UDim2.fromOffset(0,39),Size=UDim2.new(0,46,1,-39),CanvasSize=UDim2.new(),ScrollBarThickness=0,BackgroundColor3=black,BorderSizePixel=0},panel)
 make("Frame",{Position=UDim2.new(1,-1,0,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=border,BorderSizePixel=0},rail)
 local cameraBadge=make("TextButton",{Text="",AutoButtonColor=false,Position=UDim2.fromOffset(3,5),Size=UDim2.fromOffset(35,34),BackgroundColor3=black,BorderSizePixel=0},rail)
 local cameraEdge=outline(cameraBadge,purple)
@@ -275,15 +278,15 @@ outline(cameraShape,purple)
 make("Frame",{Position=UDim2.fromOffset(12,9),Size=UDim2.fromOffset(8,2),BackgroundColor3=purple,BorderSizePixel=0},cameraBadge)
 local lens=make("Frame",{Position=UDim2.fromOffset(6,3),Size=UDim2.fromOffset(6,6),BackgroundTransparency=1},cameraShape)
 outline(lens,purple)
-local columnWidth=math.floor((windowWidth-166)/2)
+local columnWidth=math.floor((windowWidth-82)/2)
 local contentWidth=columnWidth*2+12
 local function section(parent,x,width,height)
-    local frame=make("Frame",{Position=UDim2.fromOffset(x,0),Size=UDim2.fromOffset(width,height),BackgroundColor3=black,BorderSizePixel=0},parent)
+    local frame=make("Frame",{Position=UDim2.fromOffset(x,0),Size=UDim2.fromOffset(width,height),BackgroundColor3=surface,BorderSizePixel=0},parent)
     outline(frame)
     make("Frame",{Position=UDim2.fromOffset(0,29),Size=UDim2.new(1,0,0,1),BackgroundColor3=border,BorderSizePixel=0},frame)
     return frame
 end
-local cameraPage=make("ScrollingFrame",{Position=UDim2.fromOffset(142,88),Size=UDim2.fromOffset(contentWidth,170),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,BackgroundTransparency=1},panel)
+local cameraPage=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.fromOffset(contentWidth,170),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,BackgroundTransparency=1},panel)
 local lensSection=section(cameraPage,0,columnWidth,128)
 local lensTitle=label(lensSection,"Field of view",10,3,columnWidth-20,23,14)
 lensTitle.Font=Enum.Font.BuilderSansMedium
@@ -363,7 +366,7 @@ for i=0,7 do
     local angle=math.rad(i*45)
     line(skyBadge,18+math.cos(angle)*8,17+math.sin(angle)*8,18+math.cos(angle)*10.5,17+math.sin(angle)*10.5,purple,1.5)
 end
-local skyPage=make("ScrollingFrame",{Position=UDim2.fromOffset(142,88),Size=UDim2.fromOffset(contentWidth,190),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,Visible=false,BackgroundTransparency=1},panel)
+local skyPage=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.fromOffset(contentWidth,190),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,Visible=false,BackgroundTransparency=1},panel)
 local pages={Camera=cameraPage,Sky=skyPage}
 local navEdges={Camera=cameraEdge,Sky=skyEdge}
 local navButtons={Camera=cameraBadge,Sky=skyBadge}
@@ -377,8 +380,8 @@ local function chooseTab(name)
     heading.Text=name
     for id,edge in pairs(navEdges) do animate(edge,0.12,{Transparency=id==name and 0 or 1}) end
     local page=pages[name]
-    page.Position=UDim2.fromOffset(142,92)
-    animate(page,0.14,{Position=UDim2.fromOffset(142,88)})
+    page.Position=UDim2.fromOffset(58,92)
+    animate(page,0.14,{Position=UDim2.fromOffset(58,88)})
 end
 listen(cameraBadge.Activated,function() chooseTab("Camera") end)
 listen(skyBadge.Activated,function() chooseTab("Sky") end)
@@ -718,7 +721,7 @@ local function buildVisualSystems()
     local registry={}
     local allGroups={}
     local function scrollPage(page)
-        page.Size=UDim2.new(1,-154,1,-101)
+        page.Size=UDim2.new(1,-70,1,-101)
     end
     scrollPage(cameraPage) scrollPage(skyPage)
     local glyphs={
@@ -730,11 +733,11 @@ local function buildVisualSystems()
         Tweaks={{1,4,17,4},{1,9,17,9},{1,14,17,14},{5,1,5,7},{13,6,13,12},{7,11,7,17}},
         Audio={{1,7,4,7},{4,7,9,2},{9,2,9,16},{9,16,4,11},{4,11,1,11},{1,11,1,7},{12,5,15,8},{15,8,15,10},{15,10,12,13}}
     }
-    glyphs.Settings=glyphs.Tweaks
+    glyphs.Settings={{6,1,12,1},{12,1,12,4},{12,4,15,6},{15,6,18,6},{18,6,18,12},{18,12,15,12},{15,12,12,15},{12,15,12,18},{12,18,6,18},{6,18,6,15},{6,15,3,12},{3,12,0,12},{0,12,0,6},{0,6,3,6},{3,6,6,3},{6,3,6,1},{7,7,11,7},{11,7,11,11},{11,11,7,11},{7,11,7,7}}
     local order={"Camera","Sky","Lighting","Particles","World","Character","ESP","Tweaks","Audio","Settings"}
     for index,name in ipairs(order) do
         if not pages[name] then
-            local page=make("ScrollingFrame",{Position=UDim2.fromOffset(142,88),Size=UDim2.new(1,-154,1,-101),BackgroundTransparency=1,BorderSizePixel=0,
+            local page=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.new(1,-70,1,-101),BackgroundTransparency=1,BorderSizePixel=0,
                 CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,Visible=false},panel)
             pages[name]=page
             local b=make("TextButton",{Position=UDim2.fromOffset(3,5+(index-1)*39),Size=UDim2.fromOffset(35,34),Text="",BackgroundColor3=black,BorderSizePixel=0,AutoButtonColor=false},rail)
@@ -772,6 +775,7 @@ local function buildVisualSystems()
         local y=row(g,29)
         local b=make("TextButton",{Position=UDim2.fromOffset(9,y),Size=UDim2.fromOffset(columnWidth-18,24),Text="",BackgroundTransparency=1,AutoButtonColor=false},g.frame)
         local square=make("Frame",{Position=UDim2.fromOffset(1,5),Size=UDim2.fromOffset(13,13),BackgroundColor3=black,BorderSizePixel=0},b)
+        make("UICorner",{CornerRadius=UDim.new(1,0)},square)
         local edge=outline(square)
         label(b,text,24,0,columnWidth-48,24,14)
         local current=default
@@ -804,10 +808,10 @@ local function buildVisualSystems()
             ClearTextOnFocus=false,TextColor3=white,BackgroundColor3=black,BorderSizePixel=0},g.frame)
         local edge=outline(f)
         local hit=make("TextButton",{Position=UDim2.fromOffset(14,y+25),Size=UDim2.fromOffset(columnWidth-28,21),Text="",BackgroundTransparency=1,AutoButtonColor=false},g.frame)
-        local bar=make("Frame",{Position=UDim2.new(0,0,0.5,-3),Size=UDim2.new(1,0,0,6),BackgroundColor3=black,BorderSizePixel=0},hit)
+        local bar=make("Frame",{Position=UDim2.new(0,0,0.5,-3),Size=UDim2.new(1,0,0,6),BackgroundColor3=border,BorderSizePixel=0},hit)
         outline(bar)
         local fill=make("Frame",{Size=UDim2.new(),BackgroundColor3=purple,BorderSizePixel=0},bar)
-        local knob=make("Frame",{AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.new(0,0,0.5,0),Size=UDim2.fromOffset(4,10),BackgroundColor3=white,BorderSizePixel=0},bar)
+        local knob=make("Frame",{AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.new(0,0,0.5,0),Size=UDim2.fromOffset(3,8),BackgroundColor3=white,BorderSizePixel=0},bar)
         local value=initial
         local function set(v,apply)
             if not v or v~=v or math.abs(v)==math.huge then v=value end
@@ -1626,32 +1630,53 @@ local function buildVisualSystems()
         end)
     end
     local categories={
-        {id="View",label="View",tabs={"Camera","Sky"},icon={{1,9,5,4},{5,4,13,4},{13,4,18,9},{18,9,13,14},{13,14,5,14},{5,14,0,9},{7,7,11,7},{11,7,11,11},{11,11,7,11},{7,11,7,7}}},
+        {id="View",label="View",tabs={"Camera","Sky"},icon={{1,5,17,5},{17,5,17,16},{17,16,1,16},{1,16,1,5},{5,5,6,2},{6,2,12,2},{12,2,13,5},{6,8,12,8},{12,8,12,13},{12,13,6,13},{6,13,6,8}}},
         {id="Graphics",label="Graphics",tabs={"Lighting","Particles","World"},icon=glyphs.Lighting},
         {id="Character",label="Character",tabs={"Character"},icon=glyphs.Character},
         {id="ESP",label="ESP",tabs={"ESP"},icon=glyphs.ESP},
         {id="FTAP",label="FTAP",tabs={"Tweaks","Audio"},icon=glyphs.Tweaks},
-        {id="Settings",label="Settings",tabs={"Settings"},icon=glyphs.Tweaks}
+        {id="Settings",label="Settings",tabs={"Settings"},icon=glyphs.Settings}
     }
     for _,b in pairs(navButtons) do b.Visible=false end
-    local subbar=make("Frame",{Position=UDim2.fromOffset(142,49),Size=UDim2.fromOffset(contentWidth,28),BackgroundTransparency=1},panel)
+    local subbar=make("Frame",{Position=UDim2.fromOffset(58,49),Size=UDim2.fromOffset(contentWidth,28),BackgroundTransparency=1},panel)
     local tabOwners,categoryButtons,subButtons={},{},{}
     local remembered={}
     local currentCategory="View"
     local underlyingChoose=chooseTab
     local selectCategory
+    local tooltip=make("Frame",{Visible=false,Size=UDim2.fromOffset(114,29),BackgroundColor3=selectedSurface,BorderSizePixel=0,ZIndex=850},panel)
+    outline(tooltip,purple)
+    local tooltipText=label(tooltip,"",10,2,96,25,13)
+    tooltipText.ZIndex=851
+    local function hideTooltip() tooltip.Visible=false end
+    listen(panel:GetPropertyChangedSignal("Visible"),hideTooltip)
     for index,category in ipairs(categories) do
         for _,tab in ipairs(category.tabs) do tabOwners[tab]=category end
-        local b=make("TextButton",{Position=UDim2.fromOffset(5,8+(index-1)*41),Size=UDim2.fromOffset(119,34),Text="",AutoButtonColor=false,BackgroundColor3=black,BorderSizePixel=0},rail)
+        local y=category.id=="Settings" and windowHeight-39-47 or 7+(index-1)*43
+        local b=make("TextButton",{Name="Nav"..category.id,Position=UDim2.fromOffset(5,y),Size=UDim2.fromOffset(35,36),Text="",AutoButtonColor=false,BackgroundColor3=black,BorderSizePixel=0},rail)
         local edge=outline(b,purple)
         edge.Transparency=1
-        local icon=make("Frame",{Position=UDim2.fromOffset(8,8),Size=UDim2.fromOffset(18,18),BackgroundTransparency=1},b)
-        for _,segment in ipairs(category.icon) do line(icon,segment[1],segment[2],segment[3],segment[4],purple,1.3) end
-        label(b,category.label,34,4,80,26,14)
-        categoryButtons[category.id]={button=b,edge=edge}
-        listen(b.Activated,function() selectCategory(category.id) end)
-        listen(b.MouseEnter,function() if currentCategory~=category.id then animate(edge,0.12,{Transparency=0.5}) end end)
-        listen(b.MouseLeave,function() if currentCategory~=category.id then animate(edge,0.12,{Transparency=1}) end end)
+        local indicator=make("Frame",{Position=UDim2.fromOffset(-5,9),Size=UDim2.fromOffset(2,18),BackgroundColor3=purple,BorderSizePixel=0,Visible=false},b)
+        local icon=make("Frame",{Position=UDim2.fromOffset(8,9),Size=UDim2.fromOffset(18,18),BackgroundTransparency=1},b)
+        local strokes={}
+        for _,segment in ipairs(category.icon) do
+            table.insert(strokes,line(icon,segment[1],segment[2],segment[3],segment[4],muted,1.6))
+        end
+        categoryButtons[category.id]={button=b,edge=edge,indicator=indicator,strokes=strokes}
+        listen(b.Activated,function() hideTooltip() selectCategory(category.id) end)
+        listen(b.MouseEnter,function()
+            tooltipText.Text=category.label
+            tooltip.Position=UDim2.fromOffset(52,math.clamp(39+y+3,40,windowHeight-35))
+            tooltip.Visible=true
+            if currentCategory~=category.id then animate(b,0.12,{BackgroundColor3=surface}) end
+            for _,stroke in ipairs(strokes) do animate(stroke,0.12,{BackgroundColor3=purple}) end
+        end)
+        listen(b.MouseLeave,function()
+            hideTooltip()
+            local selected=currentCategory==category.id
+            animate(b,0.12,{BackgroundColor3=selected and selectedSurface or black})
+            for _,stroke in ipairs(strokes) do animate(stroke,0.12,{BackgroundColor3=selected and purple or muted}) end
+        end)
     end
     -- Reuse three subtab buttons rather than allocating a new UI on every switch.
     for index=1,3 do
@@ -1674,6 +1699,7 @@ local function buildVisualSystems()
                 entry.button.Size=UDim2.fromOffset(width,27)
                 entry.button.Text=name
                 entry.button.TextColor3=name==selected and white or muted
+                entry.button.BackgroundColor3=name==selected and selectedSurface or surface
                 entry.edge.Color=name==selected and purple or border
             end
         end
@@ -1685,19 +1711,28 @@ local function buildVisualSystems()
         currentCategory=category.id
         releaseControl() picker.Visible=false
         underlyingChoose(name)
-        for id,entry in pairs(categoryButtons) do animate(entry.edge,0.12,{Transparency=id==category.id and 0 or 1}) end
+        hideTooltip()
+        for id,entry in pairs(categoryButtons) do
+            local selected=id==category.id
+            entry.indicator.Visible=selected
+            entry.edge.Transparency=selected and 0.65 or 1
+            animate(entry.button,0.12,{BackgroundColor3=selected and selectedSurface or black})
+            for _,stroke in ipairs(entry.strokes) do animate(stroke,0.12,{BackgroundColor3=selected and purple or muted}) end
+        end
         updateSubbar(category,name)
-        heading.Text=category.label
+        brand.Text=category.label
+        subtitle.Text=name
+        heading.Text="Prime Visuals"
         local page=pages[name]
-        page.Position=UDim2.fromOffset(142,88)
-        page.Size=UDim2.new(1,-154,1,-101)
+        page.Position=UDim2.fromOffset(58,88)
+        page.Size=UDim2.new(1,-70,1,-101)
     end
     selectCategory=function(id)
         for _,category in ipairs(categories) do
             if category.id==id then chooseTab(remembered[id] or category.tabs[1]) return end
         end
     end
-    rail.CanvasSize=UDim2.fromOffset(0,#categories*41+16)
+    rail.CanvasSize=UDim2.new()
     -- Fold advanced groups and reflow both columns, instead of stacking every control onscreen.
     local function reflowGroups()
         for tab,r in pairs(registry) do
