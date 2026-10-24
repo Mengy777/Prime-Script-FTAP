@@ -10290,17 +10290,24 @@ function Library:AddFeatureSettings(Toggle, Info)
         Size = UDim2.fromOffset(312, 100), Visible = false, Active = true,
         ZIndex = 1, Parent = Floats,
     })
-    Library:AddOutline(Panel)
+    New("UIStroke", { Color = "AccentColor", Thickness = 1.5, Transparency = 0.1, Parent = Panel })
+    local Halo = New("Frame", {
+        BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1),
+        Active = false, ZIndex = 0, Parent = Panel,
+    })
+    New("UIStroke", { Color = "AccentColor", Thickness = 5, Transparency = 0.85, Parent = Halo })
     table.insert(Library.DraggableElements, Panel)
     local Scale = New("UIScale", { Scale = Library.DPIScale, Parent = Panel })
     table.insert(Library.Scales, Scale)
     local Header = New("TextLabel", {
-        BackgroundTransparency = 1, Position = UDim2.fromOffset(10, 0),
-        Size = UDim2.new(1, -44, 0, 32), Text = Toggle.Text,
-        TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
+        Name = "SettingsHeader", Active = true, BackgroundColor3 = "MainColor",
+        Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, -32, 0, 32), Text = Toggle.Text,
+        TextColor3 = "AccentColor", TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
     })
+    New("UIPadding", { PaddingLeft = UDim.new(0, 10), Parent = Header })
+    Library:MakeDraggable(Panel, Header, false)
     local CloseButton = New("TextButton", {
-        BackgroundTransparency = 1, Position = UDim2.new(1, -32, 0, 0),
+        BackgroundColor3 = "MainColor", Position = UDim2.new(1, -32, 0, 0),
         Size = UDim2.fromOffset(32, 32), Text = "×", TextSize = 20, Parent = Panel,
     })
     local Body = New("ScrollingFrame", {
@@ -10329,6 +10336,7 @@ function Library:AddFeatureSettings(Toggle, Info)
         Panel.Size = UDim2.fromOffset(Width, Height + 32)
     end
     function Settings:Close()
+        if Panel.Visible then Settings.LastPosition = Panel.Position end
         Panel.Visible = false
         if ActiveFeatureSettings == Settings then ActiveFeatureSettings = nil end
         if Settings.Watch then Settings.Watch:Disconnect() Settings.Watch = nil end
@@ -10350,9 +10358,9 @@ function Library:AddFeatureSettings(Toggle, Info)
         Header.Text = Toggle.TextLabel.Text
         Settings:Resize()
         local View, DPI = Floats.AbsoluteSize, Library.DPIScale
-        local Origin = Toggle.Holder.AbsolutePosition - Floats.AbsolutePosition
-        local X, Y = Origin.X + Toggle.Holder.AbsoluteSize.X + 8, Origin.Y
-        if X + Panel.Size.X.Offset * DPI > View.X - 8 then X = Origin.X - Panel.Size.X.Offset * DPI - 8 end
+        local Point = UserInputService:GetMouseLocation() - Floats.AbsolutePosition
+        local X = Settings.LastPosition and Settings.LastPosition.X.Offset or Point.X + 12
+        local Y = Settings.LastPosition and Settings.LastPosition.Y.Offset or Point.Y + 12
         X = math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8))
         Y = math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8))
         Panel.Position = UDim2.fromOffset(X, Y)
