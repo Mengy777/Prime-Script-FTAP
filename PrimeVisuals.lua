@@ -1,4 +1,125 @@
--- Prime Visuals | Camera + Sky
+-- Prime Visuals | FTAP visual customization
+local VERSION="1.0.0"
+local sessionStarted=os.clock()
+-- Pre-1.0 version numbers reconstruct development stages; original release dates were not recorded.
+local RELEASE_HISTORY={
+    {version="1.0.0",date="2026-10-24",ru="Главная и история версий",en="Home and version history",items={
+        {ru="Добавлена первая вкладка «Главная»: аватар, приветствие, ник игрока и автор @876osamuha.",en="Added Home as the first tab: avatar, greeting, player identity and author @876osamuha."},
+        {ru="Добавлены сведения о сборке, статус доступа, статистика производительности и сессии.",en="Added build information, access status, performance and session statistics."},
+        {ru="Добавлен развёрнутый Changelog; введена постоянная нумерация будущих обновлений. Обзор подтверждён пользователем.",en="Added expanded changelog and formal versioning for future updates. View was confirmed by the user."},
+    }},
+    {version="0.31.0",date="",ru="Возврат стабильной камеры",en="Stable camera restored",items={
+        {ru="Удалено принудительное вращение без ПКМ; возвращено прежнее третье лицо с ПКМ.",en="Removed forced orbit without RMB; restored native third person using RMB."},
+        {ru="Изменение дистанции на ходу сохранено. Пользователь подтвердил нормальную чувствительность и весь раздел «Обзор».",en="Live distance adjustments retained. User confirmed normal sensitivity and the complete View section."},
+    }},
+    {version="0.30.0",date="",ru="Экспериментальная орбитальная камера",en="Experimental orbit camera",items={
+        {ru="Проверено отдельное управление третьим лицом через Scriptable без изменения CameraMode.",en="Tried a separate Scriptable orbit without changing CameraMode."},
+        {ru="Пользователь снова сообщил о высокой чувствительности. Эксперимент впоследствии удалён.",en="User again reported excessive sensitivity. This experiment was subsequently removed."},
+    }},
+    {version="0.29.0",date="",ru="Попытка восстановления чувствительности",en="Sensitivity restoration attempt",items={
+        {ru="Добавлено сохранение чувствительности перед третьим лицом и восстановление после переключения.",en="Tried saving sensitivity before third person and restoring it after switching."},
+        {ru="Симуляция прошла, но тест пользователя не подтвердил исправление в FTAP.",en="Simulation passed, but the user test did not confirm a fix in FTAP."},
+    }},
+    {version="0.28.0",date="",ru="Исправления Обзора",en="View improvements",items={
+        {ru="Load начал принимать ID и ссылку без Enter. Солнце и облака автоматически скрываются при загрузке кастомного неба и возвращаются вручную.",en="Load now accepts sky IDs and links without Enter. Custom skies hide the sun and clouds, with manual restoration."},
+        {ru="Добавлено вращение третьего лица без ПКМ. Позднее выявлен и устранён откатом связанный сбой чувствительности.",en="Added third-person rotation without RMB. A sensitivity regression was later resolved by reverting that control mode."},
+    }},
+    {version="0.27.0",date="",ru="Переход на Obsidian",en="Migration to Obsidian",items={
+        {ru="Самодельный UI заменён настоящими Obsidian Library и Lucide Icons из актуального Resonance.",en="Replaced the custom UI with real Obsidian Library and Lucide Icons from the current Resonance source."},
+        {ru="Перенесены контролы, цвета, списки, ползунки, выбор цвета и локализация. Название закреплено рядом со значком.",en="Migrated controls, dropdowns, sliders, color pickers and localization. Kept the brand visible beside its icon."},
+    }},
+    {version="0.26.0",date="",ru="Навигация иконками",en="Icon navigation",items={
+        {ru="Добавлена узкая панель только с иконками и названиями по наведению. Обновлены шапка и карточки.",en="Added an icon-only sidebar with hover labels, and revised the header and cards."},
+        {ru="Этот вариант иконок не устроил пользователя и был заменён при переходе на Obsidian.",en="This icon design was rejected by the user and replaced during the Obsidian migration."},
+    }},
+    {version="0.25.0",date="",ru="Полное закрытие",en="Full unload",items={
+        {ru="Добавлена кнопка полного закрытия с очисткой UI, обработчиков и визуальных объектов.",en="Added full unload with UI, event connection and visual object cleanup."},
+        {ru="Пользователь подтвердил повторный запуск загрузчика без перезахода в игру.",en="User confirmed that the loader can be restarted without rejoining."},
+    }},
+    {version="0.24.0",date="",ru="Полный сброс",en="Full settings reset",items={
+        {ru="Добавлен полный сброс эффектов и настроек с восстановлением исходных свойств игры.",en="Added full settings and effects reset with restoration of original game properties."},
+        {ru="FOV перестал применяться при запуске до первого изменения пользователем.",en="FOV is no longer applied at startup until the user changes it."},
+    }},
+    {version="0.23.0",date="",ru="GitHub и загрузчик",en="GitHub distribution",items={
+        {ru="Скрипт опубликован в Mengy777/Prime-Script-FTAP и переведён на постоянный loadstring-загрузчик.",en="Published the script in Mengy777/Prime-Script-FTAP with a permanent loadstring loader."},
+        {ru="Устранён мешавший загрузке UTF-8 BOM. Настроены обновления через Git.",en="Removed the UTF-8 BOM that prevented loading, and configured updates through Git."},
+    }},
+    {version="0.22.0",date="",ru="Дистанция камеры на ходу",en="Live camera distance",items={
+        {ru="Дистанция третьего лица теперь меняется ползунком в обе стороны без выключения режима.",en="Third-person distance now changes in both directions without toggling the mode."},
+        {ru="Оба предела зума синхронизированы с выбранной дистанцией.",en="Both native zoom limits follow the selected distance."},
+    }},
+    {version="0.21.0",date="",ru="Группировка и русский язык",en="Organization and Russian language",items={
+        {ru="Функции сгруппированы в Обзор, Графику, Персонажа, ESP, FTAP и Настройки.",en="Organized features into View, Graphics, Character, ESP, FTAP and Settings."},
+        {ru="Настройки поставлены последними; добавлены русский язык и сворачивание групп.",en="Settings moved to the end; added Russian localization and collapsible groups."},
+    }},
+    {version="0.20.0",date="",ru="Расширение визуальных функций",en="Visual feature expansion",items={
+        {ru="Добавлены освещение, частицы, вода, упрощение графики, эффекты персонажа и коническая шляпа.",en="Added lighting, particles, water, graphics simplification, character effects and cone hat."},
+        {ru="Добавлены категории ESP, оформление линии захвата, прицел, визуалы чёрных дыр и звуковые настройки.",en="Added ESP categories, grab-line styling, crosshair, blackhole visuals and audio settings."},
+    }},
+    {version="0.19.0",date="",ru="Шрифты и плотность",en="Typography and density",items={
+        {ru="Улучшены шрифты, размеры контролов и читаемость интерфейса.",en="Revised fonts, control sizes and UI legibility."},
+    }},
+    {version="0.18.0",date="",ru="Чёрный интерфейс и постоянный размер",en="Black UI and fixed window size",items={
+        {ru="Убраны лишние подсказки и подписи; введены чёрные поверхности и цветные края.",en="Removed redundant hints and labels; introduced black surfaces with accent outlines."},
+        {ru="После нескольких корректировок выбран размер окна примерно как у Resonance, без изменения размера между разделами.",en="After several adjustments, fixed the window size close to Resonance, with consistent dimensions across tabs."},
+    }},
+    {version="0.17.0",date="",ru="Упрощение неба",en="Sky controls simplified",items={
+        {ru="После успешного теста примерно двадцати скайбоксов временно убраны отдельные настройки времени и размера солнца.",en="After successful tests of roughly twenty skyboxes, separate time and sun-size controls were temporarily removed."},
+    }},
+    {version="0.16.0",date="",ru="Загрузка модели скайбокса",en="Skybox model loading",items={
+        {ru="Добавлена загрузка скайбокса по ID модели или ссылке Creator Store с извлечением шести текстур.",en="Added skybox model ID and Creator Store link loading with extraction of all six textures."},
+        {ru="Загруженные модели не запускаются: копируются только свойства Sky, после чего модель удаляется.",en="Loaded models are not executed: only Sky properties are copied before the model is destroyed."},
+    }},
+    {version="0.15.0",date="",ru="Единое поле для неба",en="Single sky input",items={
+        {ru="Пересмотрены пресеты и заменён неудобный ввод отдельных текстур единым полем.",en="Reworked presets and replaced separate texture inputs with one field."},
+    }},
+    {version="0.14.0",date="",ru="Первые настройки неба",en="Initial sky features",items={
+        {ru="Добавлены пресеты неба, время суток, размер солнца и восстановление исходного неба.",en="Added sky presets, time of day, sun size and original sky restoration."},
+    }},
+    {version="0.13.0",date="",ru="Удаление Freecam",en="Freecam removed",items={
+        {ru="Экспериментальная свободная камера полностью вырезана по просьбе пользователя.",en="Removed the experimental free camera at the user request."},
+    }},
+    {version="0.12.0",date="",ru="Исправление отделения Freecam",en="Freecam detachment fix",items={
+        {ru="Исправлен тест Freecam: камера отделяется от персонажа, а персонаж остаётся на месте.",en="Fixed the Freecam experiment so the camera detaches while the character stays in place."},
+    }},
+    {version="0.11.0",date="",ru="Эксперимент Freecam",en="Freecam experiment",items={
+        {ru="Добавлен временный тест свободной камеры; первая реализация ошибочно перемещала персонажа.",en="Added a temporary free-camera experiment; the first implementation incorrectly moved the character."},
+    }},
+    {version="0.10.0",date="",ru="Иконка и оформление Prime",en="Prime icon and styling",items={
+        {ru="Создана иконка Prime Visuals и обновлено оформление меню под новое название.",en="Created the Prime Visuals icon and refreshed the UI for the new name."},
+    }},
+    {version="0.9.0",date="",ru="Prime Visuals и Prime Vortex",en="Prime Visuals and Prime Vortex",items={
+        {ru="Mengy’s Visual переименован в Prime Visuals. Для отдельного проекта Prime Vortex создан пустой TXT.",en="Renamed Mengy’s Visual to Prime Visuals and created an empty TXT for the separate Prime Vortex project."},
+    }},
+    {version="0.8.0",date="",ru="Курсор меню без лагов",en="Menu cursor stabilization",items={
+        {ru="После нескольких попыток исправлен курсор меню: простой крестик вместо активного прицела взаимодействия.",en="After several iterations, stabilized the menu cursor as a relaxed cross instead of the interaction crosshair."},
+        {ru="Убраны тяжёлые попытки поиска и переноса элементов игрового прицела.",en="Removed expensive attempts to scan and reparent the game crosshair UI."},
+    }},
+    {version="0.7.0",date="",ru="Фиолетовое оформление по референсу",en="Purple reference-based styling",items={
+        {ru="Переработаны открытие, навигация и оформление по визуальным референсам Resonance.",en="Reworked opening, navigation and purple styling using Resonance as a visual reference."},
+    }},
+    {version="0.6.0",date="",ru="Первое наполнение вкладок",en="Initial tab contents",items={
+        {ru="Заполнены первые визуальные разделы; проведена оценка UI и намечена его переработка.",en="Populated the initial visual tabs; reviewed the UI and planned a redesign."},
+    }},
+    {version="0.5.0",date="",ru="Первые вкладки",en="Initial tabs",items={
+        {ru="Меню разделено на несколько вкладок вместо одной панели FOV.",en="Split the single FOV panel into several tabs."},
+    }},
+    {version="0.4.0",date="",ru="Эксперимент расширенного FOV",en="Extended FOV experiment",items={
+        {ru="Проверена идея расширенного диапазона и изменения матрицы камеры; расширенный режим затем удалён.",en="Explored extended FOV and camera-matrix changes; the extended mode was subsequently removed."},
+        {ru="Рабочий диапазон оставлен 30–120.",en="Kept the supported range at 30–120."},
+    }},
+    {version="0.3.0",date="",ru="Перетаскивание и ползунок",en="Dragging and slider",items={
+        {ru="Добавлены перетаскивание меню, ползунок FOV с изменением на ходу и ручной ввод числа.",en="Added window dragging, a live FOV slider and manual numeric input."},
+        {ru="Временно добавлен переключатель расширенного диапазона FOV.",en="Temporarily added an extended FOV range toggle."},
+    }},
+    {version="0.2.0",date="",ru="Mengy’s Visual",en="Mengy’s Visual",items={
+        {ru="Скрипт получил название Mengy’s Visual и стал основой будущего визуального хаба.",en="Named the script Mengy’s Visual and established the visual hub foundation."},
+    }},
+    {version="0.1.0",date="",ru="Первый FOV-скрипт",en="First FOV script",items={
+        {ru="Создан первоначальный скрипт для FTAP/Xeno с изменением FOV.",en="Created the original FTAP/Xeno FOV script."},
+        {ru="Добавлены меню, разблокировка курсора и хранение полного кода в TXT для последующих обновлений.",en="Added the menu, cursor unlocking and a TXT source file for subsequent updates."},
+    }},
+}
 local sourceCache={}
 local function loadUIModule(name)
     local filename=name=="Library" and "Obsidian" or name
@@ -30,7 +151,13 @@ local function listen(signal,fn)
 end
 -- Live UI localization; internal feature identifiers always stay unchanged.
 local uiLanguage="en"
+local refreshHome=function() end
 local ru={
+    ["Home"]="Главная",
+    ["Profile"]="Профиль",
+    ["About Prime Visuals"]="О Prime Visuals",
+    ["Session statistics"]="Статистика сессии",
+    ["Changelog"]="История обновлений",
     ["Camera"]="Камера",
     ["Sky"]="Небо",
     ["Lighting"]="Освещение",
@@ -224,6 +351,7 @@ local function setLanguage(language)
             record.writing=false
         end
     end
+    refreshHome()
 end
 
 local function make(class,props,parent)
@@ -482,6 +610,7 @@ local function buildVisualSystems()
     local tabs={}
     local categoryTabs={}
     local categories={
+        {"Home","house",{"Home"}},
         {"View","camera",{"Camera","Sky"}},
         {"Graphics","sparkles",{"Lighting","Particles","World"}},
         {"Character","user-round",{"Character"}},
@@ -525,7 +654,7 @@ local function buildVisualSystems()
             end
         end
     end
-    local groupIcons={Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
+    local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
     local function group(tab,title,side)
         local collapsed=title=="Emission" or title=="Post-processing" or (tab=="ESP" and title~="Visibility")
         local parent=tabs[tab]
@@ -1326,11 +1455,139 @@ local function buildVisualSystems()
         end)
     end
 
+    -- HOME: real Obsidian cards, with one unified scroll and a full-width history below.
+    do
+        local homeTab=categoryTabs.Home
+        local profile=homeTab:AddLeftGroupbox("Profile","user-round")
+        local avatar=profile:AddImage("homeAvatar",{
+            Image=string.format("rbxthumb://type=AvatarBust&id=%d&w=180&h=180",player.UserId),
+            Height=164,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
+        })
+        local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=16})
+        local identity=profile:AddLabel({Text="",DoesWrap=true})
+        local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
+        local statistics=homeTab:AddRightGroupbox("Session statistics","chart-no-axes-combined")
+        local history=homeTab:AddLeftGroupbox("Changelog","history",true,false)
+        local function richEscape(value)
+            return tostring(value):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;"):gsub('"',"&quot;")
+        end
+        local function text(en,russian) return uiLanguage=="ru" and russian or en end
+        local function setText(widget,value)
+            if widget.Text~=value then widget:SetText(value) end
+        end
+        local staticText={}
+        local function localizedLabel(g,en,russian,size)
+            local widget=g:AddLabel({Text=en,DoesWrap=true,Size=size or 14})
+            table.insert(staticText,{widget=widget,en=en,ru=russian})
+            return widget
+        end
+        localizedLabel(about,"<b>Prime Visuals</b>  ·  v"..VERSION,"<b>Prime Visuals</b>  ·  v"..VERSION,15)
+        localizedLabel(about,"Author: <b>@876osamuha</b>","Автор: <b>@876osamuha</b>")
+        localizedLabel(about,"Visual customization for Fling Things and People.","Визуальная настройка Fling Things and People.")
+        localizedLabel(about,"License status: no license-key system.","Статус лицензии: система ключей не используется.")
+        localizedLabel(about,"View: confirmed by the user. Other sections: testing in progress.","Обзор: подтверждён пользователем. Остальные разделы: тестирование.")
+        local rows={}
+        for _,name in ipairs({"fps","frame","ping","memory","players","server","fov","effects","uptime","clock"}) do
+            rows[name]=statistics:AddLabel({Text="—",DoesWrap=true})
+        end
+        localizedLabel(history,
+            "Before 1.0.0, version numbers below reconstruct development stages; original release dates were not recorded.",
+            "Номера до 1.0.0 присвоены этапам разработки ретроспективно; исходные даты выпусков не фиксировались.")
+        for _,release in ipairs(RELEASE_HISTORY) do
+            history:AddDivider("v"..release.version..(release.date~="" and "  ·  "..release.date or ""))
+            localizedLabel(history,"<b>"..release.en.."</b>","<b>"..release.ru.."</b>",15)
+            for _,item in ipairs(release.items) do localizedLabel(history,"• "..item.en,"• "..item.ru) end
+        end
+        local scroll=make("ScrollingFrame",{Name="PrimeHomeScroll",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
+            BorderSizePixel=0,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollBarThickness=3,
+            ScrollBarImageColor3=purple,ScrollingDirection=Enum.ScrollingDirection.Y},homeTab.Container)
+        make("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},scroll)
+        make("UIPadding",{PaddingLeft=UDim.new(0,2),PaddingRight=UDim.new(0,7),PaddingBottom=UDim.new(0,8)},scroll)
+        local top=make("Frame",{Name="HomeSummary",Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,
+            BackgroundTransparency=1,LayoutOrder=0},scroll)
+        local left=make("Frame",{Size=UDim2.new(0.5,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
+        local right=make("Frame",{Position=UDim2.new(0.5,5,0,0),Size=UDim2.new(0.5,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
+        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder},column) end
+        profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
+        about.BoxHolder.Parent=left about.BoxHolder.LayoutOrder=1
+        statistics.BoxHolder.Parent=right
+        history.BoxHolder.Parent=scroll history.BoxHolder.LayoutOrder=1
+        for _,side in ipairs(homeTab.Sides) do side.Visible=false end
+        local statsService
+        pcall(function() statsService=game:GetService("Stats") end)
+        local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
+            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","espPlayers","espServer","espSticky","espBlackholes",
+            "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
+            "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
+        local lastLanguage
+        local averageFPS,averageFrame
+        refreshHome=function()
+            if not alive then return end
+            if lastLanguage~=uiLanguage then
+                for _,entry in ipairs(staticText) do setText(entry.widget,uiLanguage=="ru" and entry.ru or entry.en) end
+                lastLanguage=uiLanguage
+            end
+            local hour=tonumber(os.date("%H")) or 12
+            local greet=hour>=5 and hour<12 and text("Good morning","Доброе утро")
+                or hour>=12 and hour<17 and text("Good afternoon","Добрый день")
+                or hour>=17 and hour<22 and text("Good evening","Добрый вечер") or text("Good night","Доброй ночи")
+            setText(greeting,greet..", <b>"..richEscape(player.DisplayName).."</b>")
+            setText(identity,"@"..richEscape(player.Name))
+            local function stat(key,en,russian,value) setText(rows[key],text(en,russian)..": <b>"..tostring(value).."</b>") end
+            stat("fps","Average FPS","Средний FPS",averageFPS and string.format("%.0f",averageFPS) or "—")
+            stat("frame","Frame time","Время кадра",averageFrame and string.format("%.1f ms",averageFrame) or "—")
+            local ping,memory
+            pcall(function()
+                local value=statsService.Network.ServerStatsItem["Data Ping"]:GetValue()
+                if type(value)=="number" and value==value then ping=value end
+            end)
+            pcall(function() memory=statsService:GetTotalMemoryUsageMb() end)
+            stat("ping","Server ping","Пинг сервера",ping and string.format("%.0f ms",ping) or "—")
+            stat("memory","Client memory","Память клиента",type(memory)=="number" and string.format("%.0f MB",memory) or "—")
+            stat("players","Players","Игроки",string.format("%d / %s",#Players:GetPlayers(),tostring(Players.MaxPlayers or "—")))
+            local private=type(game.PrivateServerId)=="string" and game.PrivateServerId~=""
+            local server=private and ((game.PrivateServerOwnerId or 0)>0 and text("Private","Приватный") or text("Reserved","Выделенный")) or text("Public","Публичный")
+            stat("server","Server","Сервер",server)
+            local camera=Workspace.CurrentCamera
+            stat("fov","Current FOV","Текущий FOV",camera and string.format("%.1f",camera.FieldOfView) or "—")
+            local enabled=(customSkyLoaded and 1 or 0)+(fovChanged and 1 or 0)
+            for _,key in ipairs(masterEffects) do if controls[key] then enabled=enabled+1 end end
+            stat("effects","Enabled effects","Включено эффектов",enabled)
+            local seconds=math.max(0,math.floor(os.clock()-sessionStarted))
+            stat("uptime","Script uptime","Время работы",string.format("%02d:%02d:%02d",math.floor(seconds/3600),math.floor(seconds/60)%60,seconds%60))
+            stat("clock","Local time","Местное время",os.date("%H:%M:%S"))
+        end
+        refreshHome()
+        local frames,elapsed=0,0
+        job("Home statistics",Run.RenderStepped,function(dt)
+            if dt<=0 or dt~=dt or dt==math.huge then return end
+            frames=frames+1 elapsed=elapsed+dt
+            if elapsed>=1 then
+                averageFPS=frames/elapsed averageFrame=1000*elapsed/frames
+                frames,elapsed=0,0
+                if Library.ActiveTab==homeTab then refreshHome() end
+            end
+        end)
+        if type(Players.GetUserThumbnailAsync)=="function" then
+            task.spawn(function()
+                for attempt=1,4 do
+                    if not alive or avatar.Destroyed then return end
+                    local ok,url,ready=pcall(function()
+                        return Players:GetUserThumbnailAsync(player.UserId,Enum.ThumbnailType.AvatarBust,Enum.ThumbnailSize.Size180x180)
+                    end)
+                    if not alive or avatar.Destroyed then return end
+                    if ok and ready and type(url)=="string" and url~="" then avatar:SetImage(url) return end
+                    task.wait(attempt*0.5)
+                end
+            end)
+        end
+    end
+
     building=false
     -- Bind localization to the actual library UI; no duplicate custom control layer.
     for _,object in ipairs(Library.ScreenGui:GetDescendants()) do bindLocalization(object) end
     listen(Library.ScreenGui.DescendantAdded,bindLocalization)
-    categoryTabs.View:Show()
+    categoryTabs.Home:Show()
     -- Lightweight lifecycle handling. No scans run every frame.
     local elapsed=0
     job("Crosshair visibility",Run.RenderStepped,function()
