@@ -573,144 +573,77 @@ local function buildVisualSystems()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
     end)
     -- CAMERA
-    local cameraSettings={mode=player.CameraMode,min=player.CameraMinZoomDistance,max=player.CameraMaxZoomDistance,occlusion=player.DevCameraOcclusionMode}
     local thirdRunning=false
-    local thirdCameras,thirdController,thirdState
-    local thirdFallback=false
     local thirdYaw,thirdPitch=0,0
-    local thirdSensitivity
-    local function restoreThirdSensitivity(afterCamera)
-        Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
-        if type(thirdSensitivity)~="number" then return end
-        local sensitivity=thirdSensitivity
-        UIS.MouseDeltaSensitivity=sensitivity
-        if not afterCamera then thirdSensitivity=nil return end
-        -- CameraMode/zoom changes can reset sensitivity during the next camera update.
-        -- Restore only across that transition, then stop touching the game's input settings.
-        local frames=0
-        Run:BindToRenderStep("PrimeVisualsThirdRestoreInput",Enum.RenderPriority.Camera.Value+2,function()
-            if not alive or thirdRunning then
-                Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
-                return
-            end
-            UIS.MouseDeltaSensitivity=sensitivity
-            frames=frames+1
-            if frames>=2 then
-                Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
-                thirdSensitivity=nil
-            end
-        end)
-    end
-    local function restoreThirdController()
-        if thirdController and thirdState then
-            pcall(function()
-                thirdController:SetIsMouseLocked(thirdState.locked)
-                if thirdState.offset then thirdController:SetMouseLockOffset(thirdState.offset) end
-            end)
-        end
-        thirdController,thirdState=nil,nil
-    end
+    local thirdMouseBehavior
+    local thirdInputSensitivity
     local function stopThirdCamera()
         if not thirdRunning then return end
         thirdRunning=false
-        Run:UnbindFromRenderStep("PrimeVisualsThirdBeforeCamera")
-        Run:UnbindFromRenderStep("PrimeVisualsThirdAfterCamera")
-        restoreThirdController()
-        thirdCameras=nil thirdFallback=false
-        UIS.MouseBehavior=Library.Toggled and Enum.MouseBehavior.Default or savedBehavior
+        Run:UnbindFromRenderStep("PrimeVisualsThirdOrbit")
+        unpatch("thirdbody")
+        unpatch("third")
+        if type(thirdInputSensitivity)=="number" then UIS.MouseDeltaSensitivity=thirdInputSensitivity end
+        UIS.MouseBehavior=Library.Toggled and Enum.MouseBehavior.Default or thirdMouseBehavior or savedBehavior
+        thirdMouseBehavior,thirdInputSensitivity=nil,nil
     end
     local function startThirdCamera()
         if thirdRunning then return end
-        thirdRunning=true
-        -- Use the game's standard camera controller so its normal collision behavior is retained.
-        pcall(function()
-            local scripts=player:FindFirstChild("PlayerScripts")
-            local module=scripts and scripts:FindFirstChild("PlayerModule")
-            if module then thirdCameras=require(module):GetCameras() end
-        end)
+        local camera=Workspace.CurrentCamera
+        if not camera then error("Camera is not available yet") end
+        thirdMouseBehavior=UIS.MouseBehavior
+        thirdInputSensitivity=UIS.MouseDeltaSensitivity
+        local look=camera.CFrame.LookVector
+        thirdPitch=math.asin(math.clamp(look.Y,-1,1))
+        thirdYaw=math.atan2(-look.X,-look.Z)
         local rayParams=RaycastParams.new()
         rayParams.FilterType=Enum.RaycastFilterType.Exclude
         rayParams.RespectCanCollide=true
-        Run:BindToRenderStep("PrimeVisualsThirdBeforeCamera",Enum.RenderPriority.Camera.Value-1,function()
+        thirdRunning=true
+        -- Isolate third person from PlayerModule. Do not change CameraMode, zoom limits,
+        -- the native controller's mouse-lock state. Preserve sensitivity across CameraType events.
+        patch("third",camera,"CameraType",Enum.CameraType.Scriptable)
+        if type(thirdInputSensitivity)=="number" then UIS.MouseDeltaSensitivity=thirdInputSensitivity end
+        Run:BindToRenderStep("PrimeVisualsThirdOrbit",Enum.RenderPriority.Camera.Value+1,function()
             if not alive or not thirdRunning then return end
-            local controller=thirdCameras and thirdCameras.activeCameraController
-            if thirdCameras and type(thirdCameras.GetActiveCameraController)=="function" then
-                controller=thirdCameras:GetActiveCameraController()
-            end
-            if not (controller and type(controller.SetIsMouseLocked)=="function" and type(controller.GetIsMouseLocked)=="function") then controller=nil end
-            if controller~=thirdController then
-                restoreThirdController()
-                if controller then
-                    thirdController=controller
-                    thirdState={locked=controller:GetIsMouseLocked(),offset=type(controller.GetMouseLockOffset)=="function" and controller:GetMouseLockOffset() or nil}
-                end
-            end
+            camera=Workspace.CurrentCamera
+            local character=player.Character
+            local root=character and character:FindFirstChild("HumanoidRootPart")
+            if not camera or not root then return end
+            patch("third",camera,"CameraType",Enum.CameraType.Scriptable)
             local rotating=not Library.Toggled and not UIS:GetFocusedTextBox()
-            if thirdController then
-                thirdController:SetIsMouseLocked(rotating and true or false)
-                if type(thirdController.SetMouseLockOffset)=="function" then
-                    thirdController:SetMouseLockOffset(rotating and Vector3.zero or thirdState.offset or Vector3.zero)
-                end
-            end
             UIS.MouseBehavior=rotating and Enum.MouseBehavior.LockCenter or Enum.MouseBehavior.Default
-        end)
-        Run:BindToRenderStep("PrimeVisualsThirdAfterCamera",Enum.RenderPriority.Camera.Value+1,function()
-            if not alive or not thirdRunning then return end
-            if Library.Toggled or UIS:GetFocusedTextBox() then
-                UIS.MouseBehavior=Enum.MouseBehavior.Default
-                thirdFallback=false
-                return
+            if rotating then
+                local delta=UIS:GetMouseDelta()
+                thirdYaw=thirdYaw-delta.X*0.003
+                thirdPitch=math.clamp(thirdPitch-delta.Y*0.003,-1.5,1.5)
             end
-            UIS.MouseBehavior=Enum.MouseBehavior.LockCenter
-            -- Games that replace PlayerModule still get an orbiting camera, with wall collision.
-            if thirdController or controls.camNoclip then thirdFallback=false return end
-            local camera=Workspace.CurrentCamera
-            if not camera then return end
-            if not thirdFallback then
-                local look=camera.CFrame.LookVector
-                thirdPitch=math.asin(math.clamp(look.Y,-1,1))
-                thirdYaw=math.atan2(-look.X,-look.Z)
-                thirdFallback=true
-            end
-            local delta=UIS:GetMouseDelta()
-            thirdYaw=thirdYaw-delta.X*0.003
-            thirdPitch=math.clamp(thirdPitch-delta.Y*0.003,-1.5,1.5)
             local rotation=CFrame.fromOrientation(thirdPitch,thirdYaw,0)
-            local focus=camera.Focus.Position
+            local humanoid=character:FindFirstChildOfClass("Humanoid")
+            local offset=humanoid and humanoid.CameraOffset or Vector3.zero
+            local focus=root.Position+Vector3.new(0,1.5,0)+offset
             local distance=controls.camDistance or 12
-            rayParams.FilterDescendantsInstances=player.Character and {player.Character} or {}
-            local hit=Workspace:Raycast(focus,-rotation.LookVector*distance,rayParams)
-            if hit then distance=math.max(0.5,(hit.Position-focus).Magnitude-0.2) end
+            if not controls.camNoclip then
+                rayParams.FilterDescendantsInstances={character}
+                local hit=Workspace:Raycast(focus,-rotation.LookVector*distance,rayParams)
+                if hit then distance=math.max(0.5,(hit.Position-focus).Magnitude-0.2) end
+            end
             camera.CFrame=CFrame.new(focus-rotation.LookVector*distance)*rotation
+            camera.Focus=CFrame.new(focus)
+            for _,part in ipairs(character:GetChildren()) do
+                if part:IsA("BasePart") then patch("thirdbody",part,"LocalTransparencyModifier",0) end
+            end
         end)
     end
     local function updateThirdPerson(on)
-        if on then
-            if not thirdRunning then
-                restoreThirdSensitivity(false)
-                -- Capture before changing CameraMode: FTAP can use a lower first-person sensitivity.
-                thirdSensitivity=UIS.MouseDeltaSensitivity
-            end
-            local distance=controls.camDistance or 12
-            patch("third",player,"CameraMode",Enum.CameraMode.Classic)
-            -- Keep both zoom limits at the selected distance so moving either way applies immediately.
-            if player.CameraMaxZoomDistance<distance then
-                patch("third",player,"CameraMaxZoomDistance",distance)
-            end
-            patch("third",player,"CameraMinZoomDistance",distance)
-            patch("third",player,"CameraMaxZoomDistance",distance)
-            startThirdCamera()
-        else
-            stopThirdCamera()
-            unpatch("third")
-            restoreThirdSensitivity(true)
-        end
+        if on then startThirdCamera() else stopThirdCamera() end
     end
     do
         local g=group("Camera","View",2)
         toggle(g,"camThird","Third person [3]",false,updateThirdPerson)
         sliderControl(g,"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
         local noClipCamera
+        local noClipWasThird=false
         toggle(g,"camNoclip","Camera noclip",false,function(on)
             noClipCamera=nil
             job("Camera noclip")
@@ -724,7 +657,14 @@ local function buildVisualSystems()
             job("Camera noclip",Run.RenderStepped,function(dt)
                 camera=Workspace.CurrentCamera
                 hrp=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if controls.camThird then noClipWasThird=true return end
                 if not camera or not hrp then return end
+                if noClipWasThird then
+                    local direction=camera.CFrame.LookVector
+                    pitch=math.asin(math.clamp(direction.Y,-1,1))
+                    yaw=math.atan2(-direction.X,-direction.Z)
+                    noClipWasThird=false
+                end
                 if not menuOpen then
                     local d=UIS:GetMouseDelta()
                     yaw=yaw-d.X*0.003
@@ -1476,7 +1416,6 @@ local function buildVisualSystems()
             for property,entry in pairs(properties) do pcall(function() o[property]=entry.original end) end
         end
         patches={}
-        restoreThirdSensitivity(false)
         for o in pairs(owned) do pcall(function() o:Destroy() end) end owned={}
     end
 end
