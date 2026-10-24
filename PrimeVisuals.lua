@@ -578,6 +578,29 @@ local function buildVisualSystems()
     local thirdCameras,thirdController,thirdState
     local thirdFallback=false
     local thirdYaw,thirdPitch=0,0
+    local thirdSensitivity
+    local function restoreThirdSensitivity(afterCamera)
+        Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
+        if type(thirdSensitivity)~="number" then return end
+        local sensitivity=thirdSensitivity
+        UIS.MouseDeltaSensitivity=sensitivity
+        if not afterCamera then thirdSensitivity=nil return end
+        -- CameraMode/zoom changes can reset sensitivity during the next camera update.
+        -- Restore only across that transition, then stop touching the game's input settings.
+        local frames=0
+        Run:BindToRenderStep("PrimeVisualsThirdRestoreInput",Enum.RenderPriority.Camera.Value+2,function()
+            if not alive or thirdRunning then
+                Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
+                return
+            end
+            UIS.MouseDeltaSensitivity=sensitivity
+            frames=frames+1
+            if frames>=2 then
+                Run:UnbindFromRenderStep("PrimeVisualsThirdRestoreInput")
+                thirdSensitivity=nil
+            end
+        end)
+    end
     local function restoreThirdController()
         if thirdController and thirdState then
             pcall(function()
@@ -663,6 +686,11 @@ local function buildVisualSystems()
     end
     local function updateThirdPerson(on)
         if on then
+            if not thirdRunning then
+                restoreThirdSensitivity(false)
+                -- Capture before changing CameraMode: FTAP can use a lower first-person sensitivity.
+                thirdSensitivity=UIS.MouseDeltaSensitivity
+            end
             local distance=controls.camDistance or 12
             patch("third",player,"CameraMode",Enum.CameraMode.Classic)
             -- Keep both zoom limits at the selected distance so moving either way applies immediately.
@@ -672,7 +700,11 @@ local function buildVisualSystems()
             patch("third",player,"CameraMinZoomDistance",distance)
             patch("third",player,"CameraMaxZoomDistance",distance)
             startThirdCamera()
-        else stopThirdCamera() unpatch("third") end
+        else
+            stopThirdCamera()
+            unpatch("third")
+            restoreThirdSensitivity(true)
+        end
     end
     do
         local g=group("Camera","View",2)
@@ -1444,6 +1476,7 @@ local function buildVisualSystems()
             for property,entry in pairs(properties) do pcall(function() o[property]=entry.original end) end
         end
         patches={}
+        restoreThirdSensitivity(false)
         for o in pairs(owned) do pcall(function() o:Destroy() end) end owned={}
     end
 end
