@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.4.2"
+local VERSION="1.5.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -73,6 +73,18 @@ local ru={
     ["Performance"]="Производительность",
     ["Character finish"]="Материал персонажа",
     ["Cone hat"]="Коническая шляпа",
+    ["Mannequins"]="Манекены",
+    ["Local mannequins"]="Локальные манекены",
+    ["Roblox username"]="Ник Roblox",
+    ["Spawn mannequin"]="Создать манекена",
+    ["Apply avatar to last"]="Применить скин к последнему",
+    ["Reset last to grey"]="Сделать последнего серым",
+    ["Delete last mannequin"]="Удалить последнего",
+    ["Delete all mannequins"]="Удалить всех манекенов",
+    ["Local grab"]="Локальный захват",
+    ["Empty username = grey mannequin"]="Пустой ник — серый манекен",
+    ["LMB: grab/drop | RMB: throw"]="ЛКМ: взять/отпустить | ПКМ: бросить",
+    ["Wheel: distance | Hold R: rotate"]="Колесо: дистанция | Удерживать R: вращение",
     ["Visibility"]="Отображение",
     ["All players"]="Все игроки",
     ["Selected players"]="Выбранные игроки",
@@ -1034,6 +1046,32 @@ local function buildVisualSystems()
         sliderControl(h,"hatHeight","Height offset",0,4,1.1,0.1,function() end)
         sliderControl(h,"hatAlpha","Transparency",0,1,0.2,0.05,function() end)
     end
+    -- Lazy-loaded local actors and physics, isolated from FTAP's server grab events.
+    local mannequins
+    do
+        local g=group("Character","Mannequins",1)
+        toggle(g,"mannequinEnabled","Local mannequins",false,function(on)
+            if on and not mannequins then
+                mannequins=loadUIModule("Mannequins")({
+                    Players=Players,Workspace=Workspace,Input=UIS,Run=Run,
+                    MenuOpen=function() return Library.Toggled end,
+                    Notify=function(en,russian) notify(uiLanguage=="ru" and russian or en) end,
+                })
+            end
+            if mannequins then mannequins:SetEnabled(on) end
+        end)
+        g=featureSettings("mannequinEnabled")
+        field(g,"mannequinName","Roblox username","",function() end,true)
+        g:AddLabel("Empty username = grey mannequin")
+        action(g,"Spawn mannequin",function() if mannequins and controls.mannequinEnabled then mannequins:Spawn(controls.mannequinName) end end)
+        action(g,"Apply avatar to last",function() if mannequins and controls.mannequinEnabled then mannequins:ApplyToLast(controls.mannequinName) end end)
+        action(g,"Reset last to grey",function() if mannequins and controls.mannequinEnabled then mannequins:ApplyToLast("") end end)
+        action(g,"Delete last mannequin",function() if mannequins then mannequins:DeleteLast() end end)
+        action(g,"Delete all mannequins",function() if mannequins then mannequins:Clear() end end)
+        toggle(g,"mannequinGrab","Local grab",true,function(on) if mannequins then mannequins:SetInteractive(on) end end)
+        g:AddLabel("LMB: grab/drop | RMB: throw")
+        g:AddLabel("Wheel: distance | Hold R: rotate")
+    end
     -- ESP: four independent categories, with event-based discovery and capped updates.
     local espRoot=own(make("Folder",{Name="PV_ESP"},Workspace))
     local categories={Players={},Server={},Sticky={},Blackholes={}}
@@ -1478,7 +1516,7 @@ local function buildVisualSystems()
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
-            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","espPlayers","espServer","espSticky","espBlackholes",
+            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local lastLanguage
@@ -1611,6 +1649,7 @@ local function buildVisualSystems()
         alive=false
         for _,c in pairs(jobs) do c:Disconnect() end jobs={}
         for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
+        if mannequins then mannequins:Destroy() end
         restoreWater()
         for o,properties in pairs(patches) do
             for property,entry in pairs(properties) do pcall(function() o[property]=entry.original end) end
