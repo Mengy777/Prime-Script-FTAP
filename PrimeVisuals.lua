@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.6.0"
+local VERSION="1.6.1"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -567,11 +567,62 @@ local function buildVisualSystems()
         local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
         return register(key,widget,initial,callback)
     end
+    local colorWarningShown=false
     local function color(g,key,text,initial,callback)
-        g:AddLabel(text):AddColorPicker(key,{Default=initial,Title=text,Callback=changed(key,callback)})
-        local widget=Library.Options[key]
-        assert(widget and type(widget.SetValueRGB)=="function","Color picker was not registered: "..key)
-        return register(key,widget,initial,callback,true)
+        put(key,initial)
+        local label,picker,activeSetter
+        local pickerReady=false
+        local fallbackActive=false
+        local onChanged=changed(key,callback)
+        local function useFallback(reason)
+            pickerReady=false
+            if not fallbackActive then
+                fallbackActive=true
+                -- Dispose partial/native UI if available; it must not keep applying callbacks.
+                local partial=picker
+                if not partial then
+                    pcall(function() partial=Library.Options and Library.Options[key] end)
+                end
+                if type(partial)=="table" and type(partial.Destroy)=="function" then pcall(partial.Destroy,partial) end
+                if type(label)=="table" and type(label.Destroy)=="function" then pcall(label.Destroy,label) end
+                local diagnostic="Prime Visuals: color control "..key.." unavailable: "..tostring(reason)
+                pcall(warn,diagnostic)
+                if not colorWarningShown then
+                    colorWarningShown=true
+                    pcall(notify,uiLanguage=="ru"
+                        and "Часть настроек цвета недоступна. Меню продолжит работу; сброс цветов сохранён."
+                        or "Some color controls are unavailable. The menu and color resets will still work.")
+                end
+            end
+            local fallback={Type="ColorPicker",Value=controls[key] or initial}
+            function fallback:SetValueRGB(value) self.Value=value end
+            return register(key,fallback,fallback.Value,callback,true)
+        end
+        local created,result=pcall(function()
+            label=g:AddLabel(text)
+            label:AddColorPicker(key,{Default=initial,Title=text,Callback=function(value)
+                if pickerReady then onChanged(value) end
+            end})
+            return Library.Options and Library.Options[key]
+        end)
+        if created and type(result)=="table" and type(result.SetValueRGB)=="function" and result.Value~=nil then
+            picker=result pickerReady=true
+            activeSetter=register(key,picker,initial,callback,true)
+        else
+            activeSetter=useFallback(created and "missing or invalid ColorPicker registration" or result)
+        end
+        local function set(value,apply)
+            local previousSuppressed=suppressed
+            local ok,err=pcall(activeSetter,value,apply)
+            suppressed=previousSuppressed
+            if not ok then
+                activeSetter=useFallback(err)
+                activeSetter(value,apply)
+                setters[key]=set
+            end
+        end
+        setters[key]=set
+        return set
     end
     local function action(g,text,fn)
         return g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
