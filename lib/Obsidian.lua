@@ -10335,6 +10335,13 @@ function Library:AddFeatureSettings(Toggle, Info)
             math.max(40, math.min(460, (View.Y - 24) / DPI - 32)))
         Panel.Size = UDim2.fromOffset(Width, Height + 32)
     end
+    function Settings:ContainsPoint(Point)
+        -- Absolute bounds already include current drag position, layout and DPI.
+        if Panel.Visible and Library:MouseIsOverFrame(Panel, Point) then return true end
+        local Menu = CurrentMenu
+        return Menu ~= nil and Menu.Holder:IsDescendantOf(Panel)
+            and Menu.Menu.Visible and Library:MouseIsOverFrame(Menu.Menu, Point)
+    end
     function Settings:Close()
         if Panel.Visible then Settings.LastPosition = Panel.Position end
         Panel.Visible = false
@@ -10381,16 +10388,24 @@ function Library:AddFeatureSettings(Toggle, Info)
     end
     Library:OnUnload(function() Settings:Destroy() end)
     Library:GiveSignal(List:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Settings:Resize() end))
-    Library:GiveSignal(Toggle.Holder.MouseButton2Click:Connect(function() Settings:Open() end))
+    local DismissedOnOwnerPress = false
+    Library:GiveSignal(Toggle.Holder.MouseButton2Click:Connect(function()
+        if DismissedOnOwnerPress then DismissedOnOwnerPress = false return end
+        Settings:Open()
+    end))
     Library:GiveSignal(CloseButton.MouseButton1Click:Connect(function() Settings:Close() end))
     Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input)
+        local RightClick = Input.UserInputType == Enum.UserInputType.MouseButton2
+        if RightClick then DismissedOnOwnerPress = false end
         if ActiveFeatureSettings ~= Settings then return end
         if Input.KeyCode == Enum.KeyCode.Escape then
             Settings:Close()
-        elseif Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.MouseButton2 then
-            local Point = UserInputService:GetMouseLocation()
-            if Library:MouseIsOverFrame(Panel, Point) or Library:MouseIsOverFrame(Toggle.Holder, Point) then return end
-            if CurrentMenu and (Library:MouseIsOverFrame(CurrentMenu.Menu, Point) or Library:MouseIsOverFrame(CurrentMenu.Holder, Point)) then return end
+        elseif Input.UserInputType == Enum.UserInputType.MouseButton1 or RightClick
+            or Input.UserInputType == Enum.UserInputType.Touch then
+            local Position = Input.Position
+            local Point = Position and Vector2.new(Position.X, Position.Y) or UserInputService:GetMouseLocation()
+            if Settings:ContainsPoint(Point) then return end
+            DismissedOnOwnerPress = RightClick and Library:MouseIsOverFrame(Toggle.Holder, Point)
             Settings:Close()
         end
     end))
