@@ -573,77 +573,24 @@ local function buildVisualSystems()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
     end)
     -- CAMERA
-    local thirdRunning=false
-    local thirdYaw,thirdPitch=0,0
-    local thirdMouseBehavior
-    local thirdInputSensitivity
-    local function stopThirdCamera()
-        if not thirdRunning then return end
-        thirdRunning=false
-        Run:UnbindFromRenderStep("PrimeVisualsThirdOrbit")
-        unpatch("thirdbody")
-        unpatch("third")
-        if type(thirdInputSensitivity)=="number" then UIS.MouseDeltaSensitivity=thirdInputSensitivity end
-        UIS.MouseBehavior=Library.Toggled and Enum.MouseBehavior.Default or thirdMouseBehavior or savedBehavior
-        thirdMouseBehavior,thirdInputSensitivity=nil,nil
-    end
-    local function startThirdCamera()
-        if thirdRunning then return end
-        local camera=Workspace.CurrentCamera
-        if not camera then error("Camera is not available yet") end
-        thirdMouseBehavior=UIS.MouseBehavior
-        thirdInputSensitivity=UIS.MouseDeltaSensitivity
-        local look=camera.CFrame.LookVector
-        thirdPitch=math.asin(math.clamp(look.Y,-1,1))
-        thirdYaw=math.atan2(-look.X,-look.Z)
-        local rayParams=RaycastParams.new()
-        rayParams.FilterType=Enum.RaycastFilterType.Exclude
-        rayParams.RespectCanCollide=true
-        thirdRunning=true
-        -- Isolate third person from PlayerModule. Do not change CameraMode, zoom limits,
-        -- the native controller's mouse-lock state. Preserve sensitivity across CameraType events.
-        patch("third",camera,"CameraType",Enum.CameraType.Scriptable)
-        if type(thirdInputSensitivity)=="number" then UIS.MouseDeltaSensitivity=thirdInputSensitivity end
-        Run:BindToRenderStep("PrimeVisualsThirdOrbit",Enum.RenderPriority.Camera.Value+1,function()
-            if not alive or not thirdRunning then return end
-            camera=Workspace.CurrentCamera
-            local character=player.Character
-            local root=character and character:FindFirstChild("HumanoidRootPart")
-            if not camera or not root then return end
-            patch("third",camera,"CameraType",Enum.CameraType.Scriptable)
-            local rotating=not Library.Toggled and not UIS:GetFocusedTextBox()
-            UIS.MouseBehavior=rotating and Enum.MouseBehavior.LockCenter or Enum.MouseBehavior.Default
-            if rotating then
-                local delta=UIS:GetMouseDelta()
-                thirdYaw=thirdYaw-delta.X*0.003
-                thirdPitch=math.clamp(thirdPitch-delta.Y*0.003,-1.5,1.5)
-            end
-            local rotation=CFrame.fromOrientation(thirdPitch,thirdYaw,0)
-            local humanoid=character:FindFirstChildOfClass("Humanoid")
-            local offset=humanoid and humanoid.CameraOffset or Vector3.zero
-            local focus=root.Position+Vector3.new(0,1.5,0)+offset
-            local distance=controls.camDistance or 12
-            if not controls.camNoclip then
-                rayParams.FilterDescendantsInstances={character}
-                local hit=Workspace:Raycast(focus,-rotation.LookVector*distance,rayParams)
-                if hit then distance=math.max(0.5,(hit.Position-focus).Magnitude-0.2) end
-            end
-            camera.CFrame=CFrame.new(focus-rotation.LookVector*distance)*rotation
-            camera.Focus=CFrame.new(focus)
-            for _,part in ipairs(character:GetChildren()) do
-                if part:IsA("BasePart") then patch("thirdbody",part,"LocalTransparencyModifier",0) end
-            end
-        end)
-    end
+    local cameraSettings={mode=player.CameraMode,min=player.CameraMinZoomDistance,max=player.CameraMaxZoomDistance,occlusion=player.DevCameraOcclusionMode}
     local function updateThirdPerson(on)
-        if on then startThirdCamera() else stopThirdCamera() end
+        if on then
+            local distance=controls.camDistance or 12
+            patch("third",player,"CameraMode",Enum.CameraMode.Classic)
+            -- Keep both zoom limits at the selected distance so moving either way applies immediately.
+            if player.CameraMaxZoomDistance<distance then
+                patch("third",player,"CameraMaxZoomDistance",distance)
+            end
+            patch("third",player,"CameraMinZoomDistance",distance)
+            patch("third",player,"CameraMaxZoomDistance",distance)
+        else unpatch("third") end
     end
     do
         local g=group("Camera","View",2)
         toggle(g,"camThird","Third person [3]",false,updateThirdPerson)
         sliderControl(g,"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
         local noClipCamera
-        local noClipWasThird=false
         toggle(g,"camNoclip","Camera noclip",false,function(on)
             noClipCamera=nil
             job("Camera noclip")
@@ -657,14 +604,7 @@ local function buildVisualSystems()
             job("Camera noclip",Run.RenderStepped,function(dt)
                 camera=Workspace.CurrentCamera
                 hrp=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                if controls.camThird then noClipWasThird=true return end
                 if not camera or not hrp then return end
-                if noClipWasThird then
-                    local direction=camera.CFrame.LookVector
-                    pitch=math.asin(math.clamp(direction.Y,-1,1))
-                    yaw=math.atan2(-direction.X,-direction.Z)
-                    noClipWasThird=false
-                end
                 if not menuOpen then
                     local d=UIS:GetMouseDelta()
                     yaw=yaw-d.X*0.003
@@ -1408,7 +1348,6 @@ local function buildVisualSystems()
     end)
     cleanupExtra=function()
         alive=false
-        stopThirdCamera()
         for _,c in pairs(jobs) do c:Disconnect() end jobs={}
         for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
         restoreWater()
