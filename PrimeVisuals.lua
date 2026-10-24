@@ -1,4 +1,5 @@
 -- Prime Visuals | Camera + Sky
+local function startVisuals()
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -30,6 +31,7 @@ local ru={
     ["Tweaks"]="Эффекты FTAP",
     ["Audio"]="Звуки",
     ["Settings"]="Настройки",
+    ["Reset all settings"]="Сбросить все настройки",
     ["View"]="Обзор",
     ["Graphics"]="Графика",
     ["Interface"]="Интерфейс",
@@ -515,17 +517,18 @@ button(configCard,"Reset sky",10,85,columnWidth-20,function()
 end)
 local initialFOV=Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView or 70
 local selected=math.clamp(math.round(initialFOV),30,120)
+local fovChanged=false
 local function apply()
-    if Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=selected end
+    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=selected end
 end
-local function setValue(value)
+local function setValue(value,displayOnly)
     if not value or value~=value or math.abs(value)==math.huge then value=selected end
     selected=math.clamp(math.round(value),30,120)
     input.Text=tostring(selected)
     local a=(selected-30)/90
     fill.Size=UDim2.new(a,0,1,0)
     dot.Position=UDim2.new(a,0,0.5,0)
-    apply()
+    if not displayOnly then fovChanged=true apply() end
 end
 listen(input.FocusLost,function() setValue(tonumber(input.Text)) end)
 listen(Workspace:GetPropertyChangedSignal("CurrentCamera"),apply)
@@ -638,7 +641,7 @@ gui.Destroying:Connect(function()
     for _,t in pairs(tweens) do t:Cancel() end
     cursorLayer:Destroy()
     UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
-    if Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
+    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
 end)
 -- Prime Visuals independent visual systems.
 local function buildVisualSystems()
@@ -1593,7 +1596,10 @@ local function buildVisualSystems()
         field(h,"bhSound","Audio ID / MP3 link","1843529634",function(v)
             if controls.bhSoundEnabled then
                 task.spawn(function()
-                    if safe(function() controls.bhSoundResolved=resolveSound(v) end) then unpatch("bhsound") blackholeLoop() end
+                    local resolved
+                    if safe(function() resolved=resolveSound(v) end) and alive and controls.bhSoundEnabled and controls.bhSound==v then
+                        controls.bhSoundResolved=resolved unpatch("bhsound") blackholeLoop()
+                    end
                 end)
             end
         end)
@@ -1603,6 +1609,14 @@ local function buildVisualSystems()
         local g=group("Settings","Interface",1)
         choice(g,"uiLanguage","Language",{"English","Русский"},"English",function(value)
             setLanguage(value=="Русский" and "ru" or "en")
+        end)
+        local resetting=false
+        action(g,"Reset all settings",function()
+            if resetting then return end
+            resetting=true
+            -- Reuse full teardown, then rebuild clean controls and effect state.
+            gui:Destroy()
+            task.defer(startVisuals)
         end)
     end
     local categories={
@@ -1751,5 +1765,7 @@ local function buildVisualSystems()
 end
 buildVisualSystems()
 
-setValue(selected)
+setValue(selected,true)
 setMenu(true)
+end
+startVisuals()
