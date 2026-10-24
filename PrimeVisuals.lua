@@ -1,132 +1,6 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.1.1"
+local VERSION="1.2.0"
 local sessionStarted=os.clock()
--- Pre-1.0 version numbers reconstruct development stages; original release dates were not recorded.
-local RELEASE_HISTORY={
-    {version="1.1.1",date="2026-10-24",ru="Последовательный перелив свечения",en="Sequential rainbow glow",items={
-        {ru="Исправлено свечение: весь контур одновременно одного цвета, который плавно проходит радугу от красного и обратно. Одновременный многоцветный градиент убран.",en="Fixed the halo to use one uniform color around the whole window, smoothly cycling through the rainbow starting at red. Removed the simultaneous multicolor gradient."},
-    }},
-    {version="1.1.0",date="2026-10-24",ru="Радужное свечение окна",en="Animated rainbow window glow",items={
-        {ru="Добавлено мягкое радужное свечение по внешнему контуру окна с плавным переливом цветов.",en="Added a soft rainbow halo around the outer window with smoothly changing colors."},
-        {ru="Свечение следует за перетаскиванием и масштабом UI, скрывается вместе с меню и удаляется при сбросе или полном закрытии.",en="The glow follows window dragging and UI scale, hides with the menu, and is cleaned up on reset or unload."},
-    }},
-    {version="1.0.0",date="2026-10-24",ru="Главная и история версий",en="Home and version history",items={
-        {ru="Добавлена первая вкладка «Главная»: аватар, приветствие, ник игрока и автор @876osamuha.",en="Added Home as the first tab: avatar, greeting, player identity and author @876osamuha."},
-        {ru="Добавлены сведения о сборке, статус доступа, статистика производительности и сессии.",en="Added build information, access status, performance and session statistics."},
-        {ru="Добавлен развёрнутый Changelog; введена постоянная нумерация будущих обновлений. Обзор подтверждён пользователем.",en="Added expanded changelog and formal versioning for future updates. View was confirmed by the user."},
-    }},
-    {version="0.31.0",date="",ru="Возврат стабильной камеры",en="Stable camera restored",items={
-        {ru="Удалено принудительное вращение без ПКМ; возвращено прежнее третье лицо с ПКМ.",en="Removed forced orbit without RMB; restored native third person using RMB."},
-        {ru="Изменение дистанции на ходу сохранено. Пользователь подтвердил нормальную чувствительность и весь раздел «Обзор».",en="Live distance adjustments retained. User confirmed normal sensitivity and the complete View section."},
-    }},
-    {version="0.30.0",date="",ru="Экспериментальная орбитальная камера",en="Experimental orbit camera",items={
-        {ru="Проверено отдельное управление третьим лицом через Scriptable без изменения CameraMode.",en="Tried a separate Scriptable orbit without changing CameraMode."},
-        {ru="Пользователь снова сообщил о высокой чувствительности. Эксперимент впоследствии удалён.",en="User again reported excessive sensitivity. This experiment was subsequently removed."},
-    }},
-    {version="0.29.0",date="",ru="Попытка восстановления чувствительности",en="Sensitivity restoration attempt",items={
-        {ru="Добавлено сохранение чувствительности перед третьим лицом и восстановление после переключения.",en="Tried saving sensitivity before third person and restoring it after switching."},
-        {ru="Симуляция прошла, но тест пользователя не подтвердил исправление в FTAP.",en="Simulation passed, but the user test did not confirm a fix in FTAP."},
-    }},
-    {version="0.28.0",date="",ru="Исправления Обзора",en="View improvements",items={
-        {ru="Load начал принимать ID и ссылку без Enter. Солнце и облака автоматически скрываются при загрузке кастомного неба и возвращаются вручную.",en="Load now accepts sky IDs and links without Enter. Custom skies hide the sun and clouds, with manual restoration."},
-        {ru="Добавлено вращение третьего лица без ПКМ. Позднее выявлен и устранён откатом связанный сбой чувствительности.",en="Added third-person rotation without RMB. A sensitivity regression was later resolved by reverting that control mode."},
-    }},
-    {version="0.27.0",date="",ru="Переход на Obsidian",en="Migration to Obsidian",items={
-        {ru="Самодельный UI заменён настоящими Obsidian Library и Lucide Icons из актуального Resonance.",en="Replaced the custom UI with real Obsidian Library and Lucide Icons from the current Resonance source."},
-        {ru="Перенесены контролы, цвета, списки, ползунки, выбор цвета и локализация. Название закреплено рядом со значком.",en="Migrated controls, dropdowns, sliders, color pickers and localization. Kept the brand visible beside its icon."},
-    }},
-    {version="0.26.0",date="",ru="Навигация иконками",en="Icon navigation",items={
-        {ru="Добавлена узкая панель только с иконками и названиями по наведению. Обновлены шапка и карточки.",en="Added an icon-only sidebar with hover labels, and revised the header and cards."},
-        {ru="Этот вариант иконок не устроил пользователя и был заменён при переходе на Obsidian.",en="This icon design was rejected by the user and replaced during the Obsidian migration."},
-    }},
-    {version="0.25.0",date="",ru="Полное закрытие",en="Full unload",items={
-        {ru="Добавлена кнопка полного закрытия с очисткой UI, обработчиков и визуальных объектов.",en="Added full unload with UI, event connection and visual object cleanup."},
-        {ru="Пользователь подтвердил повторный запуск загрузчика без перезахода в игру.",en="User confirmed that the loader can be restarted without rejoining."},
-    }},
-    {version="0.24.0",date="",ru="Полный сброс",en="Full settings reset",items={
-        {ru="Добавлен полный сброс эффектов и настроек с восстановлением исходных свойств игры.",en="Added full settings and effects reset with restoration of original game properties."},
-        {ru="FOV перестал применяться при запуске до первого изменения пользователем.",en="FOV is no longer applied at startup until the user changes it."},
-    }},
-    {version="0.23.0",date="",ru="GitHub и загрузчик",en="GitHub distribution",items={
-        {ru="Скрипт опубликован в Mengy777/Prime-Script-FTAP и переведён на постоянный loadstring-загрузчик.",en="Published the script in Mengy777/Prime-Script-FTAP with a permanent loadstring loader."},
-        {ru="Устранён мешавший загрузке UTF-8 BOM. Настроены обновления через Git.",en="Removed the UTF-8 BOM that prevented loading, and configured updates through Git."},
-    }},
-    {version="0.22.0",date="",ru="Дистанция камеры на ходу",en="Live camera distance",items={
-        {ru="Дистанция третьего лица теперь меняется ползунком в обе стороны без выключения режима.",en="Third-person distance now changes in both directions without toggling the mode."},
-        {ru="Оба предела зума синхронизированы с выбранной дистанцией.",en="Both native zoom limits follow the selected distance."},
-    }},
-    {version="0.21.0",date="",ru="Группировка и русский язык",en="Organization and Russian language",items={
-        {ru="Функции сгруппированы в Обзор, Графику, Персонажа, ESP, FTAP и Настройки.",en="Organized features into View, Graphics, Character, ESP, FTAP and Settings."},
-        {ru="Настройки поставлены последними; добавлены русский язык и сворачивание групп.",en="Settings moved to the end; added Russian localization and collapsible groups."},
-    }},
-    {version="0.20.0",date="",ru="Расширение визуальных функций",en="Visual feature expansion",items={
-        {ru="Добавлены освещение, частицы, вода, упрощение графики, эффекты персонажа и коническая шляпа.",en="Added lighting, particles, water, graphics simplification, character effects and cone hat."},
-        {ru="Добавлены категории ESP, оформление линии захвата, прицел, визуалы чёрных дыр и звуковые настройки.",en="Added ESP categories, grab-line styling, crosshair, blackhole visuals and audio settings."},
-    }},
-    {version="0.19.0",date="",ru="Шрифты и плотность",en="Typography and density",items={
-        {ru="Улучшены шрифты, размеры контролов и читаемость интерфейса.",en="Revised fonts, control sizes and UI legibility."},
-    }},
-    {version="0.18.0",date="",ru="Чёрный интерфейс и постоянный размер",en="Black UI and fixed window size",items={
-        {ru="Убраны лишние подсказки и подписи; введены чёрные поверхности и цветные края.",en="Removed redundant hints and labels; introduced black surfaces with accent outlines."},
-        {ru="После нескольких корректировок выбран размер окна примерно как у Resonance, без изменения размера между разделами.",en="After several adjustments, fixed the window size close to Resonance, with consistent dimensions across tabs."},
-    }},
-    {version="0.17.0",date="",ru="Упрощение неба",en="Sky controls simplified",items={
-        {ru="После успешного теста примерно двадцати скайбоксов временно убраны отдельные настройки времени и размера солнца.",en="After successful tests of roughly twenty skyboxes, separate time and sun-size controls were temporarily removed."},
-    }},
-    {version="0.16.0",date="",ru="Загрузка модели скайбокса",en="Skybox model loading",items={
-        {ru="Добавлена загрузка скайбокса по ID модели или ссылке Creator Store с извлечением шести текстур.",en="Added skybox model ID and Creator Store link loading with extraction of all six textures."},
-        {ru="Загруженные модели не запускаются: копируются только свойства Sky, после чего модель удаляется.",en="Loaded models are not executed: only Sky properties are copied before the model is destroyed."},
-    }},
-    {version="0.15.0",date="",ru="Единое поле для неба",en="Single sky input",items={
-        {ru="Пересмотрены пресеты и заменён неудобный ввод отдельных текстур единым полем.",en="Reworked presets and replaced separate texture inputs with one field."},
-    }},
-    {version="0.14.0",date="",ru="Первые настройки неба",en="Initial sky features",items={
-        {ru="Добавлены пресеты неба, время суток, размер солнца и восстановление исходного неба.",en="Added sky presets, time of day, sun size and original sky restoration."},
-    }},
-    {version="0.13.0",date="",ru="Удаление Freecam",en="Freecam removed",items={
-        {ru="Экспериментальная свободная камера полностью вырезана по просьбе пользователя.",en="Removed the experimental free camera at the user request."},
-    }},
-    {version="0.12.0",date="",ru="Исправление отделения Freecam",en="Freecam detachment fix",items={
-        {ru="Исправлен тест Freecam: камера отделяется от персонажа, а персонаж остаётся на месте.",en="Fixed the Freecam experiment so the camera detaches while the character stays in place."},
-    }},
-    {version="0.11.0",date="",ru="Эксперимент Freecam",en="Freecam experiment",items={
-        {ru="Добавлен временный тест свободной камеры; первая реализация ошибочно перемещала персонажа.",en="Added a temporary free-camera experiment; the first implementation incorrectly moved the character."},
-    }},
-    {version="0.10.0",date="",ru="Иконка и оформление Prime",en="Prime icon and styling",items={
-        {ru="Создана иконка Prime Visuals и обновлено оформление меню под новое название.",en="Created the Prime Visuals icon and refreshed the UI for the new name."},
-    }},
-    {version="0.9.0",date="",ru="Prime Visuals и Prime Vortex",en="Prime Visuals and Prime Vortex",items={
-        {ru="Mengy’s Visual переименован в Prime Visuals. Для отдельного проекта Prime Vortex создан пустой TXT.",en="Renamed Mengy’s Visual to Prime Visuals and created an empty TXT for the separate Prime Vortex project."},
-    }},
-    {version="0.8.0",date="",ru="Курсор меню без лагов",en="Menu cursor stabilization",items={
-        {ru="После нескольких попыток исправлен курсор меню: простой крестик вместо активного прицела взаимодействия.",en="After several iterations, stabilized the menu cursor as a relaxed cross instead of the interaction crosshair."},
-        {ru="Убраны тяжёлые попытки поиска и переноса элементов игрового прицела.",en="Removed expensive attempts to scan and reparent the game crosshair UI."},
-    }},
-    {version="0.7.0",date="",ru="Фиолетовое оформление по референсу",en="Purple reference-based styling",items={
-        {ru="Переработаны открытие, навигация и оформление по визуальным референсам Resonance.",en="Reworked opening, navigation and purple styling using Resonance as a visual reference."},
-    }},
-    {version="0.6.0",date="",ru="Первое наполнение вкладок",en="Initial tab contents",items={
-        {ru="Заполнены первые визуальные разделы; проведена оценка UI и намечена его переработка.",en="Populated the initial visual tabs; reviewed the UI and planned a redesign."},
-    }},
-    {version="0.5.0",date="",ru="Первые вкладки",en="Initial tabs",items={
-        {ru="Меню разделено на несколько вкладок вместо одной панели FOV.",en="Split the single FOV panel into several tabs."},
-    }},
-    {version="0.4.0",date="",ru="Эксперимент расширенного FOV",en="Extended FOV experiment",items={
-        {ru="Проверена идея расширенного диапазона и изменения матрицы камеры; расширенный режим затем удалён.",en="Explored extended FOV and camera-matrix changes; the extended mode was subsequently removed."},
-        {ru="Рабочий диапазон оставлен 30–120.",en="Kept the supported range at 30–120."},
-    }},
-    {version="0.3.0",date="",ru="Перетаскивание и ползунок",en="Dragging and slider",items={
-        {ru="Добавлены перетаскивание меню, ползунок FOV с изменением на ходу и ручной ввод числа.",en="Added window dragging, a live FOV slider and manual numeric input."},
-        {ru="Временно добавлен переключатель расширенного диапазона FOV.",en="Temporarily added an extended FOV range toggle."},
-    }},
-    {version="0.2.0",date="",ru="Mengy’s Visual",en="Mengy’s Visual",items={
-        {ru="Скрипт получил название Mengy’s Visual и стал основой будущего визуального хаба.",en="Named the script Mengy’s Visual and established the visual hub foundation."},
-    }},
-    {version="0.1.0",date="",ru="Первый FOV-скрипт",en="First FOV script",items={
-        {ru="Создан первоначальный скрипт для FTAP/Xeno с изменением FOV.",en="Created the original FTAP/Xeno FOV script."},
-        {ru="Добавлены меню, разблокировка курсора и хранение полного кода в TXT для последующих обновлений.",en="Added the menu, cursor unlocking and a TXT source file for subsequent updates."},
-    }},
-}
 local sourceCache={}
 local function loadUIModule(name)
     local filename=name=="Library" and "Obsidian" or name
@@ -137,11 +11,10 @@ local function loadUIModule(name)
     assert(chunk,message)
     return chunk(loadUIModule)
 end
-local function startVisuals()
+local function startVisuals(skipIntro)
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -149,7 +22,7 @@ for _,name in ipairs({"PrimeVisuals","MengysVisual","FOVPanel"}) do
     local old=playerGui:FindFirstChild(name)
     if old then old:Destroy() end
 end
-local connections,tweens={},{}
+local connections={}
 local cleanupExtra=function() end
 local function listen(signal,fn)
     local c=signal:Connect(fn)
@@ -164,7 +37,6 @@ local ru={
     ["Profile"]="Профиль",
     ["About Prime Visuals"]="О Prime Visuals",
     ["Session statistics"]="Статистика сессии",
-    ["Changelog"]="История обновлений",
     ["Camera"]="Камера",
     ["Sky"]="Небо",
     ["Lighting"]="Освещение",
@@ -236,6 +108,8 @@ local ru={
     ["Max speed"]="Максимальная скорость",
     ["Area"]="Область",
     ["Terrain water"]="Реалистичная вода",
+    ["Realistic Water"]="Реалистичная вода",
+    ["Non-swimmable water"]="Не плавать в воде",
     ["Wave size"]="Размер волн",
     ["Wave speed"]="Скорость волн",
     ["Transparency"]="Прозрачность",
@@ -368,20 +242,9 @@ local function make(class,props,parent)
     bindLocalization(obj)
     return obj
 end
-local function animate(obj,seconds,props)
-    if tweens[obj] then tweens[obj]:Cancel() end
-    local t=TweenService:Create(obj,TweenInfo.new(seconds,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),props)
-    tweens[obj]=t
-    t:Play()
-    return t
-end
 local purple=Color3.fromRGB(160,106,255)
 local white=Color3.fromRGB(230,228,237)
-local muted=Color3.fromRGB(132,128,145)
-local border=Color3.fromRGB(38,36,44)
 local black=Color3.fromRGB(9,9,11)
-local surface=Color3.fromRGB(14,14,17)
-local selectedSurface=Color3.fromRGB(31,23,44)
 
 -- Real Obsidian window and controls, vendored from the current Resonance UI modules.
 local Library=loadUIModule("Library")
@@ -686,16 +549,13 @@ local function buildVisualSystems()
         return register(key,widget,initial,callback)
     end
     local function color(g,key,text,initial,callback)
-        local widget=g:AddLabel(text):AddColorPicker(key,{Default=initial,Title=text,Callback=changed(key,callback)})
+        g:AddLabel(text):AddColorPicker(key,{Default=initial,Title=text,Callback=changed(key,callback)})
+        local widget=Library.Options[key]
+        assert(widget and type(widget.SetValueRGB)=="function","Color picker was not registered: "..key)
         return register(key,widget,initial,callback,true)
     end
     local function action(g,text,fn)
         return g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
-    end
-    local function resetPrefix(prefix)
-        for key,state in pairs(controls) do
-            if key:sub(1,#prefix)==prefix and type(state)=="boolean" and state and setters[key] then setters[key](false,true) end
-        end
     end
     local cameraGroup=group("Camera","Camera",1)
     sliderControl(cameraGroup,"cameraFOV","FOV",30,120,selected,1,function(value)
@@ -709,7 +569,6 @@ local function buildVisualSystems()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
     end)
     -- CAMERA
-    local cameraSettings={mode=player.CameraMode,min=player.CameraMinZoomDistance,max=player.CameraMaxZoomDistance,occlusion=player.DevCameraOcclusionMode}
     local function updateThirdPerson(on)
         if on then
             local distance=controls.camDistance or 12
@@ -726,13 +585,10 @@ local function buildVisualSystems()
         local g=group("Camera","View",2)
         toggle(g,"camThird","Third person [3]",false,updateThirdPerson)
         sliderControl(g,"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
-        local noClipCamera
         toggle(g,"camNoclip","Camera noclip",false,function(on)
-            noClipCamera=nil
             job("Camera noclip")
             if not on then return end
             local camera=Workspace.CurrentCamera
-            noClipCamera=camera
             local hrp=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
             local look=camera.CFrame.LookVector
             local pitch=math.asin(math.clamp(look.Y,-1,1))
@@ -918,9 +774,13 @@ local function buildVisualSystems()
         sliderControl(h,"particleSpeed","Max speed",0,20,2,0.5,update)
         sliderControl(h,"particleArea","Area",10,300,60,5,update)
     end
-    -- WORLD: terrain water and reversible scene simplification.
+    -- WORLD: FTAP ocean replacement in bounded chunks, with original terrain preserved.
     local waterRegions={}
     local waterGeneration=0
+    local waterParts={}
+    local waterQueue={}
+    local waterQueueHead=1
+    local waterWorker=false
     local function scan(root,callback)
         local list=root:GetDescendants()
         task.spawn(function()
@@ -931,16 +791,16 @@ local function buildVisualSystems()
             end
         end)
     end
+    local function oceanRoot()
+        local map=Workspace:FindFirstChild("Map")
+        local objects=map and map:FindFirstChild("AlwaysHereTweenedObjects")
+        local ocean=objects and objects:FindFirstChild("Ocean")
+        local object=ocean and ocean:FindFirstChild("Object")
+        return object and object:FindFirstChild("ObjectModel") or ocean
+    end
     local function isWaterPart(o)
-        if not o:IsA("BasePart") or o:IsA("Terrain") then return false end
-        if string.find(string.lower(o.Name),"water",1,true) then return true end
-        -- FTAP stores its visible ocean inside Map/AlwaysHereTweenedObjects/Ocean.
-        local ancestor=o.Parent
-        while ancestor and ancestor~=Workspace do
-            if ancestor.Name=="Ocean" then return o.Transparency<1 end
-            ancestor=ancestor.Parent
-        end
-        return false
+        local root=oceanRoot()
+        return root and o:IsA("BasePart") and o:IsDescendantOf(root) and o.Transparency<1
     end
     local swimmingState
     local function updateSwimming()
@@ -956,19 +816,36 @@ local function buildVisualSystems()
             if humanoid:GetState()==Enum.HumanoidStateType.Swimming then humanoid:ChangeState(Enum.HumanoidStateType.Freefall) end
         end
     end
+    local function restoreChunk(entry)
+        if entry.empty then
+            Terrain:FillRegion(entry.region,4,Enum.Material.Air)
+            return
+        end
+        local materials,occupancy=Terrain:ReadVoxels(entry.region,4)
+        for _,run in ipairs(entry.runs) do
+            for y=run[3],run[4] do
+                materials[run[1]][y][run[2]]=Enum.Material.Air
+                occupancy[run[1]][y][run[2]]=0
+            end
+        end
+        Terrain:WriteVoxels(entry.region,4,materials,occupancy)
+    end
     local function restoreWater()
         waterGeneration=waterGeneration+1
+        waterQueue={} waterQueueHead=1 waterWorker=false waterParts={}
+        job("New water")
         if swimmingState then
             local state=swimmingState swimmingState=nil
             if state.humanoid.Parent then pcall(function() state.humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,state.enabled) end) end
         end
-        job("New water")
-        unpatch("water") unpatch("noswim")
+        -- Restore mixed regions by changed cells, rather than wiping islands or existing terrain water.
+        local failures=0
         for index=#waterRegions,1,-1 do
-            local entry=waterRegions[index]
-            pcall(function() Terrain:WriteVoxels(entry.region,4,entry.materials,entry.occupancy) end)
+            if not pcall(restoreChunk,waterRegions[index]) then failures=failures+1 end
         end
         waterRegions={}
+        unpatch("waterparts") unpatch("water") unpatch("noswim")
+        if failures>0 then warn("Prime Visuals: could not restore "..failures.." water chunks") end
     end
     local function waterSettings()
         patch("water",Terrain,"WaterColor",controls.waterColor or Color3.fromRGB(35,135,190))
@@ -977,29 +854,100 @@ local function buildVisualSystems()
         patch("water",Terrain,"WaterTransparency",controls.waterAlpha or 0.4)
         patch("water",Terrain,"WaterReflectance",controls.waterReflect or 0.5)
     end
-    local function convertWater(o)
-        if not controls.waterEnabled or not isWaterPart(o) or o:GetAttribute("PrimeVisualsWater") then return end
-        for _,entry in ipairs(waterRegions) do if entry.part==o then return end end
-        local half=o.Size/2
-        local region=Region3.new(o.Position-half-Vector3.new(4,4,4),o.Position+half+Vector3.new(4,4,4)):ExpandToGrid(4)
-        local cells=region.Size.X*region.Size.Y*region.Size.Z/64
-        if cells>1500000 then notify("Water region is too large for safe conversion; terrain water settings still apply.") return end
-        local generation=waterGeneration
+    local function fillChunk(region,generation)
         local materials,occupancy=Terrain:ReadVoxels(region,4)
-        if not alive or not controls.waterEnabled or generation~=waterGeneration then return end
-        table.insert(waterRegions,{region=region,materials=materials,occupancy=occupancy,part=o})
-        Terrain:FillBlock(o.CFrame,o.Size,Enum.Material.Water)
-        patch("water",o,"Transparency",1)
-        patch("water",o,"CanCollide",controls.waterSolid==true)
+        if not alive or not controls.waterEnabled or generation~=waterGeneration then return false end
+        local nx,ny,nz=#materials,#materials[1],#materials[1][1]
+        local empty=true
+        for x=1,nx do
+            for y=1,ny do
+                for z=1,nz do
+                    if materials[x][y][z]~=Enum.Material.Air or occupancy[x][y][z]~=0 then empty=false break end
+                end
+                if not empty then break end
+            end
+            if not empty then break end
+        end
+        local runs=not empty and {} or nil
+        local changed=false
+        for x=1,nx do
+            for z=1,nz do
+                local first
+                for y=1,ny do
+                    if materials[x][y][z]==Enum.Material.Air and occupancy[x][y][z]==0 then
+                        materials[x][y][z]=Enum.Material.Water occupancy[x][y][z]=1
+                        changed=true
+                        if not empty and not first then first=y end
+                    elseif first then
+                        table.insert(runs,{x,z,first,y-1}) first=nil
+                    end
+                end
+                if first then table.insert(runs,{x,z,first,ny}) end
+            end
+        end
+        if changed then
+            table.insert(waterRegions,{region=region,empty=empty,runs=not empty and runs or nil})
+            Terrain:WriteVoxels(region,4,materials,occupancy)
+        end
+        return true
+    end
+    local function convertWater(part,generation)
+        if not part.Parent then return end
+        local half=part.Size/2
+        -- Match the FTAP ocean offset used by Resonance; a 32-stud surface layer avoids huge deep volumes.
+        local top=part.Position.Y+half.Y-4
+        local bottom=math.min(top-4,math.max(part.Position.Y-half.Y-4,top-32))
+        local bounds=Region3.new(Vector3.new(part.Position.X-half.X,bottom,part.Position.Z-half.Z),
+            Vector3.new(part.Position.X+half.X,top,part.Position.Z+half.Z)):ExpandToGrid(4)
+        local low=bounds.CFrame.Position-bounds.Size/2
+        local high=bounds.CFrame.Position+bounds.Size/2
+        local sliceStarted=os.clock()
+        for x=low.X,high.X-4,128 do
+            for y=low.Y,high.Y-4,128 do
+                for z=low.Z,high.Z-4,128 do
+                    if not alive or generation~=waterGeneration or not controls.waterEnabled then return end
+                    local region=Region3.new(Vector3.new(x,y,z),Vector3.new(math.min(x+128,high.X),math.min(y+128,high.Y),math.min(z+128,high.Z)))
+                    if not fillChunk(region,generation) then return end
+                    if os.clock()-sliceStarted>=0.004 then task.wait() sliceStarted=os.clock() end
+                end
+            end
+        end
+        if alive and generation==waterGeneration and controls.waterEnabled and part.Parent then
+            patch("waterparts",part,"Transparency",1)
+            patch("waterparts",part,"CanCollide",false)
+        end
+    end
+    local function queueWater(part)
+        if not alive or not controls.waterEnabled or not isWaterPart(part) or waterParts[part] then return end
+        waterParts[part]=true table.insert(waterQueue,part)
+        if waterWorker then return end
+        waterWorker=true
+        local generation=waterGeneration
+        task.spawn(function()
+            while alive and generation==waterGeneration and controls.waterEnabled and waterQueueHead<=#waterQueue do
+                local part=waterQueue[waterQueueHead]
+                waterQueueHead=waterQueueHead+1
+                local ok,message=pcall(convertWater,part,generation)
+                if not ok then
+                    if generation==waterGeneration and alive then
+                        setters.waterEnabled(false,true)
+                        notify("Realistic Water stopped: "..tostring(message))
+                    end
+                    return
+                end
+            end
+            if generation==waterGeneration then waterWorker=false waterQueue={} waterQueueHead=1 end
+        end)
     end
     do
         local g=group("World","Water",1)
-        toggle(g,"waterEnabled","Terrain water",false,function(on)
+        toggle(g,"waterEnabled","Realistic Water",false,function(on)
             if not on then restoreWater() return end
-            waterSettings()
-            updateSwimming()
-            scan(Workspace,convertWater)
-            job("New water",Workspace.DescendantAdded,convertWater)
+            local root=oceanRoot()
+            if not root then error("FTAP ocean is not loaded yet. Try again when the map is ready.") end
+            waterSettings() updateSwimming()
+            job("New water",Workspace.DescendantAdded,queueWater)
+            for _,part in ipairs(root:GetDescendants()) do queueWater(part) end
         end)
         local function update() if controls.waterEnabled then waterSettings() end end
         color(g,"waterColor","Color",Color3.fromRGB(35,135,190),update)
@@ -1007,10 +955,7 @@ local function buildVisualSystems()
         sliderControl(g,"waterSpeed","Wave speed",0,100,10,1,update)
         sliderControl(g,"waterAlpha","Transparency",0,1,0.4,0.05,update)
         sliderControl(g,"waterReflect","Reflectance",0,1,0.5,0.05,update)
-        toggle(g,"waterSolid","Non-swimmable surface",false,function(on)
-            updateSwimming()
-            for _,entry in ipairs(waterRegions) do if entry.part.Parent then patch("water",entry.part,"CanCollide",on) end end
-        end)
+        toggle(g,"waterSolid","Non-swimmable water",false,updateSwimming)
     end
     local function fpsObject(o)
         if not controls.fpsEnabled then return end
@@ -1453,7 +1398,7 @@ local function buildVisualSystems()
             resetting=true
             -- Reuse full teardown, then rebuild clean controls and effect state.
             gui:Destroy()
-            task.defer(startVisuals)
+            task.defer(function() startVisuals(true) end)
         end)
         action(g,"Unload script",function()
             if resetting then return end
@@ -1462,7 +1407,7 @@ local function buildVisualSystems()
         end)
     end
 
-    -- HOME: real Obsidian cards, with one unified scroll and a full-width history below.
+    -- HOME: profile, build information and live session statistics in native Obsidian cards.
     do
         local homeTab=categoryTabs.Home
         local profile=homeTab:AddLeftGroupbox("Profile","user-round")
@@ -1474,7 +1419,6 @@ local function buildVisualSystems()
         local identity=profile:AddLabel({Text="",DoesWrap=true})
         local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
         local statistics=homeTab:AddRightGroupbox("Session statistics","chart-no-axes-combined")
-        local history=homeTab:AddLeftGroupbox("Changelog","history",true,false)
         local function richEscape(value)
             return tostring(value):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;"):gsub('"',"&quot;")
         end
@@ -1497,14 +1441,6 @@ local function buildVisualSystems()
         for _,name in ipairs({"fps","frame","ping","memory","players","server","fov","effects","uptime","clock"}) do
             rows[name]=statistics:AddLabel({Text="—",DoesWrap=true})
         end
-        localizedLabel(history,
-            "Before 1.0.0, version numbers below reconstruct development stages; original release dates were not recorded.",
-            "Номера до 1.0.0 присвоены этапам разработки ретроспективно; исходные даты выпусков не фиксировались.")
-        for _,release in ipairs(RELEASE_HISTORY) do
-            history:AddDivider("v"..release.version..(release.date~="" and "  ·  "..release.date or ""))
-            localizedLabel(history,"<b>"..release.en.."</b>","<b>"..release.ru.."</b>",15)
-            for _,item in ipairs(release.items) do localizedLabel(history,"• "..item.en,"• "..item.ru) end
-        end
         local scroll=make("ScrollingFrame",{Name="PrimeHomeScroll",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
             BorderSizePixel=0,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollBarThickness=3,
             ScrollBarImageColor3=purple,ScrollingDirection=Enum.ScrollingDirection.Y},homeTab.Container)
@@ -1518,7 +1454,6 @@ local function buildVisualSystems()
         profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
         about.BoxHolder.Parent=left about.BoxHolder.LayoutOrder=1
         statistics.BoxHolder.Parent=right
-        history.BoxHolder.Parent=scroll history.BoxHolder.LayoutOrder=1
         for _,side in ipairs(homeTab.Sides) do side.Visible=false end
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
@@ -1626,7 +1561,6 @@ local function buildVisualSystems()
         sync()
         local phase=0
         job("Rainbow window glow",Run.RenderStepped,function(dt)
-            sync()
             if not glow.Visible then return end
             phase=(phase+math.clamp(dt,0,0.1)/18)%1
             local color=Color3.fromHSV(phase,0.78,1)
@@ -1640,7 +1574,6 @@ local function buildVisualSystems()
     listen(Library.ScreenGui.DescendantAdded,bindLocalization)
     categoryTabs.Home:Show()
     -- Lightweight lifecycle handling. No scans run every frame.
-    local elapsed=0
     job("Crosshair visibility",Run.RenderStepped,function()
         menuOpen=Library.Toggled
         if controls.crossEnabled then crossGui.Enabled=not menuOpen end
@@ -1677,14 +1610,47 @@ local function shutdown()
         Library:Unload()
     end
     for _,connection in ipairs(connections) do connection:Disconnect() end
-    for _,tween in pairs(tweens) do tween:Cancel() end
     UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
     if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
 end
 gui.Destroying:Connect(shutdown)
 Library:OnUnload(function() if not closing and gui.Parent then gui:Destroy() end end)
-buildVisualSystems()
-Library:Toggle(true)
-menuOpen=true
+local startupLoading
+local startupStarted=os.clock()
+local startupDuration=math.random(3000,5000)/1000
+if not skipIntro then
+    startupLoading=Library:CreateLoading({
+        Title="Prime Visuals",Icon="diamond",IconSize=UDim2.fromOffset(26,26),LoadingIcon="loader-circle",
+        CurrentStep=0,TotalSteps=100,WindowWidth=420,ContentWidth=420,WindowHeight=240,
+        ShowSidebar=false,AutoResizeHeight=false,AlwaysOnTop=true
+    })
+    startupLoading:SetMessage("Preparing Prime Visuals")
+    startupLoading:SetDescription("by @876osamuha  ·  v"..VERSION)
+end
+local prepared,prepareError=xpcall(buildVisualSystems,debug.traceback)
+if not prepared then
+    gui:Destroy()
+    error(prepareError,0)
+end
+if startupLoading then
+    task.spawn(function()
+        local lastStep=-1
+        while not closing and gui.Parent and not startupLoading.Destroyed do
+            local progress=math.clamp((os.clock()-startupStarted)/startupDuration,0,1)
+            local step=math.floor(progress*progress*(3-2*progress)*100)
+            if step~=lastStep then startupLoading:SetCurrentStep(step) lastStep=step end
+            if progress>=1 then
+                startupLoading:SetMessage("Ready")
+                startupLoading:Destroy()
+                menuOpen=true
+                return
+            end
+            task.wait(0.04)
+        end
+    end)
+else
+    Library:Toggle(true)
+    menuOpen=true
+end
 end
 startVisuals()
