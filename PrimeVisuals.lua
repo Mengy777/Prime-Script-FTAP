@@ -32,6 +32,7 @@ local ru={
     ["Audio"]="Звуки",
     ["Settings"]="Настройки",
     ["Reset all settings"]="Сбросить все настройки",
+    ["Unload script"]="Полностью закрыть",
     ["View"]="Обзор",
     ["Graphics"]="Графика",
     ["Interface"]="Интерфейс",
@@ -1617,6 +1618,11 @@ local function buildVisualSystems()
             -- Reuse full teardown, then rebuild clean controls and effect state.
             gui:Destroy()
             task.defer(startVisuals)
+        end)
+        action(g,"Unload script",function()
+            if resetting then return end
+            resetting=true
+            gui:Destroy()
         end)
     end
     local categories={
