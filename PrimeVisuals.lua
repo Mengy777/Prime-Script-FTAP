@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.2.0"
+local VERSION="1.2.1"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -781,6 +781,7 @@ local function buildVisualSystems()
     local waterQueue={}
     local waterQueueHead=1
     local waterWorker=false
+    local waterBatch=false
     local function scan(root,callback)
         local list=root:GetDescendants()
         task.spawn(function()
@@ -808,37 +809,37 @@ local function buildVisualSystems()
         local enabled=controls.waterEnabled and controls.waterSolid
         if swimmingState and (not enabled or swimmingState.humanoid~=humanoid) then
             local state=swimmingState swimmingState=nil
+            job("Water swimming")
             if state.humanoid.Parent then state.humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,state.enabled) end
         end
         if enabled and humanoid then
-            if not swimmingState then swimmingState={humanoid=humanoid,enabled=humanoid:GetStateEnabled(Enum.HumanoidStateType.Swimming)} end
+            if not swimmingState then
+                swimmingState={humanoid=humanoid,enabled=humanoid:GetStateEnabled(Enum.HumanoidStateType.Swimming)}
+                job("Water swimming",humanoid.StateChanged,function(_,newState)
+                    if controls.waterEnabled and controls.waterSolid and newState==Enum.HumanoidStateType.Swimming then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+                    end
+                end)
+            end
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,false)
             if humanoid:GetState()==Enum.HumanoidStateType.Swimming then humanoid:ChangeState(Enum.HumanoidStateType.Freefall) end
         end
     end
     local function restoreChunk(entry)
-        if entry.empty then
-            Terrain:FillRegion(entry.region,4,Enum.Material.Air)
-            return
-        end
-        local materials,occupancy=Terrain:ReadVoxels(entry.region,4)
-        for _,run in ipairs(entry.runs) do
-            for y=run[3],run[4] do
-                materials[run[1]][y][run[2]]=Enum.Material.Air
-                occupancy[run[1]][y][run[2]]=0
-            end
-        end
-        Terrain:WriteVoxels(entry.region,4,materials,occupancy)
+        -- Native snapshots preserve terrain that existed before conversion, including empty cells.
+        Terrain:PasteRegion(entry.snapshot,entry.corner,true)
+        entry.snapshot:Destroy()
     end
     local function restoreWater()
         waterGeneration=waterGeneration+1
         waterQueue={} waterQueueHead=1 waterWorker=false waterParts={}
         job("New water")
+        job("Water swimming")
         if swimmingState then
             local state=swimmingState swimmingState=nil
             if state.humanoid.Parent then pcall(function() state.humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,state.enabled) end) end
         end
-        -- Restore mixed regions by changed cells, rather than wiping islands or existing terrain water.
+        -- Undo in reverse order so overlapping ocean tiles restore their original terrain.
         local failures=0
         for index=#waterRegions,1,-1 do
             if not pcall(restoreChunk,waterRegions[index]) then failures=failures+1 end
@@ -855,50 +856,21 @@ local function buildVisualSystems()
         patch("water",Terrain,"WaterReflectance",controls.waterReflect or 0.5)
     end
     local function fillChunk(region,generation)
-        local materials,occupancy=Terrain:ReadVoxels(region,4)
         if not alive or not controls.waterEnabled or generation~=waterGeneration then return false end
-        local nx,ny,nz=#materials,#materials[1],#materials[1][1]
-        local empty=true
-        for x=1,nx do
-            for y=1,ny do
-                for z=1,nz do
-                    if materials[x][y][z]~=Enum.Material.Air or occupancy[x][y][z]~=0 then empty=false break end
-                end
-                if not empty then break end
-            end
-            if not empty then break end
-        end
-        local runs=not empty and {} or nil
-        local changed=false
-        for x=1,nx do
-            for z=1,nz do
-                local first
-                for y=1,ny do
-                    if materials[x][y][z]==Enum.Material.Air and occupancy[x][y][z]==0 then
-                        materials[x][y][z]=Enum.Material.Water occupancy[x][y][z]=1
-                        changed=true
-                        if not empty and not first then first=y end
-                    elseif first then
-                        table.insert(runs,{x,z,first,y-1}) first=nil
-                    end
-                end
-                if first then table.insert(runs,{x,z,first,ny}) end
-            end
-        end
-        if changed then
-            table.insert(waterRegions,{region=region,empty=empty,runs=not empty and runs or nil})
-            Terrain:WriteVoxels(region,4,materials,occupancy)
-        end
+        local low=region.CFrame.Position-region.Size/2
+        local high=region.CFrame.Position+region.Size/2
+        local corner=Vector3int16.new(low.X/4,low.Y/4,low.Z/4)
+        local last=Vector3int16.new(high.X/4-1,high.Y/4-1,high.Z/4-1)
+        local snapshot=Terrain:CopyRegion(Region3int16.new(corner,last))
+        table.insert(waterRegions,{snapshot=snapshot,corner=corner})
+        Terrain:FillRegion(region,4,Enum.Material.Water)
         return true
     end
     local function convertWater(part,generation)
         if not part.Parent then return end
-        local half=part.Size/2
-        -- Match the FTAP ocean offset used by Resonance; a 32-stud surface layer avoids huge deep volumes.
-        local top=part.Position.Y+half.Y-4
-        local bottom=math.min(top-4,math.max(part.Position.Y-half.Y-4,top-32))
-        local bounds=Region3.new(Vector3.new(part.Position.X-half.X,bottom,part.Position.Z-half.Z),
-            Vector3.new(part.Position.X+half.X,top,part.Position.Z+half.Z)):ExpandToGrid(4)
+        -- Resonance geometry: the entire original volume, shifted down four studs.
+        local offset=Vector3.new(0,-4,0)
+        local bounds=Region3.new(part.Position-part.Size/2+offset,part.Position+part.Size/2+offset):ExpandToGrid(4)
         local low=bounds.CFrame.Position-bounds.Size/2
         local high=bounds.CFrame.Position+bounds.Size/2
         local sliceStarted=os.clock()
@@ -908,19 +880,13 @@ local function buildVisualSystems()
                     if not alive or generation~=waterGeneration or not controls.waterEnabled then return end
                     local region=Region3.new(Vector3.new(x,y,z),Vector3.new(math.min(x+128,high.X),math.min(y+128,high.Y),math.min(z+128,high.Z)))
                     if not fillChunk(region,generation) then return end
-                    if os.clock()-sliceStarted>=0.004 then task.wait() sliceStarted=os.clock() end
+                    if os.clock()-sliceStarted>=0.004 then Run.Heartbeat:Wait() sliceStarted=os.clock() end
                 end
             end
         end
-        if alive and generation==waterGeneration and controls.waterEnabled and part.Parent then
-            patch("waterparts",part,"Transparency",1)
-            patch("waterparts",part,"CanCollide",false)
-        end
     end
-    local function queueWater(part)
-        if not alive or not controls.waterEnabled or not isWaterPart(part) or waterParts[part] then return end
-        waterParts[part]=true table.insert(waterQueue,part)
-        if waterWorker then return end
+    local function startWaterWorker()
+        if waterWorker or waterBatch or #waterQueue==0 then return end
         waterWorker=true
         local generation=waterGeneration
         task.spawn(function()
@@ -939,6 +905,12 @@ local function buildVisualSystems()
             if generation==waterGeneration then waterWorker=false waterQueue={} waterQueueHead=1 end
         end)
     end
+    local function queueWater(part)
+        if not alive or not controls.waterEnabled or not isWaterPart(part) or waterParts[part] then return end
+        waterParts[part]=true table.insert(waterQueue,part)
+        patch("waterparts",part,"Transparency",1)
+        startWaterWorker()
+    end
     do
         local g=group("World","Water",1)
         toggle(g,"waterEnabled","Realistic Water",false,function(on)
@@ -947,7 +919,10 @@ local function buildVisualSystems()
             if not root then error("FTAP ocean is not loaded yet. Try again when the map is ready.") end
             waterSettings() updateSwimming()
             job("New water",Workspace.DescendantAdded,queueWater)
+            waterBatch=true
             for _,part in ipairs(root:GetDescendants()) do queueWater(part) end
+            waterBatch=false
+            startWaterWorker()
         end)
         local function update() if controls.waterEnabled then waterSettings() end end
         color(g,"waterColor","Color",Color3.fromRGB(35,135,190),update)
