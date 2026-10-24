@@ -2,7 +2,7 @@
 return function(context)
     local Players, Workspace = context.Players, context.Workspace
     local UIS, Run = context.Input, context.Run
-    local self={Enabled=false,Interactive=true,Destroyed=false,Models={},Connections={},Serial=0,Busy=false}
+    local self={Enabled=false,Interactive=true,PhysicsEnabled=true,SoundsEnabled=true,Destroyed=false,Models={},Actors={},Connections={},Serial=0,Busy=false}
     local folder,held,rotating
     local function message(en,ru) context.Notify(en,ru) end
     local function validRequest(id) return not self.Destroyed and self.Enabled and self.Serial==id end
@@ -10,6 +10,7 @@ return function(context)
         for i=#self.Models,1,-1 do
             local model=self.Models[i]
             if not model.Parent or not model:FindFirstChild("HumanoidRootPart") then
+                if self.Actors[model] then self.Actors[model]:Destroy() self.Actors[model]=nil end
                 model:Destroy() table.remove(self.Models,i)
             end
         end
@@ -20,10 +21,13 @@ return function(context)
         for _,object in ipairs(old.Constraints) do object:Destroy() end
         if old.Root.Parent then
             if throw and Workspace.CurrentCamera then
-                old.Root.AssemblyLinearVelocity=Workspace.CurrentCamera.CFrame.LookVector*80+Vector3.new(0,12,0)
+                local velocity=Workspace.CurrentCamera.CFrame.LookVector*80+Vector3.new(0,12,0)
+                for _,part in ipairs(old.Model:GetChildren()) do if part:IsA("BasePart") then part.AssemblyLinearVelocity=velocity end end
             end
             local humanoid=old.Humanoid
-            if humanoid.Parent then
+            local actor=self.Actors[old.Model]
+            if actor and self.PhysicsEnabled then actor:Released(throw)
+            elseif humanoid.Parent then
                 humanoid.PlatformStand=old.PlatformStand
                 if throw then humanoid:ChangeState(Enum.HumanoidStateType.Freefall) end
             end
@@ -85,35 +89,49 @@ return function(context)
         local id=self.Serial
         self.Busy=true
         task.spawn(function()
-            local candidate
+            local candidate,candidateActor
             local ok,err=pcall(function()
+                local description
                 if name=="" then
-                    local description=Instance.new("HumanoidDescription")
+                    description=Instance.new("HumanoidDescription")
                     local grey=Color3.fromRGB(163,162,165)
                     for _,property in ipairs({"HeadColor","TorsoColor","LeftArmColor","RightArmColor","LeftLegColor","RightLegColor"}) do description[property]=grey end
-                    local created,result=pcall(function() return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) end)
-                    description:Destroy()
-                    assert(created,result) candidate=result
                 else
                     local userId=Players:GetUserIdFromNameAsync(name)
                     if not validRequest(id) then return end
-                    candidate=Players:CreateHumanoidModelFromUserIdAsync(userId)
+                    description=Players:GetHumanoidDescriptionFromUserIdAsync(userId)
                 end
+                if not validRequest(id) then description:Destroy() return end
+                local created,result=pcall(function() return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) end)
+                description:Destroy()
+                assert(created,result) candidate=result
                 if not validRequest(id) then return end
                 if replacement and not replacement.Parent then return end
                 configure(candidate,name=="")
                 local position=replacement and replacement:GetPivot() or spawnPosition(candidate)
+                if replacement and self.Actors[replacement] and self.Actors[replacement].Active then
+                    local ground=raycast(position.Position+Vector3.new(0,20,0),Vector3.new(0,-100,0),{folder,candidate})
+                    if ground then
+                        local box,size=candidate:GetBoundingBox()
+                        local height=candidate:GetPivot().Position.Y-box.Position.Y+size.Y/2
+                        position=CFrame.new(position.Position.X,ground.Position.Y+height+0.2,position.Position.Z)*position.Rotation
+                    end
+                end
                 candidate.Name="PV_Mannequin_"..(name~="" and name or "Grey")
                 candidate:PivotTo(position)
+                candidateActor=context.RagdollFactory(candidate,{Workspace=Workspace,Template=Players.LocalPlayer.Character,SoundsEnabled=self.SoundsEnabled})
                 candidate.Parent=folder
+                self.Actors[candidate]=candidateActor
                 if replacement then
                     if held and held.Model==replacement then release(false) end
                     for i,model in ipairs(self.Models) do if model==replacement then self.Models[i]=candidate break end end
+                    if self.Actors[replacement] then self.Actors[replacement]:Destroy() self.Actors[replacement]=nil end
                     replacement:Destroy()
                 else table.insert(self.Models,candidate) end
-                candidate=nil
+                candidate=nil candidateActor=nil
             end)
-            if candidate then candidate:Destroy() end
+            if candidateActor then candidateActor:Destroy() end
+            if candidate then self.Actors[candidate]=nil candidate:Destroy() end
             if self.Serial==id then self.Busy=false end
             if not ok and validRequest(id) then
                 warn("Prime Visuals mannequins: "..tostring(err))
@@ -129,13 +147,26 @@ return function(context)
     end
     function self:Clear()
         self.Serial=self.Serial+1 self.Busy=false release(false)
+        for _,actor in pairs(self.Actors) do actor:Destroy() end self.Actors={}
         for _,model in ipairs(self.Models) do model:Destroy() end
         self.Models={}
     end
     function self:DeleteLast()
         self.Serial=self.Serial+1 self.Busy=false prune()
         local model=table.remove(self.Models)
-        if model then if held and held.Model==model then release(false) end model:Destroy() end
+        if model then
+            if held and held.Model==model then release(false) end
+            if self.Actors[model] then self.Actors[model]:Destroy() self.Actors[model]=nil end
+            model:Destroy()
+        end
+    end
+    function self:SetPhysics(on)
+        self.PhysicsEnabled=on
+        if not on then for _,actor in pairs(self.Actors) do actor:SetActive(false) end end
+    end
+    function self:SetSounds(on)
+        self.SoundsEnabled=on
+        for _,actor in pairs(self.Actors) do actor:SetSounds(on) end
     end
     function self:SetInteractive(on) self.Interactive=on if not on then release(false) end end
     function self:SetEnabled(on)
@@ -169,18 +200,21 @@ return function(context)
                 local root=model:FindFirstChild("HumanoidRootPart")
                 local humanoid=model:FindFirstChildOfClass("Humanoid")
                 if not root or not humanoid then return end
-                local attachment=Instance.new("Attachment") attachment.Parent=root
+                local actor=self.Actors[model]
+                if actor and self.PhysicsEnabled then actor:SetActive(true) end
+                local part=hit.Instance:IsA("BasePart") and hit.Instance or root
+                local attachment=Instance.new("Attachment") attachment.Position=part.CFrame:PointToObjectSpace(hit.Position) attachment.Parent=part
                 local position=Instance.new("AlignPosition")
                 position.Mode=Enum.PositionAlignmentMode.OneAttachment position.Attachment0=attachment
                 position.MaxForce=math.max(10000,root.AssemblyMass*5000) position.MaxVelocity=100
-                position.Responsiveness=30 position.ApplyAtCenterOfMass=true position.Position=root.Position position.Parent=root
+                position.Responsiveness=30 position.ApplyAtCenterOfMass=false position.Position=hit.Position position.Parent=part
                 local orientation=Instance.new("AlignOrientation")
                 orientation.Mode=Enum.OrientationAlignmentMode.OneAttachment orientation.Attachment0=attachment
                 orientation.MaxTorque=math.max(10000,root.AssemblyMass*5000) orientation.Responsiveness=25
-                orientation.CFrame=root.CFrame.Rotation orientation.Parent=root
-                held={Model=model,Root=root,Humanoid=humanoid,PlatformStand=humanoid.PlatformStand,
-                    Distance=math.clamp((root.Position-camera.CFrame.Position).Magnitude,4,50),
-                    Position=position,Orientation=orientation,Rotation=root.CFrame.Rotation,
+                orientation.CFrame=part.CFrame.Rotation orientation.Parent=part
+                held={Model=model,Root=root,Part=part,Humanoid=humanoid,PlatformStand=humanoid.PlatformStand,
+                    Distance=math.clamp((hit.Position-camera.CFrame.Position).Magnitude,4,50),
+                    Position=position,Orientation=orientation,Rotation=part.CFrame.Rotation,
                     Constraints={position,orientation,attachment}}
                 humanoid.PlatformStand=true
             elseif input.UserInputType==Enum.UserInputType.MouseButton2 then release(true)
@@ -194,10 +228,21 @@ return function(context)
         end)
         connect(UIS.WindowFocusReleased,function() release(false) end)
         connect(Players.LocalPlayer.CharacterRemoving,function() release(false) end)
+        local physicsElapsed=0
+        connect(Run.Heartbeat,function(dt)
+            physicsElapsed=physicsElapsed+dt
+            if physicsElapsed<0.1 then return end
+            local elapsed=physicsElapsed physicsElapsed=0
+            if self.PhysicsEnabled then
+                for model,actor in pairs(self.Actors) do
+                    if model.Parent then actor:Step(elapsed,held and held.Model==model) end
+                end
+            end
+        end)
         connect(Run.RenderStepped,function()
             if not held then return end
             local camera=Workspace.CurrentCamera
-            if context.MenuOpen() or not camera or not held.Root.Parent then release(false) return end
+            if context.MenuOpen() or not camera or not held.Root.Parent or not held.Part.Parent then release(false) return end
             if rotating then
                 local delta=UIS:GetMouseDelta()
                 held.Rotation=CFrame.fromAxisAngle(camera.CFrame.UpVector,delta.X*0.01)

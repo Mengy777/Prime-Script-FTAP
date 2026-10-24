@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.5.0"
+local VERSION="1.6.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -82,6 +82,8 @@ local ru={
     ["Delete last mannequin"]="Удалить последнего",
     ["Delete all mannequins"]="Удалить всех манекенов",
     ["Local grab"]="Локальный захват",
+    ["Ragdoll physics"]="Физика ragdoll",
+    ["Ragdoll sounds"]="Крики и звуки ударов",
     ["Empty username = grey mannequin"]="Пустой ник — серый манекен",
     ["LMB: grab/drop | RMB: throw"]="ЛКМ: взять/отпустить | ПКМ: бросить",
     ["Wheel: distance | Hold R: rotate"]="Колесо: дистанция | Удерживать R: вращение",
@@ -1054,6 +1056,7 @@ local function buildVisualSystems()
             if on and not mannequins then
                 mannequins=loadUIModule("Mannequins")({
                     Players=Players,Workspace=Workspace,Input=UIS,Run=Run,
+                    RagdollFactory=loadUIModule("MannequinRagdoll"),
                     MenuOpen=function() return Library.Toggled end,
                     Notify=function(en,russian) notify(uiLanguage=="ru" and russian or en) end,
                 })
@@ -1069,6 +1072,8 @@ local function buildVisualSystems()
         action(g,"Delete last mannequin",function() if mannequins then mannequins:DeleteLast() end end)
         action(g,"Delete all mannequins",function() if mannequins then mannequins:Clear() end end)
         toggle(g,"mannequinGrab","Local grab",true,function(on) if mannequins then mannequins:SetInteractive(on) end end)
+        toggle(g,"mannequinPhysics","Ragdoll physics",true,function(on) if mannequins then mannequins:SetPhysics(on) end end)
+        toggle(g,"mannequinSounds","Ragdoll sounds",true,function(on) if mannequins then mannequins:SetSounds(on) end end)
         g:AddLabel("LMB: grab/drop | RMB: throw")
         g:AddLabel("Wheel: distance | Hold R: rotate")
     end
