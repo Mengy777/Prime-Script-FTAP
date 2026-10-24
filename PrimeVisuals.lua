@@ -90,6 +90,7 @@ local ru={
     ["Blur"]="Размытие",
     ["Time of day"]="Время суток",
     ["Sun size"]="Размер солнца",
+    ["Show sun"]="Показывать солнце",
     ["Density"]="Плотность",
     ["Cover"]="Покрытие",
     ["Color"]="Цвет",
@@ -284,6 +285,9 @@ end
 local sourceSky=originalSkies[1]
 local skyProperties={"SkyboxBk","SkyboxDn","SkyboxFt","SkyboxLf","SkyboxRt","SkyboxUp"}
 local activeSky
+local customSkyLoaded=false
+local onCustomSkyApplied=function() end
+local onSkyRestored=function() end
 local skyLoadGeneration=0
 local skyLoadBusy=false
 local hazeEnabled=false
@@ -325,6 +329,8 @@ local function restoreSky()
     for _,o in ipairs(originalSkies) do
         if o.Parent==nil then o.Parent=Lighting end
     end
+    customSkyLoaded=false
+    onSkyRestored()
 end
 local function assetUrl(text)
     text=text:match("^%s*(.-)%s*$")
@@ -399,6 +405,8 @@ local function applyCustomSky()
         local ok,err=pcall(function()
             local sky=ensureSky()
             for property,value in pairs(data) do sky[property]=value end
+            customSkyLoaded=true
+            onCustomSkyApplied(data)
         end)
         if not ok then skyFeedback("Could not apply skybox. Try another asset.",true) warn("Prime Visuals Sky: " .. tostring(err)) return end
         skyFeedback("Skybox loaded / six separate textures.",false)
@@ -533,8 +541,8 @@ local function buildVisualSystems()
         local widget=g:AddSlider(key,{Text=text,Min=low,Max=high,Default=initial,Rounding=rounding,AllowRightClickInput=true,Callback=changed(key,callback)})
         return register(key,widget,initial,callback)
     end
-    local function field(g,key,text,initial,callback)
-        local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=true,Callback=changed(key,callback)})
+    local function field(g,key,text,initial,callback,live)
+        local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=not live,Callback=changed(key,callback)})
         return register(key,widget,initial,callback)
     end
     local function choice(g,key,text,values,initial,callback)
@@ -558,7 +566,7 @@ local function buildVisualSystems()
         selected=value fovChanged=true applyFOV()
     end)
     local skyGroup=group("Sky","Skybox",1)
-    field(skyGroup,"skyAsset","Skybox ID or link","",function(value) skyInput.Text=value end)
+    field(skyGroup,"skyAsset","Skybox ID or link","",function(value) skyInput.Text=value end,true)
     action(skyGroup,"Load",applyCustomSky)
     toggle(skyGroup,"skyHaze","Remove haze",false,clearHaze)
     action(skyGroup,"Reset sky",function()
@@ -566,6 +574,93 @@ local function buildVisualSystems()
     end)
     -- CAMERA
     local cameraSettings={mode=player.CameraMode,min=player.CameraMinZoomDistance,max=player.CameraMaxZoomDistance,occlusion=player.DevCameraOcclusionMode}
+    local thirdRunning=false
+    local thirdCameras,thirdController,thirdState
+    local thirdFallback=false
+    local thirdYaw,thirdPitch=0,0
+    local function restoreThirdController()
+        if thirdController and thirdState then
+            pcall(function()
+                thirdController:SetIsMouseLocked(thirdState.locked)
+                if thirdState.offset then thirdController:SetMouseLockOffset(thirdState.offset) end
+            end)
+        end
+        thirdController,thirdState=nil,nil
+    end
+    local function stopThirdCamera()
+        if not thirdRunning then return end
+        thirdRunning=false
+        Run:UnbindFromRenderStep("PrimeVisualsThirdBeforeCamera")
+        Run:UnbindFromRenderStep("PrimeVisualsThirdAfterCamera")
+        restoreThirdController()
+        thirdCameras=nil thirdFallback=false
+        UIS.MouseBehavior=Library.Toggled and Enum.MouseBehavior.Default or savedBehavior
+    end
+    local function startThirdCamera()
+        if thirdRunning then return end
+        thirdRunning=true
+        -- Use the game's standard camera controller so its normal collision behavior is retained.
+        pcall(function()
+            local scripts=player:FindFirstChild("PlayerScripts")
+            local module=scripts and scripts:FindFirstChild("PlayerModule")
+            if module then thirdCameras=require(module):GetCameras() end
+        end)
+        local rayParams=RaycastParams.new()
+        rayParams.FilterType=Enum.RaycastFilterType.Exclude
+        rayParams.RespectCanCollide=true
+        Run:BindToRenderStep("PrimeVisualsThirdBeforeCamera",Enum.RenderPriority.Camera.Value-1,function()
+            if not alive or not thirdRunning then return end
+            local controller=thirdCameras and thirdCameras.activeCameraController
+            if thirdCameras and type(thirdCameras.GetActiveCameraController)=="function" then
+                controller=thirdCameras:GetActiveCameraController()
+            end
+            if not (controller and type(controller.SetIsMouseLocked)=="function" and type(controller.GetIsMouseLocked)=="function") then controller=nil end
+            if controller~=thirdController then
+                restoreThirdController()
+                if controller then
+                    thirdController=controller
+                    thirdState={locked=controller:GetIsMouseLocked(),offset=type(controller.GetMouseLockOffset)=="function" and controller:GetMouseLockOffset() or nil}
+                end
+            end
+            local rotating=not Library.Toggled and not UIS:GetFocusedTextBox()
+            if thirdController then
+                thirdController:SetIsMouseLocked(rotating and true or false)
+                if type(thirdController.SetMouseLockOffset)=="function" then
+                    thirdController:SetMouseLockOffset(rotating and Vector3.zero or thirdState.offset or Vector3.zero)
+                end
+            end
+            UIS.MouseBehavior=rotating and Enum.MouseBehavior.LockCenter or Enum.MouseBehavior.Default
+        end)
+        Run:BindToRenderStep("PrimeVisualsThirdAfterCamera",Enum.RenderPriority.Camera.Value+1,function()
+            if not alive or not thirdRunning then return end
+            if Library.Toggled or UIS:GetFocusedTextBox() then
+                UIS.MouseBehavior=Enum.MouseBehavior.Default
+                thirdFallback=false
+                return
+            end
+            UIS.MouseBehavior=Enum.MouseBehavior.LockCenter
+            -- Games that replace PlayerModule still get an orbiting camera, with wall collision.
+            if thirdController or controls.camNoclip then thirdFallback=false return end
+            local camera=Workspace.CurrentCamera
+            if not camera then return end
+            if not thirdFallback then
+                local look=camera.CFrame.LookVector
+                thirdPitch=math.asin(math.clamp(look.Y,-1,1))
+                thirdYaw=math.atan2(-look.X,-look.Z)
+                thirdFallback=true
+            end
+            local delta=UIS:GetMouseDelta()
+            thirdYaw=thirdYaw-delta.X*0.003
+            thirdPitch=math.clamp(thirdPitch-delta.Y*0.003,-1.5,1.5)
+            local rotation=CFrame.fromOrientation(thirdPitch,thirdYaw,0)
+            local focus=camera.Focus.Position
+            local distance=controls.camDistance or 12
+            rayParams.FilterDescendantsInstances=player.Character and {player.Character} or {}
+            local hit=Workspace:Raycast(focus,-rotation.LookVector*distance,rayParams)
+            if hit then distance=math.max(0.5,(hit.Position-focus).Magnitude-0.2) end
+            camera.CFrame=CFrame.new(focus-rotation.LookVector*distance)*rotation
+        end)
+    end
     local function updateThirdPerson(on)
         if on then
             local distance=controls.camDistance or 12
@@ -576,7 +671,8 @@ local function buildVisualSystems()
             end
             patch("third",player,"CameraMinZoomDistance",distance)
             patch("third",player,"CameraMaxZoomDistance",distance)
-        else unpatch("third") end
+            startThirdCamera()
+        else stopThirdCamera() unpatch("third") end
     end
     do
         local g=group("Camera","View",2)
@@ -677,17 +773,45 @@ local function buildVisualSystems()
     do
         local g=group("Sky","Sun",1)
         local originalClock=Lighting.ClockTime
+        local originalSunVisible=not sourceSky or (sourceSky.CelestialBodiesShown and sourceSky.SunAngularSize>0)
+        toggle(g,"skySunVisible","Show sun",originalSunVisible,function(on)
+            local sky=ensureSky()
+            if on then
+                sky.CelestialBodiesShown=true
+                if (controls.skySun or 21)<=0 then setters.skySun(21,false) end
+                sky.SunAngularSize=controls.skySun or 21
+            else sky.SunAngularSize=0 end
+        end)
         sliderControl(g,"skyTime","Time of day",0,24,originalClock,0.1,function(v) patch("skytime",Lighting,"ClockTime",v) end)
-        sliderControl(g,"skySun","Sun size",0,60,sourceSky and sourceSky.SunAngularSize or 21,0.5,function(v) ensureSky().SunAngularSize=v end)
+        sliderControl(g,"skySun","Sun size",0,60,sourceSky and sourceSky.SunAngularSize or 21,0.5,function(v)
+            if controls.skySunVisible then ensureSky().SunAngularSize=v end
+        end)
         action(g,"Reset time and sun",function()
             unpatch("skytime") setters.skyTime(originalClock,false)
             local value=sourceSky and sourceSky.SunAngularSize or 21
-            setters.skySun(value,false) if activeSky then activeSky.SunAngularSize=value end
+            setters.skySun(value,false)
+            setters.skySunVisible(originalSunVisible,true)
         end)
         local h=group("Sky","Clouds",2)
         local cloud
+        local function hideGameCloud(o)
+            if alive and customSkyLoaded and not controls.skyClouds and o:IsA("Clouds") then
+                patch("skyweather",o,"Enabled",false)
+            end
+        end
         local function updateClouds(on)
-            if not on then unpatch("clouds") if cloud and owned[cloud] then dispose(cloud) end cloud=nil return end
+            job("Sky background clouds")
+            unpatch("skyweather")
+            if not on then
+                unpatch("clouds")
+                if cloud and owned[cloud] then dispose(cloud) end
+                cloud=nil
+                if customSkyLoaded then
+                    for _,o in ipairs(Terrain:GetDescendants()) do hideGameCloud(o) end
+                    job("Sky background clouds",Terrain.DescendantAdded,hideGameCloud)
+                end
+                return
+            end
             cloud=cloud and cloud.Parent and cloud or Terrain:FindFirstChildOfClass("Clouds")
             if not cloud then cloud=own(make("Clouds",{Enabled=false},Terrain)) end
             patch("clouds",cloud,"Enabled",true)
@@ -700,6 +824,17 @@ local function buildVisualSystems()
         sliderControl(h,"skyCloudDensity","Density",0,1,0.5,0.05,update)
         sliderControl(h,"skyCloudCover","Cover",0,1,0.5,0.05,update)
         color(h,"skyCloudColor","Color",Color3.new(1,1,1),update)
+        onCustomSkyApplied=function(data)
+            setters.skySun(math.clamp(tonumber(data.SunAngularSize) or 21,0,60),false)
+            setters.skySunVisible(false,true)
+            setters.skyClouds(false,true)
+        end
+        onSkyRestored=function()
+            if not alive then return end
+            setters.skyClouds(false,true)
+            setters.skySun(sourceSky and sourceSky.SunAngularSize or 21,false)
+            setters.skySunVisible(originalSunVisible,false)
+        end
     end
     -- PARTICLES
     local particlePart,emitter
@@ -1301,6 +1436,7 @@ local function buildVisualSystems()
     end)
     cleanupExtra=function()
         alive=false
+        stopThirdCamera()
         for _,c in pairs(jobs) do c:Disconnect() end jobs={}
         for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
         restoreWater()
