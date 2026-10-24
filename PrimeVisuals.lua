@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.2.1"
+local VERSION="1.3.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -74,6 +74,8 @@ local ru={
     ["Character finish"]="Материал персонажа",
     ["Cone hat"]="Коническая шляпа",
     ["Visibility"]="Отображение",
+    ["All players"]="Все игроки",
+    ["Selected players"]="Выбранные игроки",
     ["Grab line"]="Линия захвата",
     ["Crosshair"]="Прицел",
     ["Blackholes"]="Чёрные дыры",
@@ -1026,6 +1028,18 @@ local function buildVisualSystems()
     local espRoot=own(make("Folder",{Name="PV_ESP"},Workspace))
     local categories={Players={},Server={},Sticky={},Blackholes={}}
     local espEntries={}
+    local playerSelector
+    local function playerSelected(p)
+        return p~=player and (controls.espAllPlayers~=false or (controls.espSelectedPlayers or {})[p.Name]==true)
+    end
+    local function playerNames(excluded)
+        local names={}
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=player and p~=excluded then table.insert(names,p.Name) end
+        end
+        table.sort(names,function(a,b) return a:lower()<b:lower() end)
+        return names
+    end
     local function defaultESP() return {rainbow=false,smooth=true,fill=purple,outline=white,fillAlpha=0.75,outlineAlpha=0.1,names=true,text=white,textOutline=black,textStroke=0,size=14,offset=3,font="Builder Sans",bold=false,thickness=0.03,nameDistance=0,highlight=true,icon=false} end
     for name in pairs(categories) do categories[name]=defaultESP() end
     local function nearestOwner(part)
@@ -1086,9 +1100,9 @@ local function buildVisualSystems()
         local enabled=controls.espPlayers or controls.espServer or controls.espSticky or controls.espBlackholes
         job("ESP world") job("ESP render") job("ESP smooth")
         local active={Players=controls.espPlayers,Server=controls.espServer,Sticky=controls.espSticky,Blackholes=controls.espBlackholes}
-        for target,entry in pairs(espEntries) do if not active[entry.category] then removeESP(target) end end
+        for target,entry in pairs(espEntries) do if not active[entry.category] or (entry.category=="Players" and not playerSelected(entry.owner)) then removeESP(target) end end
         if not enabled then return end
-        if controls.espPlayers then for _,p in ipairs(Players:GetPlayers()) do if p~=player and p.Character then addESP(p.Character,"Players",p) end end end
+        if controls.espPlayers then for _,p in ipairs(Players:GetPlayers()) do if playerSelected(p) and p.Character then addESP(p.Character,"Players",p) end end end
         scan(Workspace,espCandidate)
         job("ESP world",Workspace.DescendantAdded,espCandidate)
         job("ESP smooth",Run.RenderStepped,function(dt)
@@ -1128,14 +1142,29 @@ local function buildVisualSystems()
     end
     local function watchPlayer(p)
         listen(p.CharacterAdded,function(character)
-            task.delay(0.7,function() if alive and controls.espPlayers and p~=player and character.Parent then addESP(character,"Players",p) end end)
+            task.delay(0.7,function() if alive and controls.espPlayers and playerSelected(p) and character.Parent then addESP(character,"Players",p) end end)
         end)
     end
     for _,p in ipairs(Players:GetPlayers()) do watchPlayer(p) end
-    listen(Players.PlayerAdded,watchPlayer)
+    listen(Players.PlayerAdded,function(p)
+        watchPlayer(p)
+        if playerSelector then playerSelector:SetValues(playerNames()) end
+    end)
+    listen(Players.PlayerRemoving,function(p)
+        for target,entry in pairs(espEntries) do
+            if entry.owner==p then removeESP(target) end
+        end
+        if playerSelector then playerSelector:SetValues(playerNames(p)) end
+    end)
     do
         local g=group("ESP","Visibility",1)
         for _,entry in ipairs({{"espPlayers","Players"},{"espServer","Server detectors"},{"espSticky","Stickies"},{"espBlackholes","Blackholes"}}) do toggle(g,entry[1],entry[2],false,refreshESP) end
+        toggle(g,"espAllPlayers","All players",true,refreshESP)
+        playerSelector=g:AddDropdown("espSelectedPlayers",{
+            Text="Selected players",Values=playerNames(),Multi=true,AllowNull=true,
+            Callback=changed("espSelectedPlayers",refreshESP),
+        })
+        register("espSelectedPlayers",playerSelector,{},refreshESP)
         local function config(category,side)
             local cfg=categories[category]
             local g=group("ESP",category,side)
