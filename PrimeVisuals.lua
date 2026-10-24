@@ -1,4 +1,14 @@
 -- Prime Visuals | Camera + Sky
+local sourceCache={}
+local function loadUIModule(name)
+    local filename=name=="Library" and "Obsidian" or name
+    if not sourceCache[name] then
+        sourceCache[name]=game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/main/lib/"..filename..".lua")
+    end
+    local chunk,message=loadstring(sourceCache[name],"PrimeVisuals/"..filename)
+    assert(chunk,message)
+    return chunk(loadUIModule)
+end
 local function startVisuals()
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -187,6 +197,7 @@ local function translateText(text)
     return text
 end
 local function bindLocalization(o)
+    if localized[o] then return end
     local class=o.ClassName
     if class~="TextLabel" and class~="TextButton" and class~="TextBox" then return end
     local record={base={},writing=false}
@@ -235,78 +246,36 @@ local border=Color3.fromRGB(38,36,44)
 local black=Color3.fromRGB(9,9,11)
 local surface=Color3.fromRGB(14,14,17)
 local selectedSurface=Color3.fromRGB(31,23,44)
-local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,DisplayOrder=1000,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},playerGui)
--- Resonance window defaults: 720x600 at 100%, clamped to viewport minus 64.
+
+-- Real Obsidian window and controls, vendored from the current Resonance UI modules.
+local Library=loadUIModule("Library")
+Library.ForceCheckbox=true
+Library.Scheme.AccentColor=purple
+local savedBehavior,savedIcon=UIS.MouseBehavior,UIS.MouseIconEnabled
 local viewport=Workspace.CurrentCamera and Workspace.CurrentCamera.ViewportSize or Vector2.new(1280,720)
-local maxWidth,maxHeight=math.max(1,viewport.X-64),math.max(1,viewport.Y-64)
-local windowWidth=math.clamp(720,math.min(256,maxWidth),maxWidth)
-local windowHeight=math.clamp(600,math.min(360,maxHeight),maxHeight)
-local panel=make("CanvasGroup",{Size=UDim2.fromOffset(windowWidth,windowHeight),Position=UDim2.new(0.5,-windowWidth/2,0.5,-windowHeight/2),BackgroundColor3=black,BorderSizePixel=0,GroupTransparency=1},gui)
-make("UIStroke",{Color=purple,Thickness=1,Transparency=0.45},panel)
-local function label(parent,text,x,y,w,h,size,color)
-    return make("TextLabel",{Text=text,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundTransparency=1,TextColor3=color or white,Font=Enum.Font.BuilderSans,TextSize=size,TextXAlignment=Enum.TextXAlignment.Left},parent)
+local windowWidth=math.min(720,math.max(256,viewport.X-64))
+local windowHeight=math.min(600,math.max(360,viewport.Y-64))
+local nativeWindow=Library:CreateWindow({
+    Title="Prime Visuals",Footer="",Icon="diamond",IconSize=UDim2.fromOffset(26,26),
+    Size=UDim2.fromOffset(windowWidth,windowHeight),Center=true,AutoShow=false,Resizable=false,
+    ToggleKeybind=Enum.KeyCode.RightShift,EnableSidebarResize=false,Compact=true,
+    ShowCustomCursor=true,UnlockMouseWhileOpen=true,Font=Enum.Font.Code,CornerRadius=6,
+    Animations={ToggleWindow=false,TabSwitch=true,Dropdown=true,Groupbox=true,KeyPicker=true},
+    TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
+})
+local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,Enabled=false},playerGui)
+local menuOpen=false
+local closing=false
+local initialFOV=Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView or 70
+local selected=math.clamp(math.round(initialFOV),30,120)
+local fovChanged=false
+local function applyFOV()
+    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=selected end
 end
-local function line(parent,x1,y1,x2,y2,color,width)
-    local dx,dy=x2-x1,y2-y1
-    return make("Frame",{AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromOffset((x1+x2)/2,(y1+y2)/2),Size=UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),width or 1.5),Rotation=math.deg(math.atan2(dy,dx)),BackgroundColor3=color,BorderSizePixel=0,Active=false},parent)
-end
-local function outline(object,color)
-    return make("UIStroke",{Color=color or border,Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},object)
-end
-local header=make("TextButton",{Size=UDim2.new(1,0,0,38),Text="",BackgroundTransparency=1,Modal=true,AutoButtonColor=false},panel)
-local logo=make("Frame",{Position=UDim2.fromOffset(12,10),Size=UDim2.fromOffset(18,18),BackgroundTransparency=1},header)
-line(logo,9,0,17,7,purple)
-line(logo,17,7,9,18,purple)
-line(logo,9,18,1,7,purple)
-line(logo,1,7,9,0,purple)
-line(logo,1,7,17,7,purple,1)
-line(logo,9,0,9,18,purple,1)
-local brand=label(header,"View",54,1,235,22,15)
-brand.Font=Enum.Font.BuilderSansBold
-local subtitle=label(header,"Camera",54,22,235,12,10,muted)
-local heading=label(header,"Prime Visuals",0,9,112,22,12,muted)
-heading.AnchorPoint=Vector2.new(1,0)
-heading.Position=UDim2.new(1,-14,0,10)
-heading.TextXAlignment=Enum.TextXAlignment.Right
-make("Frame",{Position=UDim2.fromOffset(0,38),Size=UDim2.new(1,0,0,1),BackgroundColor3=border,BorderSizePixel=0},panel)
-local rail=make("ScrollingFrame",{Position=UDim2.fromOffset(0,39),Size=UDim2.new(0,46,1,-39),CanvasSize=UDim2.new(),ScrollBarThickness=0,BackgroundColor3=black,BorderSizePixel=0},panel)
-make("Frame",{Position=UDim2.new(1,-1,0,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=border,BorderSizePixel=0},rail)
-local cameraBadge=make("TextButton",{Text="",AutoButtonColor=false,Position=UDim2.fromOffset(3,5),Size=UDim2.fromOffset(35,34),BackgroundColor3=black,BorderSizePixel=0},rail)
-local cameraEdge=outline(cameraBadge,purple)
-local cameraShape=make("Frame",{Position=UDim2.fromOffset(9,12),Size=UDim2.fromOffset(18,12),BackgroundTransparency=1},cameraBadge)
-outline(cameraShape,purple)
-make("Frame",{Position=UDim2.fromOffset(12,9),Size=UDim2.fromOffset(8,2),BackgroundColor3=purple,BorderSizePixel=0},cameraBadge)
-local lens=make("Frame",{Position=UDim2.fromOffset(6,3),Size=UDim2.fromOffset(6,6),BackgroundTransparency=1},cameraShape)
-outline(lens,purple)
-local columnWidth=math.floor((windowWidth-82)/2)
-local contentWidth=columnWidth*2+12
-local function section(parent,x,width,height)
-    local frame=make("Frame",{Position=UDim2.fromOffset(x,0),Size=UDim2.fromOffset(width,height),BackgroundColor3=surface,BorderSizePixel=0},parent)
-    outline(frame)
-    make("Frame",{Position=UDim2.fromOffset(0,29),Size=UDim2.new(1,0,0,1),BackgroundColor3=border,BorderSizePixel=0},frame)
-    return frame
-end
-local cameraPage=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.fromOffset(contentWidth,170),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,BackgroundTransparency=1},panel)
-local lensSection=section(cameraPage,0,columnWidth,128)
-local lensTitle=label(lensSection,"Field of view",10,3,columnWidth-20,23,14)
-lensTitle.Font=Enum.Font.BuilderSansMedium
-local input=make("TextBox",{Position=UDim2.fromOffset(columnWidth-76,39),Size=UDim2.fromOffset(64,26),Text="70",ClearTextOnFocus=false,Font=Enum.Font.Code,TextSize=14,TextColor3=white,BackgroundColor3=black,BorderSizePixel=0},lensSection)
-label(lensSection,"FOV",10,42,columnWidth-100,20,14,muted)
-local inputStroke=outline(input)
-listen(input.Focused,function() input.CursorPosition=#input.Text+1 input.SelectionStart=1 end)
-listen(input.Focused,function() animate(inputStroke,0.12,{Color=purple}) end)
-listen(input.FocusLost,function() animate(inputStroke,0.12,{Color=border}) end)
-local slider=make("TextButton",{Position=UDim2.fromOffset(14,72),Size=UDim2.fromOffset(columnWidth-28,22),Text="",BackgroundTransparency=1,AutoButtonColor=false},lensSection)
-local track=make("Frame",{Position=UDim2.new(0,0,0.5,-4),Size=UDim2.new(1,0,0,8),BackgroundColor3=black,BorderSizePixel=0},slider)
-outline(track)
-local fill=make("Frame",{Size=UDim2.new(0,0,1,0),BackgroundColor3=purple,BorderSizePixel=0},track)
-local dot=make("Frame",{AnchorPoint=Vector2.new(0.5,0.5),Size=UDim2.fromOffset(6,14),Position=UDim2.new(0,0,0.5,0),BackgroundColor3=white,BorderSizePixel=0},track)
-local knobStroke=outline(dot,purple)
-listen(slider.MouseEnter,function() animate(knobStroke,0.12,{Color=white}) end)
-listen(slider.MouseLeave,function() animate(knobStroke,0.12,{Color=purple}) end)
-label(lensSection,"30",10,99,64,20,12,muted)
-local maxLabel=label(lensSection,"120",columnWidth-74,99,64,20,12,muted)
-maxLabel.TextXAlignment=Enum.TextXAlignment.Right
+listen(Workspace:GetPropertyChangedSignal("CurrentCamera"),applyFOV)
+local skyInput={Text=""}
+local skyMessage={Text="",Visible=false}
+local loadButton={Text="Load"}
 -- Sky changes are opt-in. Original Sky instances are retained for an exact reset.
 local originalSkies={}
 for _,o in ipairs(Lighting:GetChildren()) do
@@ -357,69 +326,6 @@ local function restoreSky()
         if o.Parent==nil then o.Parent=Lighting end
     end
 end
-local skyBadge=make("TextButton",{Position=UDim2.fromOffset(3,44),Size=UDim2.fromOffset(35,34),Text="",AutoButtonColor=false,BackgroundColor3=black,BorderSizePixel=0},rail)
-local skyEdge=outline(skyBadge,purple)
-skyEdge.Transparency=1
-local sunIcon=make("Frame",{Position=UDim2.fromOffset(14,13),Size=UDim2.fromOffset(8,8),BackgroundTransparency=1,Rotation=45},skyBadge)
-outline(sunIcon,purple)
-for i=0,7 do
-    local angle=math.rad(i*45)
-    line(skyBadge,18+math.cos(angle)*8,17+math.sin(angle)*8,18+math.cos(angle)*10.5,17+math.sin(angle)*10.5,purple,1.5)
-end
-local skyPage=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.fromOffset(contentWidth,190),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,BorderSizePixel=0,Visible=false,BackgroundTransparency=1},panel)
-local pages={Camera=cameraPage,Sky=skyPage}
-local navEdges={Camera=cameraEdge,Sky=skyEdge}
-local navButtons={Camera=cameraBadge,Sky=skyBadge}
-local activeTab="Camera"
-local function chooseTab(name)
-    if activeTab==name then return end
-    activeTab=name
-    local focused=UIS:GetFocusedTextBox()
-    if focused then focused:ReleaseFocus() end
-    for id,page in pairs(pages) do page.Visible=id==name end
-    heading.Text=name
-    for id,edge in pairs(navEdges) do animate(edge,0.12,{Transparency=id==name and 0 or 1}) end
-    local page=pages[name]
-    page.Position=UDim2.fromOffset(58,92)
-    animate(page,0.14,{Position=UDim2.fromOffset(58,88)})
-end
-listen(cameraBadge.Activated,function() chooseTab("Camera") end)
-listen(skyBadge.Activated,function() chooseTab("Sky") end)
-local function button(parent,text,x,y,width,callback)
-    local b=make("TextButton",{Text=text,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(width,28),BackgroundColor3=black,BorderSizePixel=0,Font=Enum.Font.BuilderSansMedium,TextSize=14,TextColor3=white,AutoButtonColor=false},parent)
-    local stroke=outline(b)
-    listen(b.MouseEnter,function() animate(stroke,0.12,{Color=purple}) end)
-    listen(b.MouseLeave,function() animate(stroke,0.12,{Color=border}) end)
-    listen(b.InputBegan,function(event)
-        if event.UserInputType==Enum.UserInputType.MouseButton1 then animate(stroke,0.08,{Color=white}) end
-    end)
-    listen(b.InputEnded,function(event)
-        if event.UserInputType==Enum.UserInputType.MouseButton1 then animate(stroke,0.12,{Color=purple}) end
-    end)
-    listen(b.Activated,callback)
-    return b
-end
-local customCard=section(skyPage,0,columnWidth,166)
-local configCard=section(skyPage,columnWidth+12,columnWidth,128)
-local skyTitle=label(customCard,"Skybox",10,3,columnWidth-20,23,14)
-skyTitle.Font=Enum.Font.BuilderSansMedium
-local configTitle=label(configCard,"Environment",10,3,columnWidth-20,23,14)
-configTitle.Font=Enum.Font.BuilderSansMedium
-local skyInput=make("TextBox",{Position=UDim2.fromOffset(10,39),Size=UDim2.fromOffset(columnWidth-20,28),Text="",PlaceholderText="Skybox link or ID",ClearTextOnFocus=false,TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.BuilderSans,TextSize=14,TextColor3=white,PlaceholderColor3=muted,BackgroundColor3=black,BorderSizePixel=0},customCard)
-make("UIPadding",{PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8)},skyInput)
-local skyInputStroke=outline(skyInput)
-listen(skyInput.MouseEnter,function() if not skyInput:IsFocused() then animate(skyInputStroke,0.12,{Color=purple}) end end)
-listen(skyInput.MouseLeave,function() if not skyInput:IsFocused() then animate(skyInputStroke,0.12,{Color=border}) end end)
-listen(skyInput.Focused,function() animate(skyInputStroke,0.12,{Color=purple}) end)
-listen(skyInput.FocusLost,function() animate(skyInputStroke,0.12,{Color=border}) end)
-local skyMessage=label(customCard,"",10,111,columnWidth-20,46,12,Color3.fromRGB(255,142,163))
-skyMessage.Visible=false
-skyMessage.TextWrapped=true
-skyMessage.TextYAlignment=Enum.TextYAlignment.Top
-listen(skyInput:GetPropertyChangedSignal("Text"),function()
-    skyMessage.Visible=false
-end)
-local loadButton
 local function assetUrl(text)
     text=text:match("^%s*(.-)%s*$")
     local id=text:match("^(%d+)$") or text:match("^rbxassetid://(%d+)$") or text:match("[?&]id=(%d+)") or text:match("roblox.com/library/(%d+)") or text:match("roblox.com/store/asset/(%d+)")
@@ -465,6 +371,7 @@ end
 local function skyFeedback(text,isError)
     skyMessage.Text=isError and text or ""
     skyMessage.Visible=isError==true
+    if isError then Library:Notify(tostring(text),5) end
     if loadButton then loadButton.Text=text=="Loading skybox..." and "Loading..." or "Load" end
 end
 local function applyCustomSky()
@@ -497,157 +404,6 @@ local function applyCustomSky()
         skyFeedback("Skybox loaded / six separate textures.",false)
     end)
 end
-loadButton=button(customCard,"Load",10,76,columnWidth-20,applyCustomSky)
-listen(skyInput.FocusLost,function(enterPressed) if enterPressed then applyCustomSky() end end)
-local hazeButton=make("TextButton",{Position=UDim2.fromOffset(10,39),Size=UDim2.fromOffset(columnWidth-20,28),Text="",BackgroundTransparency=1,AutoButtonColor=false},configCard)
-local hazeCheck=make("Frame",{Position=UDim2.fromOffset(1,7),Size=UDim2.fromOffset(14,14),BackgroundColor3=black,BorderSizePixel=0},hazeButton)
-local hazeStroke=outline(hazeCheck)
-label(hazeButton,"Remove haze",25,2,columnWidth-55,24,14)
-local function updateHazeText()
-    animate(hazeCheck,0.12,{BackgroundColor3=hazeEnabled and purple or black})
-    animate(hazeStroke,0.12,{Color=hazeEnabled and purple or border})
-end
-listen(hazeButton.Activated,function()
-    clearHaze(not hazeEnabled)
-    updateHazeText()
-end)
-button(configCard,"Reset sky",10,85,columnWidth-20,function()
-    restoreSky()
-    updateHazeText()
-    skyInput.Text=""
-    skyMessage.Text=""
-    skyMessage.Visible=false
-    loadButton.Text="Load"
-end)
-local initialFOV=Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView or 70
-local selected=math.clamp(math.round(initialFOV),30,120)
-local fovChanged=false
-local function apply()
-    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=selected end
-end
-local function setValue(value,displayOnly)
-    if not value or value~=value or math.abs(value)==math.huge then value=selected end
-    selected=math.clamp(math.round(value),30,120)
-    input.Text=tostring(selected)
-    local a=(selected-30)/90
-    fill.Size=UDim2.new(a,0,1,0)
-    dot.Position=UDim2.new(a,0,0.5,0)
-    if not displayOnly then fovChanged=true apply() end
-end
-listen(input.FocusLost,function() setValue(tonumber(input.Text)) end)
-listen(Workspace:GetPropertyChangedSignal("CurrentCamera"),apply)
-
--- Standalone menu cursor: the same 11x11 cross layout used by Resonance.
--- No game GUI scanning or reparenting.
-local cursorLayer=make("ScreenGui",{
-    Name="PrimeVisualsMenuCursor",IgnoreGuiInset=true,ResetOnSpawn=false,
-    DisplayOrder=1001,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,Enabled=false
-},playerGui)
-local cursor=make("Frame",{
-    AnchorPoint=Vector2.new(0.5,0.5),Size=UDim2.fromOffset(11,11),
-    BackgroundTransparency=1,Active=false
-},cursorLayer)
-local function crossPart(width,height,color,z)
-    make("Frame",{
-        AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),
-        Size=UDim2.fromOffset(width,height),BackgroundColor3=color,
-        BorderSizePixel=0,ZIndex=z,Active=false
-    },cursor)
-end
-crossPart(11,3,Color3.new(0,0,0),1)
-crossPart(3,11,Color3.new(0,0,0),1)
-crossPart(9,1,Color3.new(1,1,1),2)
-crossPart(1,9,Color3.new(1,1,1),2)
-local savedBehavior,savedIcon=UIS.MouseBehavior,UIS.MouseIconEnabled
-local menuOpen=false
-local generation=0
-local dragging,sliding=false,false
-local dragStart,startPosition,activeTouch
-local function setMenu(open)
-    generation=generation+1
-    local currentGeneration=generation
-    local focused=UIS:GetFocusedTextBox()
-    if focused then focused:ReleaseFocus() end
-    dragging,sliding,activeTouch=false,false,nil
-    if open then
-        if not menuOpen then savedBehavior,savedIcon=UIS.MouseBehavior,UIS.MouseIconEnabled end
-        menuOpen=true
-        panel.Visible=true
-        header.Modal=true
-        UIS.MouseBehavior=Enum.MouseBehavior.Default
-        UIS.MouseIconEnabled=false
-        cursorLayer.Enabled=true
-        local mouse=UIS:GetMouseLocation()
-        cursor.Position=UDim2.fromOffset(mouse.X,mouse.Y)
-        animate(panel,0.23,{GroupTransparency=0})
-    else
-        menuOpen=false
-        header.Modal=false
-        cursorLayer.Enabled=false
-        UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
-        local t=animate(panel,0.16,{GroupTransparency=1})
-        t.Completed:Once(function(state)
-            if generation==currentGeneration and not menuOpen and state==Enum.PlaybackState.Completed then panel.Visible=false end
-        end)
-    end
-end
-
-local function pointerStart(event)
-    return event.UserInputType==Enum.UserInputType.MouseButton1 or event.UserInputType==Enum.UserInputType.Touch
-end
-local function slide(x)
-    setValue(30+math.clamp((x-track.AbsolutePosition.X)/math.max(track.AbsoluteSize.X,1),0,1)*90)
-end
-listen(slider.InputBegan,function(event)
-    if pointerStart(event) then
-        sliding=true
-        activeTouch=event.UserInputType==Enum.UserInputType.Touch and event or nil
-        slide(event.Position.X)
-    end
-end)
-listen(header.InputBegan,function(event)
-    if pointerStart(event) then
-        dragging=true
-        dragStart,startPosition=event.Position,panel.Position
-        activeTouch=event.UserInputType==Enum.UserInputType.Touch and event or nil
-    end
-end)
-listen(UIS.InputChanged,function(event)
-    if event.UserInputType~=Enum.UserInputType.MouseMovement and event~=activeTouch then return end
-    if sliding then slide(event.Position.X) end
-    if dragging then
-        local delta=event.Position-dragStart
-        local bounds=gui.AbsoluteSize
-        local x=startPosition.X.Scale*bounds.X+startPosition.X.Offset+delta.X
-        local y=startPosition.Y.Scale*bounds.Y+startPosition.Y.Offset+delta.Y
-        panel.Position=UDim2.fromOffset(math.clamp(x,0,math.max(0,bounds.X-panel.AbsoluteSize.X)),math.clamp(y,0,math.max(0,bounds.Y-panel.AbsoluteSize.Y)))
-    end
-end)
-listen(UIS.WindowFocusReleased,function() dragging,sliding,activeTouch=false,false,nil end)
-listen(UIS.InputEnded,function(event)
-    if event.UserInputType==Enum.UserInputType.MouseButton1 or event==activeTouch then dragging,sliding,activeTouch=false,false,nil end
-end)
-listen(UIS.InputBegan,function(event)
-    if event.KeyCode==Enum.KeyCode.RightShift then setMenu(not menuOpen) end
-end)
-RunService:BindToRenderStep("PrimeVisualsCursor",Enum.RenderPriority.Last.Value,function(dt)
-    if not menuOpen then return end
-    UIS.MouseBehavior=Enum.MouseBehavior.Default
-    UIS.MouseIconEnabled=false
-    local mouse=UIS:GetMouseLocation()
-    cursor.Position=UDim2.fromOffset(mouse.X,mouse.Y)
-end)
-gui.Destroying:Connect(function()
-    cleanupExtra()
-    restoreSky()
-    RunService:UnbindFromRenderStep("PrimeVisualsCursor")
-    for _,c in ipairs(connections) do c:Disconnect() end
-    for _,t in pairs(tweens) do t:Cancel() end
-    cursorLayer:Destroy()
-    UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
-    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
-end)
--- Prime Visuals independent visual systems.
 local function buildVisualSystems()
     local player=Players.LocalPlayer
     local Run=RunService
@@ -657,14 +413,7 @@ local function buildVisualSystems()
     local alive=true
     local setters={}
     local controls={}
-    local function notify(text)
-        local note=gui:FindFirstChild("VisualNotice")
-        if note then note:Destroy() end
-        note=make("TextLabel",{Name="VisualNotice",Text=tostring(text),TextWrapped=true,TextSize=13,Font=Enum.Font.BuilderSans,
-            BackgroundColor3=black,TextColor3=white,BorderSizePixel=0,Position=UDim2.new(0.5,-220,1,-68),Size=UDim2.fromOffset(440,48),ZIndex=900},gui)
-        outline(note,purple)
-        task.delay(6,function() if note.Parent then note:Destroy() end end)
-    end
+    local function notify(text) Library:Notify(tostring(text),5) end
     local function job(name,signal,fn)
         if jobs[name] then jobs[name]:Disconnect() jobs[name]=nil end
         if signal and fn then jobs[name]=signal:Connect(function(...)
@@ -718,203 +467,103 @@ local function buildVisualSystems()
         if not ok then notify(err) end
         return ok
     end
-    local registry={}
-    local allGroups={}
-    local function scrollPage(page)
-        page.Size=UDim2.new(1,-70,1,-101)
-    end
-    scrollPage(cameraPage) scrollPage(skyPage)
-    local glyphs={
-        Lighting={{9,1,9,5},{9,13,9,17},{1,9,5,9},{13,9,17,9},{4,4,6,6},{12,12,14,14},{4,14,6,12},{12,6,14,4}},
-        Particles={{9,0,9,18},{0,9,18,9},{3,3,15,15},{3,15,15,3}},
-        World={{1,4,17,4},{1,9,17,9},{1,14,17,14},{4,1,4,17},{14,1,14,17}},
-        Character={{7,1,11,1},{11,1,11,5},{11,5,7,5},{7,5,7,1},{9,6,9,12},{2,8,16,8},{9,12,4,18},{9,12,14,18}},
-        ESP={{0,9,5,4},{5,4,13,4},{13,4,18,9},{18,9,13,14},{13,14,5,14},{5,14,0,9},{7,7,11,7},{11,7,11,11},{11,11,7,11},{7,11,7,7}},
-        Tweaks={{1,4,17,4},{1,9,17,9},{1,14,17,14},{5,1,5,7},{13,6,13,12},{7,11,7,17}},
-        Audio={{1,7,4,7},{4,7,9,2},{9,2,9,16},{9,16,4,11},{4,11,1,11},{1,11,1,7},{12,5,15,8},{15,8,15,10},{15,10,12,13}}
+
+    local building=true
+    local suppressed=false
+    local widgets={}
+    local tabs={}
+    local categoryTabs={}
+    local categories={
+        {"View","camera",{"Camera","Sky"}},
+        {"Graphics","sparkles",{"Lighting","Particles","World"}},
+        {"Character","user-round",{"Character"}},
+        {"ESP","scan-eye",{"ESP"}},
+        {"FTAP","orbit",{"Tweaks","Audio"}},
+        {"Settings","settings",{"Settings"}}
     }
-    glyphs.Settings={{6,1,12,1},{12,1,12,4},{12,4,15,6},{15,6,18,6},{18,6,18,12},{18,12,15,12},{15,12,12,15},{12,15,12,18},{12,18,6,18},{6,18,6,15},{6,15,3,12},{3,12,0,12},{0,12,0,6},{0,6,3,6},{3,6,6,3},{6,3,6,1},{7,7,11,7},{11,7,11,11},{11,11,7,11},{7,11,7,7}}
-    local order={"Camera","Sky","Lighting","Particles","World","Character","ESP","Tweaks","Audio","Settings"}
-    for index,name in ipairs(order) do
-        if not pages[name] then
-            local page=make("ScrollingFrame",{Position=UDim2.fromOffset(58,88),Size=UDim2.new(1,-70,1,-101),BackgroundTransparency=1,BorderSizePixel=0,
-                CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=2,ScrollBarImageColor3=purple,Visible=false},panel)
-            pages[name]=page
-            local b=make("TextButton",{Position=UDim2.fromOffset(3,5+(index-1)*39),Size=UDim2.fromOffset(35,34),Text="",BackgroundColor3=black,BorderSizePixel=0,AutoButtonColor=false},rail)
-            local edge=outline(b,purple) edge.Transparency=1
-            navEdges[name]=edge
-            navButtons[name]=b
-            local icon=make("Frame",{Position=UDim2.fromOffset(9,8),Size=UDim2.fromOffset(18,18),BackgroundTransparency=1},b)
-            for _,segment in ipairs(glyphs[name]) do line(icon,segment[1],segment[2],segment[3],segment[4],purple,1.3) end
-            listen(b.Activated,function() chooseTab(name) end)
-            listen(b.MouseEnter,function() if activeTab~=name then animate(edge,0.12,{Transparency=0.55}) end end)
-            listen(b.MouseLeave,function() if activeTab~=name then animate(edge,0.12,{Transparency=1}) end end)
-        end
-        registry[name]={page=pages[name],left=name=="Camera" and 140 or name=="Sky" and 178 or 0,right=name=="Sky" and 140 or 0}
-    end
-    local function group(tab,title,side)
-        local r=registry[tab]
-        local sideKey=side==2 and "right" or "left"
-        local frame=section(r.page,side==2 and columnWidth+12 or 0,columnWidth,38)
-        frame.Position=UDim2.fromOffset(side==2 and columnWidth+12 or 0,r[sideKey])
-        local titleLabel=label(frame,title,10,3,columnWidth-20,23,14)
-        titleLabel.Font=Enum.Font.BuilderSansMedium
-        local g={frame=frame,y=37,r=r,key=sideKey,origin=r[sideKey],tab=tab,title=title,side=side==2 and 2 or 1}
-        table.insert(allGroups,g)
-        r[sideKey]=r[sideKey]+50
-        return g
-    end
-    local function row(g,height)
-        local y=g.y g.y=y+height
-        g.frame.Size=UDim2.fromOffset(columnWidth,g.y+7)
-        g.r[g.key]=math.max(g.r[g.key],g.origin+g.y+19)
-        return y
+    for _,category in ipairs(categories) do
+        local tab=nativeWindow:AddTab({Name=category[1],Icon=category[2],Tooltip=category[1]})
+        categoryTabs[category[1]]=tab
+        for _,name in ipairs(category[3]) do tabs[name]=tab end
     end
     local function put(key,value) controls[key]=value end
-    local function toggle(g,key,text,default,callback)
-        local y=row(g,29)
-        local b=make("TextButton",{Position=UDim2.fromOffset(9,y),Size=UDim2.fromOffset(columnWidth-18,24),Text="",BackgroundTransparency=1,AutoButtonColor=false},g.frame)
-        local square=make("Frame",{Position=UDim2.fromOffset(1,5),Size=UDim2.fromOffset(13,13),BackgroundColor3=black,BorderSizePixel=0},b)
-        make("UICorner",{CornerRadius=UDim.new(1,0)},square)
-        local edge=outline(square)
-        label(b,text,24,0,columnWidth-48,24,14)
-        local current=default
-        local function set(v,apply)
-            local previous=current
-            current=v==true put(key,current)
-            animate(square,0.12,{BackgroundColor3=current and purple or black})
-            animate(edge,0.12,{Color=current and purple or border})
-            if apply and not safe(callback,current) then
-                current=previous put(key,current)
-                animate(square,0.12,{BackgroundColor3=current and purple or black})
-                animate(edge,0.12,{Color=current and purple or border})
-                pcall(callback,current)
-            end
+    local function register(key,widget,initial,callback,isColor)
+        put(key,initial) widgets[key]=widget
+        local function set(value,apply)
+            local wasSuppressed=suppressed
+            suppressed=true
+            if isColor then widget:SetValueRGB(value) else widget:SetValue(value) end
+            suppressed=wasSuppressed
+            put(key,widget.Value)
+            if apply then safe(callback,widget.Value) end
         end
-        listen(b.Activated,function() set(not current,true) end)
-        set(default,false) setters[key]=set
+        setters[key]=set
         return set
     end
-    local draggingControl
-    local draggingPage
-    local function releaseControl()
-        draggingControl=nil
-        if draggingPage then draggingPage.ScrollingEnabled=true draggingPage=nil end
+    local function changed(key,callback)
+        return function(value)
+            if building or suppressed or not alive then return end
+            local previous=controls[key]
+            put(key,value)
+            if not safe(callback,value) then
+                local widget=widgets[key]
+                if widget then
+                    suppressed=true
+                    if widget.Type=="ColorPicker" then widget:SetValueRGB(previous) else widget:SetValue(previous) end
+                    suppressed=false
+                end
+                put(key,previous)
+                pcall(callback,previous)
+            end
+        end
+    end
+    local groupIcons={Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
+    local function group(tab,title,side)
+        local collapsed=title=="Emission" or title=="Post-processing" or (tab=="ESP" and title~="Visibility")
+        local parent=tabs[tab]
+        if side==2 then return parent:AddRightGroupbox(title,groupIcons[tab],true,collapsed) end
+        return parent:AddLeftGroupbox(title,groupIcons[tab],true,collapsed)
+    end
+    local function toggle(g,key,text,initial,callback)
+        local widget=g:AddToggle(key,{Text=text,Default=initial,Callback=changed(key,callback)})
+        return register(key,widget,initial,callback)
     end
     local function sliderControl(g,key,text,low,high,initial,step,callback)
-        local y=row(g,52)
-        label(g.frame,text,10,y,columnWidth-92,22,13)
-        local f=make("TextBox",{Position=UDim2.fromOffset(columnWidth-74,y),Size=UDim2.fromOffset(64,22),Text="",Font=Enum.Font.Code,TextSize=13,
-            ClearTextOnFocus=false,TextColor3=white,BackgroundColor3=black,BorderSizePixel=0},g.frame)
-        local edge=outline(f)
-        local hit=make("TextButton",{Position=UDim2.fromOffset(14,y+25),Size=UDim2.fromOffset(columnWidth-28,21),Text="",BackgroundTransparency=1,AutoButtonColor=false},g.frame)
-        local bar=make("Frame",{Position=UDim2.new(0,0,0.5,-3),Size=UDim2.new(1,0,0,6),BackgroundColor3=border,BorderSizePixel=0},hit)
-        outline(bar)
-        local fill=make("Frame",{Size=UDim2.new(),BackgroundColor3=purple,BorderSizePixel=0},bar)
-        local knob=make("Frame",{AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.new(0,0,0.5,0),Size=UDim2.fromOffset(3,8),BackgroundColor3=white,BorderSizePixel=0},bar)
-        local value=initial
-        local function set(v,apply)
-            if not v or v~=v or math.abs(v)==math.huge then v=value end
-            value=math.clamp(math.round(v/step)*step,low,high) value=math.round(value*1000)/1000
-            put(key,value) f.Text=tostring(value)
-            local alpha=(value-low)/(high-low)
-            fill.Size=UDim2.new(alpha,0,1,0) knob.Position=UDim2.new(alpha,0,0.5,0)
-            if apply then safe(callback,value) end
-        end
-        listen(f.Focused,function() animate(edge,0.12,{Color=purple}) end)
-        listen(f.FocusLost,function() animate(edge,0.12,{Color=border}) set(tonumber(f.Text),true) end)
-        listen(hit.InputBegan,function(event)
-            if event.UserInputType==Enum.UserInputType.MouseButton1 or event.UserInputType==Enum.UserInputType.Touch then
-                draggingPage=g.r.page draggingPage.ScrollingEnabled=false
-                draggingControl=function(x) set(low+math.clamp((x-bar.AbsolutePosition.X)/math.max(1,bar.AbsoluteSize.X),0,1)*(high-low),true) end
-                draggingControl(event.Position.X)
-            end
-        end)
-        set(initial,false) setters[key]=set return set
+        local rounding=step>=1 and 0 or step>=0.1 and 1 or step>=0.01 and 2 or 3
+        local widget=g:AddSlider(key,{Text=text,Min=low,Max=high,Default=initial,Rounding=rounding,AllowRightClickInput=true,Callback=changed(key,callback)})
+        return register(key,widget,initial,callback)
     end
-    listen(UIS.InputChanged,function(event)
-        if draggingControl and (event.UserInputType==Enum.UserInputType.MouseMovement or event.UserInputType==Enum.UserInputType.Touch) then draggingControl(event.Position.X) end
-    end)
-    listen(UIS.InputEnded,function(event) if event.UserInputType==Enum.UserInputType.MouseButton1 or event.UserInputType==Enum.UserInputType.Touch then releaseControl() end end)
-    listen(UIS.WindowFocusReleased,releaseControl)
-    listen(panel:GetPropertyChangedSignal("Visible"),function() if not panel.Visible then releaseControl() end end)
     local function field(g,key,text,initial,callback)
-        local y=row(g,54)
-        label(g.frame,text,10,y,columnWidth-20,21,13)
-        local f=make("TextBox",{Position=UDim2.fromOffset(10,y+23),Size=UDim2.fromOffset(columnWidth-20,24),Text=tostring(initial or ""),PlaceholderText="ID or link",
-            ClearTextOnFocus=false,TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.BuilderSans,TextSize=13,TextColor3=white,PlaceholderColor3=muted,BackgroundColor3=black,BorderSizePixel=0},g.frame)
-        make("UIPadding",{PaddingLeft=UDim.new(0,5),PaddingRight=UDim.new(0,5)},f)
-        local edge=outline(f)
-        local function set(v,apply) put(key,v) f.Text=tostring(v or "") if apply then safe(callback,v) end end
-        listen(f.Focused,function() animate(edge,0.12,{Color=purple}) end)
-        listen(f.FocusLost,function() animate(edge,0.12,{Color=border}) set(f.Text,true) end)
-        set(initial,false) setters[key]=set return set
+        local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=true,Callback=changed(key,callback)})
+        return register(key,widget,initial,callback)
     end
     local function choice(g,key,text,values,initial,callback)
-        local y=row(g,49)
-        label(g.frame,text,10,y,columnWidth-20,21,13)
-        local b=make("TextButton",{Position=UDim2.fromOffset(10,y+22),Size=UDim2.fromOffset(columnWidth-20,22),Text="",Font=Enum.Font.BuilderSans,TextSize=13,
-            TextColor3=white,BackgroundColor3=black,BorderSizePixel=0,AutoButtonColor=false},g.frame)
-        local edge=outline(b)
-        local current=initial
-        local function set(v,apply) current=v put(key,v) b.Text=tostring(v).."  >" if apply then safe(callback,v) end end
-        listen(b.Activated,function()
-            local index=table.find(values,current) or 0
-            set(values[index%#values+1],true)
-        end)
-        listen(b.MouseEnter,function() animate(edge,0.12,{Color=purple}) end)
-        listen(b.MouseLeave,function() animate(edge,0.12,{Color=border}) end)
-        set(initial,false) setters[key]=set return set
-    end
-    local function action(g,text,fn)
-        local y=row(g,33) return button(g.frame,text,10,y,columnWidth-20,function() safe(fn) end)
-    end
-    -- Shared RGB picker, opened only while editing a color.
-    local picker=make("Frame",{Size=UDim2.fromOffset(225,146),BackgroundColor3=black,BorderSizePixel=0,Visible=false,ZIndex=800},gui)
-    outline(picker,purple)
-    local pickFields={}
-    local pickSet,pickColor
-    label(picker,"Color",10,3,180,22,14).ZIndex=801
-    local closePicker=make("TextButton",{Text="x",Position=UDim2.fromOffset(197,3),Size=UDim2.fromOffset(22,22),BackgroundTransparency=1,TextColor3=white,TextSize=14,ZIndex=801},picker)
-    listen(closePicker.Activated,function() picker.Visible=false end)
-    for index,name in ipairs({"R","G","B"}) do
-        label(picker,name,10,30+(index-1)*28,20,22,13).ZIndex=801
-        local f=make("TextBox",{Position=UDim2.fromOffset(38,30+(index-1)*28),Size=UDim2.fromOffset(172,22),Text="",Font=Enum.Font.Code,TextSize=13,ClearTextOnFocus=false,
-            BackgroundColor3=black,TextColor3=white,BorderSizePixel=0,ZIndex=801},picker)
-        outline(f) pickFields[index]=f
-        listen(f.FocusLost,function()
-            local rgb={pickColor.R*255,pickColor.G*255,pickColor.B*255}
-            rgb[index]=math.clamp(tonumber(f.Text) or rgb[index],0,255)
-            pickColor=Color3.fromRGB(rgb[1],rgb[2],rgb[3])
-            for i,input in ipairs(pickFields) do input.Text=tostring(math.round(rgb[i])) end
-            if pickSet then pickSet(pickColor,true) end
-        end)
+        local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
+        return register(key,widget,initial,callback)
     end
     local function color(g,key,text,initial,callback)
-        local y=row(g,29)
-        label(g.frame,text,10,y,columnWidth-92,24,13)
-        local swatch=make("TextButton",{Position=UDim2.fromOffset(columnWidth-72,y+3),Size=UDim2.fromOffset(62,19),Text="",BackgroundColor3=initial,BorderSizePixel=0,AutoButtonColor=false},g.frame)
-        outline(swatch)
-        local current=initial
-        local function set(v,apply) current=v put(key,v) swatch.BackgroundColor3=v if apply then safe(callback,v) end end
-        listen(swatch.Activated,function()
-            pickSet,pickColor=set,current
-            local pos=swatch.AbsolutePosition-gui.AbsolutePosition
-            local bounds=gui.AbsoluteSize
-            picker.Position=UDim2.fromOffset(math.clamp(pos.X-160,0,math.max(0,bounds.X-225)),math.clamp(pos.Y+24,0,math.max(0,bounds.Y-146)))
-            for i,v in ipairs({current.R,current.G,current.B}) do pickFields[i].Text=tostring(math.round(v*255)) end
-            picker.Visible=true
-        end)
-        set(initial,false) setters[key]=set return set
+        local widget=g:AddLabel(text):AddColorPicker(key,{Default=initial,Title=text,Callback=changed(key,callback)})
+        return register(key,widget,initial,callback,true)
     end
-    local oldChoose=chooseTab
-    chooseTab=function(name) releaseControl() picker.Visible=false oldChoose(name) end
-    listen(UIS.InputBegan,function(event) if event.KeyCode==Enum.KeyCode.RightShift then picker.Visible=false releaseControl() end end)
+    local function action(g,text,fn)
+        return g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
+    end
     local function resetPrefix(prefix)
         for key,state in pairs(controls) do
             if key:sub(1,#prefix)==prefix and type(state)=="boolean" and state and setters[key] then setters[key](false,true) end
         end
     end
+    local cameraGroup=group("Camera","Camera",1)
+    sliderControl(cameraGroup,"cameraFOV","FOV",30,120,selected,1,function(value)
+        selected=value fovChanged=true applyFOV()
+    end)
+    local skyGroup=group("Sky","Skybox",1)
+    field(skyGroup,"skyAsset","Skybox ID or link","",function(value) skyInput.Text=value end)
+    action(skyGroup,"Load",applyCustomSky)
+    toggle(skyGroup,"skyHaze","Remove haze",false,clearHaze)
+    action(skyGroup,"Reset sky",function()
+        restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
+    end)
     -- CAMERA
     local cameraSettings={mode=player.CameraMode,min=player.CameraMinZoomDistance,max=player.CameraMaxZoomDistance,occlusion=player.DevCameraOcclusionMode}
     local function updateThirdPerson(on)
@@ -1629,156 +1278,16 @@ local function buildVisualSystems()
             gui:Destroy()
         end)
     end
-    local categories={
-        {id="View",label="View",tabs={"Camera","Sky"},icon={{1,5,17,5},{17,5,17,16},{17,16,1,16},{1,16,1,5},{5,5,6,2},{6,2,12,2},{12,2,13,5},{6,8,12,8},{12,8,12,13},{12,13,6,13},{6,13,6,8}}},
-        {id="Graphics",label="Graphics",tabs={"Lighting","Particles","World"},icon=glyphs.Lighting},
-        {id="Character",label="Character",tabs={"Character"},icon=glyphs.Character},
-        {id="ESP",label="ESP",tabs={"ESP"},icon=glyphs.ESP},
-        {id="FTAP",label="FTAP",tabs={"Tweaks","Audio"},icon=glyphs.Tweaks},
-        {id="Settings",label="Settings",tabs={"Settings"},icon=glyphs.Settings}
-    }
-    for _,b in pairs(navButtons) do b.Visible=false end
-    local subbar=make("Frame",{Position=UDim2.fromOffset(58,49),Size=UDim2.fromOffset(contentWidth,28),BackgroundTransparency=1},panel)
-    local tabOwners,categoryButtons,subButtons={},{},{}
-    local remembered={}
-    local currentCategory="View"
-    local underlyingChoose=chooseTab
-    local selectCategory
-    local tooltip=make("Frame",{Visible=false,Size=UDim2.fromOffset(114,29),BackgroundColor3=selectedSurface,BorderSizePixel=0,ZIndex=850},panel)
-    outline(tooltip,purple)
-    local tooltipText=label(tooltip,"",10,2,96,25,13)
-    tooltipText.ZIndex=851
-    local function hideTooltip() tooltip.Visible=false end
-    listen(panel:GetPropertyChangedSignal("Visible"),hideTooltip)
-    for index,category in ipairs(categories) do
-        for _,tab in ipairs(category.tabs) do tabOwners[tab]=category end
-        local y=category.id=="Settings" and windowHeight-39-47 or 7+(index-1)*43
-        local b=make("TextButton",{Name="Nav"..category.id,Position=UDim2.fromOffset(5,y),Size=UDim2.fromOffset(35,36),Text="",AutoButtonColor=false,BackgroundColor3=black,BorderSizePixel=0},rail)
-        local edge=outline(b,purple)
-        edge.Transparency=1
-        local indicator=make("Frame",{Position=UDim2.fromOffset(-5,9),Size=UDim2.fromOffset(2,18),BackgroundColor3=purple,BorderSizePixel=0,Visible=false},b)
-        local icon=make("Frame",{Position=UDim2.fromOffset(8,9),Size=UDim2.fromOffset(18,18),BackgroundTransparency=1},b)
-        local strokes={}
-        for _,segment in ipairs(category.icon) do
-            table.insert(strokes,line(icon,segment[1],segment[2],segment[3],segment[4],muted,1.6))
-        end
-        categoryButtons[category.id]={button=b,edge=edge,indicator=indicator,strokes=strokes}
-        listen(b.Activated,function() hideTooltip() selectCategory(category.id) end)
-        listen(b.MouseEnter,function()
-            tooltipText.Text=category.label
-            tooltip.Position=UDim2.fromOffset(52,math.clamp(39+y+3,40,windowHeight-35))
-            tooltip.Visible=true
-            if currentCategory~=category.id then animate(b,0.12,{BackgroundColor3=surface}) end
-            for _,stroke in ipairs(strokes) do animate(stroke,0.12,{BackgroundColor3=purple}) end
-        end)
-        listen(b.MouseLeave,function()
-            hideTooltip()
-            local selected=currentCategory==category.id
-            animate(b,0.12,{BackgroundColor3=selected and selectedSurface or black})
-            for _,stroke in ipairs(strokes) do animate(stroke,0.12,{BackgroundColor3=selected and purple or muted}) end
-        end)
-    end
-    -- Reuse three subtab buttons rather than allocating a new UI on every switch.
-    for index=1,3 do
-        local entry={}
-        local b=make("TextButton",{Size=UDim2.fromOffset(140,27),Text="",Font=Enum.Font.BuilderSansMedium,TextSize=14,BackgroundColor3=black,TextColor3=muted,BorderSizePixel=0,AutoButtonColor=false},subbar)
-        entry.button=b entry.edge=outline(b,border)
-        subButtons[index]=entry
-        listen(b.Activated,function() if entry.name then chooseTab(entry.name) end end)
-        listen(b.MouseEnter,function() animate(entry.edge,0.12,{Color=purple}) end)
-        listen(b.MouseLeave,function() animate(entry.edge,0.12,{Color=entry.name==activeTab and purple or border}) end)
-    end
-    local function updateSubbar(category,selected)
-        local width=math.min(155,math.floor((contentWidth-(#category.tabs-1)*8)/#category.tabs))
-        for index,entry in ipairs(subButtons) do
-            local name=category.tabs[index]
-            entry.name=name
-            entry.button.Visible=name~=nil
-            if name then
-                entry.button.Position=UDim2.fromOffset((index-1)*(width+8),0)
-                entry.button.Size=UDim2.fromOffset(width,27)
-                entry.button.Text=name
-                entry.button.TextColor3=name==selected and white or muted
-                entry.button.BackgroundColor3=name==selected and selectedSurface or surface
-                entry.edge.Color=name==selected and purple or border
-            end
-        end
-    end
-    chooseTab=function(name)
-        local category=tabOwners[name]
-        if not category then return end
-        remembered[category.id]=name
-        currentCategory=category.id
-        releaseControl() picker.Visible=false
-        underlyingChoose(name)
-        hideTooltip()
-        for id,entry in pairs(categoryButtons) do
-            local selected=id==category.id
-            entry.indicator.Visible=selected
-            entry.edge.Transparency=selected and 0.65 or 1
-            animate(entry.button,0.12,{BackgroundColor3=selected and selectedSurface or black})
-            for _,stroke in ipairs(entry.strokes) do animate(stroke,0.12,{BackgroundColor3=selected and purple or muted}) end
-        end
-        updateSubbar(category,name)
-        brand.Text=category.label
-        subtitle.Text=name
-        heading.Text="Prime Visuals"
-        local page=pages[name]
-        page.Position=UDim2.fromOffset(58,88)
-        page.Size=UDim2.new(1,-70,1,-101)
-    end
-    selectCategory=function(id)
-        for _,category in ipairs(categories) do
-            if category.id==id then chooseTab(remembered[id] or category.tabs[1]) return end
-        end
-    end
-    rail.CanvasSize=UDim2.new()
-    -- Fold advanced groups and reflow both columns, instead of stacking every control onscreen.
-    local function reflowGroups()
-        for tab,r in pairs(registry) do
-            local left=tab=="Camera" and lensSection.Size.Y.Offset+12 or tab=="Sky" and customCard.Size.Y.Offset+12 or 0
-            local right=tab=="Sky" and configCard.Size.Y.Offset+12 or 0
-            for _,g in ipairs(allGroups) do
-                if g.tab==tab then
-                    local y=g.side==2 and right or left
-                    g.frame.Position=UDim2.fromOffset(g.side==2 and columnWidth+12 or 0,y)
-                    local height=g.collapsed and 29 or g.y+7
-                    g.frame.Size=UDim2.fromOffset(columnWidth,height)
-                    if g.side==2 then right=y+height+12 else left=y+height+12 end
-                end
-            end
-        end
-    end
-    for _,g in ipairs(allGroups) do
-        local title
-        for _,child in ipairs(g.frame:GetChildren()) do
-            if child:IsA("TextLabel") and child.Position.Y.Offset==3 then title=child break end
-        end
-        if title then title.Size=UDim2.fromOffset(columnWidth-42,23) end
-        local arrow=label(g.frame,"-",columnWidth-26,2,18,24,16,purple)
-        arrow.TextXAlignment=Enum.TextXAlignment.Center
-        local fold=make("TextButton",{Size=UDim2.new(1,0,0,29),Text="",BackgroundTransparency=1,AutoButtonColor=false},g.frame)
-        local visibility={}
-        local function foldGroup(collapsed)
-            g.collapsed=collapsed
-            arrow.Text=collapsed and "+" or "-"
-            for _,child in ipairs(g.frame:GetChildren()) do
-                if child:IsA("GuiObject") and child~=fold and child~=arrow and child.Position.Y.Offset>=29 then
-                    if collapsed then visibility[child]=child.Visible child.Visible=false
-                    elseif visibility[child]~=nil then child.Visible=visibility[child] end
-                end
-            end
-            reflowGroups()
-        end
-        listen(fold.Activated,function() foldGroup(not g.collapsed) end)
-        if (g.tab=="ESP" and g.title~="Visibility") or g.title=="Emission" or g.title=="Post-processing" then foldGroup(true) end
-    end
-    reflowGroups()
-    selectCategory("View")
 
+    building=false
+    -- Bind localization to the actual library UI; no duplicate custom control layer.
+    for _,object in ipairs(Library.ScreenGui:GetDescendants()) do bindLocalization(object) end
+    listen(Library.ScreenGui.DescendantAdded,bindLocalization)
+    categoryTabs.View:Show()
     -- Lightweight lifecycle handling. No scans run every frame.
     local elapsed=0
     job("Crosshair visibility",Run.RenderStepped,function()
+        menuOpen=Library.Toggled
         if controls.crossEnabled then crossGui.Enabled=not menuOpen end
         grabbedInfo.Enabled=controls.grabInfo and not menuOpen
     end)
@@ -1792,7 +1301,6 @@ local function buildVisualSystems()
     end)
     cleanupExtra=function()
         alive=false
-        releaseControl()
         for _,c in pairs(jobs) do c:Disconnect() end jobs={}
         for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
         restoreWater()
@@ -1801,12 +1309,27 @@ local function buildVisualSystems()
         end
         patches={}
         for o in pairs(owned) do pcall(function() o:Destroy() end) end owned={}
-        picker:Destroy()
     end
 end
+local function shutdown()
+    if closing then return end
+    closing=true
+    cleanupExtra()
+    restoreSky()
+    pcall(function() RunService:UnbindFromRenderStep(Library.ShowCursorBinding) end)
+    if not Library.Unloaded then
+        Library:Toggle(false)
+        Library:Unload()
+    end
+    for _,connection in ipairs(connections) do connection:Disconnect() end
+    for _,tween in pairs(tweens) do tween:Cancel() end
+    UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
+    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
+end
+gui.Destroying:Connect(shutdown)
+Library:OnUnload(function() if not closing and gui.Parent then gui:Destroy() end end)
 buildVisualSystems()
-
-setValue(selected,true)
-setMenu(true)
+Library:Toggle(true)
+menuOpen=true
 end
 startVisuals()
