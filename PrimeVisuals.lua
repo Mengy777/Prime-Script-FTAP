@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.6.1"
+local VERSION="1.7.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -1133,13 +1133,24 @@ local function buildVisualSystems()
     local categories={Players={},Server={},Sticky={},Blackholes={}}
     local espEntries={}
     local playerSelector
+    local playerLabels,playerImages={},{}
+    local function playerLabel(p) return (p.DisplayName or p.Name).." (@"..p.Name..")" end
+    local function playerHeadshot(p)
+        return p and p.UserId and string.format("rbxthumb://type=AvatarHeadShot&id=%s&w=48&h=48",tostring(p.UserId)) or ""
+    end
     local function playerSelected(p)
         return p~=player and (controls.espAllPlayers~=false or (controls.espSelectedPlayers or {})[p.Name]==true)
     end
     local function playerNames(excluded)
         local names={}
+        for name in pairs(playerLabels) do playerLabels[name]=nil end
+        for name in pairs(playerImages) do playerImages[name]=nil end
         for _,p in ipairs(Players:GetPlayers()) do
-            if p~=player and p~=excluded then table.insert(names,p.Name) end
+            if p~=player and p~=excluded then
+                table.insert(names,p.Name)
+                playerLabels[p.Name]=playerLabel(p)
+                playerImages[p.Name]=playerHeadshot(p)
+            end
         end
         table.sort(names,function(a,b) return a:lower()<b:lower() end)
         return names
@@ -1170,6 +1181,13 @@ local function buildVisualSystems()
         local hi=own(make("Highlight",{Name="PV_Highlight",Adornee=target,DepthMode=Enum.HighlightDepthMode.AlwaysOnTop},espRoot))
         local bill=own(make("BillboardGui",{Name="PV_Name",Adornee=part,AlwaysOnTop=true,Size=UDim2.fromOffset(240,38),StudsOffsetWorldSpace=Vector3.new(0,3,0)},espRoot))
         local text=make("TextLabel",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,TextColor3=white,TextStrokeTransparency=0,Font=Enum.Font.BuilderSans,TextSize=14},bill)
+        if category=="Players" and owner then
+            bill.Size=UDim2.fromOffset(360,38)
+            make("ImageLabel",{Name="PV_Avatar",Image=playerHeadshot(owner),BackgroundTransparency=1,
+                Size=UDim2.fromOffset(22,22),Position=UDim2.new(0,0,0.5,-11)},bill)
+            text.Position=UDim2.fromOffset(28,0) text.Size=UDim2.new(1,-28,1,0)
+            text.TextTruncate=Enum.TextTruncate.AtEnd
+        end
         local entry={target=target,category=category,owner=owner,part=part,hi=hi,bill=bill,text=text,objects={hi,bill}}
         if category=="Server" or category=="Sticky" then
             local selection=own(make("SelectionBox",{Adornee=part,Color3=white,SurfaceTransparency=1,LineThickness=0.03},espRoot))
@@ -1229,7 +1247,7 @@ local function buildVisualSystems()
                     local hi=e.hi hi.Enabled=cfg.highlight and not e.proxy hi.FillColor=fillColor hi.OutlineColor=cfg.outline hi.FillTransparency=cfg.fillAlpha hi.OutlineTransparency=cfg.outlineAlpha
                     e.bill.Enabled=cfg.names e.bill.StudsOffsetWorldSpace=Vector3.new(0,cfg.offset,0)
                     if e.category=="Server" then e.owner=nearestOwner(e.part) end
-                    local title=e.owner and e.owner.DisplayName or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
+                    local title=e.owner and (e.category=="Players" and playerLabel(e.owner) or e.owner.DisplayName) or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
                     if cfg.icon then title="[+] "..title end
                     e.text.Text=title e.text.TextSize=cfg.size e.text.TextColor3=cfg.text e.text.TextStrokeColor3=cfg.textOutline e.text.TextStrokeTransparency=cfg.textStroke
                     local font=cfg.font=="Code" and Enum.Font.Code or cfg.font=="Roboto" and Enum.Font.Roboto or cfg.bold and Enum.Font.BuilderSansBold or Enum.Font.BuilderSans
@@ -1271,6 +1289,9 @@ local function buildVisualSystems()
                 toggle(g,"espAllPlayers","All players",true,refreshESP)
                 playerSelector=g:AddDropdown("espSelectedPlayers",{
                     Text="Selected players",Values=playerNames(),Multi=true,AllowNull=true,
+                    ValueImages=playerImages,
+                    FormatListValue=function(name) return playerLabels[name] or name end,
+                    FormatDisplayValue=function(name) return playerLabels[name] or name end,
                     Callback=changed("espSelectedPlayers",refreshESP),
                 })
                 register("espSelectedPlayers",playerSelector,{},refreshESP)
@@ -1320,17 +1341,35 @@ local function buildVisualSystems()
     local lineTextures={Laser="rbxassetid://8922958725",Chain="rbxassetid://81358145120405",["Chain 2"]="rbxassetid://132910145874066",
         ["Chain 3"]="rbxassetid://128466395060514",["Chain 4"]="rbxassetid://73368670987191",Pulse="rbxassetid://82163767314193",Rope="rbxassetid://78999022056924",
         Dots="rbxassetid://9169659357",Bubbles="rbxassetid://1249690853",Spring="rbxassetid://18837732116",Gamepass="rbxassetid://8933355899",Default="rbxassetid://8933346550"}
+    local lineBeams={}
+    local function lineRainbowColor()
+        return ColorSequence.new(Color3.fromHSV((os.clock()*0.12)%1,1,1))
+    end
     local function applyLine()
-        unpatch("line")
+        job("Grab line rainbow")
+        unpatch("line") lineBeams={}
         if not controls.lineEnabled then return end
         local grab=Workspace:FindFirstChild("GrabParts")
         if not grab then return end
+        local tint=controls.lineRainbow and lineRainbowColor() or ColorSequence.new(controls.lineColor or white)
         for _,beam in ipairs(grab:GetDescendants()) do
             if beam:IsA("Beam") then
+                lineBeams[beam]=true
                 patch("line",beam,"Texture",lineTextures[controls.lineTexture] or imageId(controls.lineImage))
-                patch("line",beam,"Color",ColorSequence.new(controls.lineColor or white))
+                patch("line",beam,"Color",tint)
                 patch("line",beam,"TextureSpeed",controls.lineSpeed or 1)
             end
+        end
+        if controls.lineRainbow and next(lineBeams) then
+            local elapsed=0
+            job("Grab line rainbow",Run.Heartbeat,function(dt)
+                elapsed=elapsed+dt if elapsed<1/30 then return end elapsed=0
+                local color=lineRainbowColor()
+                for beam in pairs(lineBeams) do
+                    if beam:IsDescendantOf(grab) then patch("line",beam,"Color",color) else lineBeams[beam]=nil end
+                end
+                if not next(lineBeams) then job("Grab line rainbow") end
+            end)
         end
     end
     local grabbedInfo=own(make("ScreenGui",{Name="PrimeVisualsGrabInfo",ResetOnSpawn=false,Enabled=false,DisplayOrder=800},playerGui))
@@ -1405,12 +1444,18 @@ local function buildVisualSystems()
         local g=group("Tweaks","Grab line",1)
         toggle(g,"lineEnabled","Custom line",false,function(on)
             job("Grab line") applyLine()
-            if on then job("Grab line",Workspace.DescendantAdded,function(o) if o:IsA("Beam") and o.Name=="GrabBeam" then task.defer(function() if alive then applyLine() end end) end end) end
+            if on then job("Grab line",Workspace.DescendantAdded,function(o)
+                if o:IsA("Beam") then task.defer(function()
+                    local grab=Workspace:FindFirstChild("GrabParts")
+                    if alive and controls.lineEnabled and grab and o:IsDescendantOf(grab) then applyLine() end
+                end) end
+            end) end
         end)
         local lineSettings=featureSettings("lineEnabled")
         choice(lineSettings,"lineTexture","Texture",{"Laser","Chain","Chain 2","Chain 3","Chain 4","Pulse","Rope","Dots","Bubbles","Spring","Gamepass","Default","Custom"},"Chain",applyLine)
         field(lineSettings,"lineImage","Custom image","8922958725",applyLine)
         color(lineSettings,"lineColor","Color",white,applyLine)
+        toggle(lineSettings,"lineRainbow","Rainbow",false,applyLine)
         sliderControl(lineSettings,"lineSpeed","Texture speed",-10,10,1,0.25,applyLine)
         toggle(g,"grabInfo","Grabbed object info",false,function(on)
             grabbedInfo.Enabled=on job("Grab info")
