@@ -1,11 +1,11 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.3.0"
+local VERSION="1.4.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
     local filename=name=="Library" and "Obsidian" or name
     if not sourceCache[name] then
-        sourceCache[name]=game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/main/lib/"..filename..".lua")
+        sourceCache[name]=game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/lib/"..filename..".lua")
     end
     local chunk,message=loadstring(sourceCache[name],"PrimeVisuals/"..filename)
     assert(chunk,message)
@@ -537,6 +537,9 @@ local function buildVisualSystems()
         local widget=g:AddToggle(key,{Text=text,Default=initial,Callback=changed(key,callback)})
         return register(key,widget,initial,callback)
     end
+    local function featureSettings(key)
+        return Library:AddFeatureSettings(widgets[key])
+    end
     local function sliderControl(g,key,text,low,high,initial,step,callback)
         local rounding=step>=1 and 0 or step>=0.1 and 1 or step>=0.01 and 2 or 3
         local widget=g:AddSlider(key,{Text=text,Min=low,Max=high,Default=initial,Rounding=rounding,AllowRightClickInput=true,Callback=changed(key,callback)})
@@ -586,7 +589,7 @@ local function buildVisualSystems()
     do
         local g=group("Camera","View",2)
         toggle(g,"camThird","Third person [3]",false,updateThirdPerson)
-        sliderControl(g,"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
+        sliderControl(featureSettings("camThird"),"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
         toggle(g,"camNoclip","Camera noclip",false,function(on)
             job("Camera noclip")
             if not on then return end
@@ -630,7 +633,7 @@ local function buildVisualSystems()
                 end
             end)
         end)
-        sliderControl(g,"camBodyAlpha","Limb transparency",0,1,0.3,0.05,function() end)
+        sliderControl(featureSettings("camBody"),"camBodyAlpha","Limb transparency",0,1,0.3,0.05,function() end)
         listen(UIS.InputBegan,function(event,processed)
             if not processed and not UIS:GetFocusedTextBox() and event.KeyCode==Enum.KeyCode.Three then setters.camThird(not controls.camThird,true) end
         end)
@@ -659,13 +662,14 @@ local function buildVisualSystems()
     do
         local g=group("Lighting","Color and light",1)
         toggle(g,"lightEnabled","Shaders",false,shaders)
+        g=featureSettings("lightEnabled")
         local function update() if controls.lightEnabled then shaders(true) end end
         sliderControl(g,"lightBrightness","Brightness",0,5,2,0.05,update)
         sliderControl(g,"lightExposure","Exposure",-3,3,0,0.05,update)
         sliderControl(g,"lightSaturation","Saturation",-1,1,0.15,0.05,update)
         sliderControl(g,"lightContrast","Contrast",-1,1,0.05,0.05,update)
         color(g,"lightTint","Tint",Color3.new(1,1,1),update)
-        local h=group("Lighting","Post-processing",2)
+        local h=g
         sliderControl(h,"lightBloom","Bloom",0,3,0.25,0.05,update)
         sliderControl(h,"lightRays","Sun rays",0,1,0.03,0.01,update)
         sliderControl(h,"lightBlur","Blur",0,24,0,0.5,update)
@@ -689,7 +693,7 @@ local function buildVisualSystems()
             else sky.SunAngularSize=0 end
         end)
         sliderControl(g,"skyTime","Time of day",0,24,originalClock,0.1,function(v) patch("skytime",Lighting,"ClockTime",v) end)
-        sliderControl(g,"skySun","Sun size",0,60,sourceSky and sourceSky.SunAngularSize or 21,0.5,function(v)
+        sliderControl(featureSettings("skySunVisible"),"skySun","Sun size",0,60,sourceSky and sourceSky.SunAngularSize or 21,0.5,function(v)
             if controls.skySunVisible then ensureSky().SunAngularSize=v end
         end)
         action(g,"Reset time and sun",function()
@@ -726,6 +730,7 @@ local function buildVisualSystems()
             patch("clouds",cloud,"Color",controls.skyCloudColor or Color3.new(1,1,1))
         end
         toggle(h,"skyClouds","Clouds",false,updateClouds)
+        h=featureSettings("skyClouds")
         local function update() if controls.skyClouds then updateClouds(true) end end
         sliderControl(h,"skyCloudDensity","Density",0,1,0.5,0.05,update)
         sliderControl(h,"skyCloudCover","Cover",0,1,0.5,0.05,update)
@@ -765,11 +770,12 @@ local function buildVisualSystems()
     do
         local g=group("Particles","Particles",1)
         toggle(g,"particleEnabled","Particles",false,updateParticles)
+        g=featureSettings("particleEnabled")
         local function update() if controls.particleEnabled then updateParticles(true) end end
         choice(g,"particleTexture","Texture",{"Circles","Snowflakes","Prime","Custom"},"Circles",update)
         field(g,"particleImage","Custom image","242109931",update)
         color(g,"particleColor","Color",purple,update)
-        local h=group("Particles","Emission",2)
+        local h=g
         sliderControl(h,"particleCount","Count per second",10,5000,150,10,update)
         sliderControl(h,"particleLimit","Performance cap",100,5000,1000,100,update)
         sliderControl(h,"particleSize","Size",0.05,5,0.15,0.05,update)
@@ -927,6 +933,7 @@ local function buildVisualSystems()
             startWaterWorker()
         end)
         local function update() if controls.waterEnabled then waterSettings() end end
+        g=featureSettings("waterEnabled")
         color(g,"waterColor","Color",Color3.fromRGB(35,135,190),update)
         sliderControl(g,"waterWaves","Wave size",0,1,0.15,0.05,update)
         sliderControl(g,"waterSpeed","Wave speed",0,100,10,1,update)
@@ -956,6 +963,7 @@ local function buildVisualSystems()
     do
         local g=group("World","Performance",2)
         toggle(g,"fpsEnabled","Boost FPS",false,refreshFPS)
+        g=featureSettings("fpsEnabled")
         local function update() if controls.fpsEnabled then refreshFPS(true) end end
         toggle(g,"fpsMaterials","Simplify materials",true,update)
         toggle(g,"fpsTextures","Hide textures",true,update)
@@ -994,6 +1002,7 @@ local function buildVisualSystems()
                 job("Character finish",Run.Heartbeat,function(dt) elapsed=elapsed+dt if elapsed>0.15 then elapsed=0 paintCharacter() end end)
             end
         end)
+        g=featureSettings("characterEnabled")
         color(g,"characterColor","Color",purple,paintCharacter)
         toggle(g,"characterRainbow","Rainbow",false,paintCharacter)
         toggle(g,"characterBody","Affect character",true,paintCharacter)
@@ -1018,6 +1027,7 @@ local function buildVisualSystems()
             end)
         end
         toggle(h,"hatEnabled","Cone hat",false,updateHat)
+        h=featureSettings("hatEnabled")
         color(h,"hatColor","Color",purple,function() end)
         toggle(h,"hatRainbow","Rainbow",false,function() end)
         sliderControl(h,"hatSize","Width",1,8,3,0.1,function() end)
@@ -1159,15 +1169,18 @@ local function buildVisualSystems()
     do
         local g=group("ESP","Visibility",1)
         for _,entry in ipairs({{"espPlayers","Players"},{"espServer","Server detectors"},{"espSticky","Stickies"},{"espBlackholes","Blackholes"}}) do toggle(g,entry[1],entry[2],false,refreshESP) end
-        toggle(g,"espAllPlayers","All players",true,refreshESP)
-        playerSelector=g:AddDropdown("espSelectedPlayers",{
-            Text="Selected players",Values=playerNames(),Multi=true,AllowNull=true,
-            Callback=changed("espSelectedPlayers",refreshESP),
-        })
-        register("espSelectedPlayers",playerSelector,{},refreshESP)
         local function config(category,side)
             local cfg=categories[category]
-            local g=group("ESP",category,side)
+            local masterKeys={Players="espPlayers",Server="espServer",Sticky="espSticky",Blackholes="espBlackholes"}
+            local g=featureSettings(masterKeys[category])
+            if category=="Players" then
+                toggle(g,"espAllPlayers","All players",true,refreshESP)
+                playerSelector=g:AddDropdown("espSelectedPlayers",{
+                    Text="Selected players",Values=playerNames(),Multi=true,AllowNull=true,
+                    Callback=changed("espSelectedPlayers",refreshESP),
+                })
+                register("espSelectedPlayers",playerSelector,{},refreshESP)
+            end
             if category=="Server" then toggle(g,"espServerSmooth","Smooth movement",true,function(v) cfg.smooth=v end) end
             toggle(g,"esp"..category.."Highlight","Highlight",true,function(v) cfg.highlight=v end)
             color(g,"esp"..category.."Fill","Fill",cfg.fill,function(v) cfg.fill=v end)
@@ -1300,10 +1313,11 @@ local function buildVisualSystems()
             job("Grab line") applyLine()
             if on then job("Grab line",Workspace.DescendantAdded,function(o) if o:IsA("Beam") and o.Name=="GrabBeam" then task.defer(function() if alive then applyLine() end end) end end) end
         end)
-        choice(g,"lineTexture","Texture",{"Laser","Chain","Chain 2","Chain 3","Chain 4","Pulse","Rope","Dots","Bubbles","Spring","Gamepass","Default","Custom"},"Chain",applyLine)
-        field(g,"lineImage","Custom image","8922958725",applyLine)
-        color(g,"lineColor","Color",white,applyLine)
-        sliderControl(g,"lineSpeed","Texture speed",-10,10,1,0.25,applyLine)
+        local lineSettings=featureSettings("lineEnabled")
+        choice(lineSettings,"lineTexture","Texture",{"Laser","Chain","Chain 2","Chain 3","Chain 4","Pulse","Rope","Dots","Bubbles","Spring","Gamepass","Default","Custom"},"Chain",applyLine)
+        field(lineSettings,"lineImage","Custom image","8922958725",applyLine)
+        color(lineSettings,"lineColor","Color",white,applyLine)
+        sliderControl(lineSettings,"lineSpeed","Texture speed",-10,10,1,0.25,applyLine)
         toggle(g,"grabInfo","Grabbed object info",false,function(on)
             grabbedInfo.Enabled=on job("Grab info")
             if on then
@@ -1313,15 +1327,16 @@ local function buildVisualSystems()
         end)
         local h=group("Tweaks","Crosshair",2)
         toggle(h,"crossEnabled","Custom crosshair",false,crosshair)
+        h=featureSettings("crossEnabled")
         local function update() if controls.crossEnabled then crosshair(true) end end
         field(h,"crossImage","Image","9943168532",update)
         color(h,"crossColor","Color",white,update)
         sliderControl(h,"crossSize","Size",8,128,28,1,update)
         local b=group("Tweaks","Blackholes",1)
         toggle(b,"bhImageEnabled","Custom image",false,blackholeLoop)
-        field(b,"bhImage","Image","9920612764",function() unpatch("blackhole") blackholeLoop() end)
+        field(featureSettings("bhImageEnabled"),"bhImage","Image","9920612764",function() unpatch("blackhole") blackholeLoop() end)
         toggle(b,"bhTintEnabled","Custom color",false,blackholeLoop)
-        color(b,"bhColor","Color",white,function() unpatch("blackhole") blackholeLoop() end)
+        color(featureSettings("bhTintEnabled"),"bhColor","Color",white,function() unpatch("blackhole") blackholeLoop() end)
         toggle(b,"bhStay","Keep visual blackholes",false,blackholeLoop)
     end
     -- AUDIO: category mutes and custom blackhole audio.
@@ -1379,6 +1394,7 @@ local function buildVisualSystems()
             if on then controls.bhSoundResolved=resolveSound(controls.bhSound or "1843529634") end
             blackholeLoop()
         end)
+        h=featureSettings("bhSoundEnabled")
         field(h,"bhSound","Audio ID / MP3 link","1843529634",function(v)
             if controls.bhSoundEnabled then
                 task.spawn(function()

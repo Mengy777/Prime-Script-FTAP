@@ -10280,6 +10280,115 @@ do
     end
 end
 
+-- Feature parameter panels share native Obsidian controls without competing with
+-- the dropdown/color-picker context menu. Only one feature panel is open at once.
+local ActiveFeatureSettings
+function Library:AddFeatureSettings(Toggle, Info)
+    Info = Info or {}
+    local Panel = New("Frame", {
+        Name = "FeatureSettings", BackgroundColor3 = "BackgroundColor",
+        Size = UDim2.fromOffset(312, 100), Visible = false, Active = true,
+        ZIndex = 1, Parent = Floats,
+    })
+    Library:AddOutline(Panel)
+    table.insert(Library.DraggableElements, Panel)
+    local Scale = New("UIScale", { Scale = Library.DPIScale, Parent = Panel })
+    table.insert(Library.Scales, Scale)
+    local Header = New("TextLabel", {
+        BackgroundTransparency = 1, Position = UDim2.fromOffset(10, 0),
+        Size = UDim2.new(1, -44, 0, 32), Text = Toggle.Text,
+        TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
+    })
+    local CloseButton = New("TextButton", {
+        BackgroundTransparency = 1, Position = UDim2.new(1, -32, 0, 0),
+        Size = UDim2.fromOffset(32, 32), Text = "×", TextSize = 20, Parent = Panel,
+    })
+    local Body = New("ScrollingFrame", {
+        BackgroundTransparency = 1, BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 32), Size = UDim2.new(1, 0, 1, -32),
+        CanvasSize = UDim2.fromOffset(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollBarThickness = 3, ScrollBarImageColor3 = "AccentColor",
+        ScrollingDirection = Enum.ScrollingDirection.Y, Parent = Panel,
+    })
+    New("UIPadding", {
+        PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), Parent = Body,
+    })
+    local List = New("UIListLayout", { Padding = UDim.new(0, 8), Parent = Body })
+    local Settings = setmetatable({
+        Type = "FeatureSettings", Container = Body, Holder = Panel, BoxHolder = Panel,
+        Elements = {}, DependencyBoxes = {}, Connections = {}, Destroyed = false,
+        Visible = true, Owner = Toggle,
+    }, BaseGroupbox)
+    function Settings:Resize()
+        local DPI = math.max(Library.DPIScale, 0.1)
+        local View = Floats.AbsoluteSize
+        local Width = math.min(312, math.max(100, (View.X - 16) / DPI))
+        local Height = math.min(List.AbsoluteContentSize.Y / DPI + 18,
+            math.max(40, math.min(460, (View.Y - 24) / DPI - 32)))
+        Panel.Size = UDim2.fromOffset(Width, Height + 32)
+    end
+    function Settings:Close()
+        Panel.Visible = false
+        if ActiveFeatureSettings == Settings then ActiveFeatureSettings = nil end
+        if Settings.Watch then Settings.Watch:Disconnect() Settings.Watch = nil end
+        if CurrentMenu and CurrentMenu.Holder:IsDescendantOf(Panel) then CurrentMenu:Close() end
+    end
+    local function OwnerVisible()
+        local Parent = Toggle.Holder
+        while Parent and Parent ~= ScreenGui do
+            if Parent:IsA("GuiObject") and not Parent.Visible then return false end
+            Parent = Parent.Parent
+        end
+        return Parent == ScreenGui
+    end
+    function Settings:Open()
+        if Settings.Destroyed or not Library.Toggled or not Toggle.Value or not OwnerVisible() then return end
+        if ActiveFeatureSettings == Settings then Settings:Close() return end
+        if ActiveFeatureSettings then ActiveFeatureSettings:Close() end
+        if CurrentMenu then CurrentMenu:Close() end
+        Header.Text = Toggle.TextLabel.Text
+        Settings:Resize()
+        local View, DPI = Floats.AbsoluteSize, Library.DPIScale
+        local Origin = Toggle.Holder.AbsolutePosition - Floats.AbsolutePosition
+        local X, Y = Origin.X + Toggle.Holder.AbsoluteSize.X + 8, Origin.Y
+        if X + Panel.Size.X.Offset * DPI > View.X - 8 then X = Origin.X - Panel.Size.X.Offset * DPI - 8 end
+        X = math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8))
+        Y = math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8))
+        Panel.Position = UDim2.fromOffset(X, Y)
+        Panel.Visible = true
+        ActiveFeatureSettings = Settings
+        Settings.Watch = RunService.Heartbeat:Connect(function()
+            if not Library.Toggled or not Toggle.Value or not OwnerVisible() then Settings:Close() end
+        end)
+    end
+    function Settings:Destroy()
+        if Settings.Destroyed then return end
+        Settings:Close()
+        Settings.Destroyed = true
+        local Index = table.find(Library.DraggableElements, Panel)
+        if Index then table.remove(Library.DraggableElements, Index) end
+        for _, Element in Settings.Elements do if Element.Destroy then Element:Destroy() end end
+        Panel:Destroy()
+    end
+    Library:OnUnload(function() Settings:Destroy() end)
+    Library:GiveSignal(List:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Settings:Resize() end))
+    Library:GiveSignal(Toggle.Holder.MouseButton2Click:Connect(function() Settings:Open() end))
+    Library:GiveSignal(CloseButton.MouseButton1Click:Connect(function() Settings:Close() end))
+    Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input)
+        if ActiveFeatureSettings ~= Settings then return end
+        if Input.KeyCode == Enum.KeyCode.Escape then
+            Settings:Close()
+        elseif Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.MouseButton2 then
+            local Point = UserInputService:GetMouseLocation()
+            if Library:MouseIsOverFrame(Panel, Point) or Library:MouseIsOverFrame(Toggle.Holder, Point) then return end
+            if CurrentMenu and (Library:MouseIsOverFrame(CurrentMenu.Menu, Point) or Library:MouseIsOverFrame(CurrentMenu.Holder, Point)) then return end
+            Settings:Close()
+        end
+    end))
+    return Settings
+end
+
 function Library:SetFont(FontFace)
     if typeof(FontFace) == "EnumItem" then
         FontFace = Font.fromEnum(FontFace :: any)
