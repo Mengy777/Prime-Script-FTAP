@@ -1,7 +1,36 @@
--- Prime Vortex 0.2.1 | UI shell only. No gameplay hooks or features.
-local VERSION="0.2.1"
-local UI_TAG="vortex-v0.2.1"
+-- Prime Vortex 0.2.2 | UI shell only. No gameplay hooks or features.
+local VERSION="0.2.2"
+local UI_TAG="vortex-v0.2.2"
 local BASE="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/lib/"
+local function cleanupFailedStartup(state)
+    state.Alive=false
+    for _,key in ipairs({"SuppressSave","Close","CleanupEffects","RestoreSky"}) do
+        if type(state[key])=="function" then pcall(state[key]) end
+    end
+    for _,connection in ipairs(type(state.Connections)=="table" and state.Connections or {}) do pcall(function() connection:Disconnect() end) end
+    local library=state.Library
+    if type(library)=="table" then
+        if type(library.Unload)=="function" and not library.Unloaded then pcall(library.Unload,library) end
+        for _,connection in pairs(type(library.Signals)=="table" and library.Signals or {}) do pcall(function() connection:Disconnect() end) end
+        if library.ScreenGui then pcall(function() library.ScreenGui:Destroy() end) end
+        if state.Input and library.ShowCursorBinding then
+            pcall(function() game:GetService("RunService"):UnbindFromRenderStep(library.ShowCursorBinding) end)
+        end
+    end
+    if state.Gui then pcall(function() state.Gui:Destroy() end) end
+    if state.Input then pcall(function() state.Input.MouseBehavior=state.MouseBehavior state.Input.MouseIconEnabled=state.MouseIconEnabled end) end
+    for camera,value in pairs(type(state.CameraFOVs)=="table" and state.CameraFOVs or {}) do pcall(function() camera.FieldOfView=value end) end
+    if type(state.Environment)=="table" and state.Environment.Library==library then state.Environment.Library=nil end
+end
+local function reportStartupFailure(title,message)
+    warn(title.." startup: "..tostring(message))
+    return pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title=title,
+            Text="Не удалось загрузить обязательные компоненты. Повтори запуск. Подробности в консоли.",Duration=8})
+    end)
+end
+local startup={Alive=true}
+local function startVortex()
 local env=(getgenv and getgenv()) or shared
 local previous=env.PrimeVortexUI
 if type(previous)=="table" and type(previous.Unload)=="function" then previous:Unload() end
@@ -11,12 +40,37 @@ local privateEnv={}
 local moduleCache={}
 local function loadModule(name)
     local file=name=="Library" and "Obsidian" or name
-    if not moduleCache[name] then moduleCache[name]=game:HttpGet(BASE..file..".lua") end
-    local chunk,message=loadstring("return function(getgenv, ...)\n"..moduleCache[name].."\nend","PrimeVortex/"..file)
-    assert(chunk,message)
-    return chunk()(function() return privateEnv end,loadModule)
+    local chunk,source,message
+    for attempt=1,3 do
+        if not startup.Alive then error("Prime Vortex module load cancelled",0) end
+        source=moduleCache[name]
+        if not source then
+            local url=BASE..file..".lua"..(attempt>1 and "?retry="..attempt or "")
+            local ok,result=pcall(game.HttpGet,game,url)
+            if ok and type(result)=="string" and result:find("%S") then source=result else message=tostring(result) end
+        end
+        if source then
+            local compiled,result,detail=pcall(loadstring,"return function(getgenv, ...)\n"..source.."\nend","PrimeVortex/"..file)
+            if compiled then chunk,message=result,detail else chunk,message=nil,result end
+        end
+        if chunk then break end
+        moduleCache[name]=nil
+        if attempt<3 then task.wait(0.35*attempt) end
+    end
+    if not chunk then error("Prime Vortex module "..file.." unavailable after 3 attempts: "..tostring(message),0) end
+    if not startup.Alive then error("Prime Vortex module load cancelled",0) end
+    local ok,result=pcall(function() return chunk()(function() return privateEnv end,loadModule,
+        function(library) startup.Library=library end) end)
+    if not ok then moduleCache[name]=nil error("Prime Vortex module "..file.." failed: "..tostring(result),0) end
+    moduleCache[name]=source
+    return result
 end
+startup.Environment=privateEnv
+startup.Input=game:GetService("UserInputService")
+startup.MouseBehavior=startup.Input.MouseBehavior startup.MouseIconEnabled=startup.Input.MouseIconEnabled
 local Library=loadModule("Library")
+if type(Library)=="table" then startup.Library=Library end
+assert(type(Library)=="table" and type(Library.CreateWindow)=="function","Obsidian returned an invalid library")
 local Run=game:GetService("RunService")
 local Workspace=game:GetService("Workspace")
 local red=Color3.fromRGB(235,39,54)
@@ -35,7 +89,8 @@ local function connect(signal,fn) local c=signal:Connect(fn) table.insert(connec
 local function cleanup()
     if controller.Unloaded then return end
     controller.Unloaded=true
-    if controller.Artwork then controller.Artwork:Destroy() end
+    startup.Alive=false
+    if controller.Artwork then pcall(function() controller.Artwork:Destroy() end) end
     for _,c in ipairs(connections) do c:Disconnect() end connections={}
     if env.PrimeVortexUI==controller then env.PrimeVortexUI=nil end
 end
@@ -44,6 +99,8 @@ function controller:Unload()
     cleanup()
     if not Library.Unloaded then Library:Unload() end
 end
+startup.Close=function() controller:Unload() end
+startup.Connections=connections
 Library:OnUnload(cleanup)
 local function make(class,properties,parent)
     local object=Instance.new(class)
@@ -51,6 +108,36 @@ local function make(class,properties,parent)
     object.Parent=parent
     return object
 end
+    local function optionalArtwork(options)
+        local before={}
+        for _,parent in ipairs({options.Parent,options.Header}) do
+            before[parent]={}
+            for _,child in ipairs(parent:GetChildren()) do before[parent][child]=true end
+        end
+        local saved={}
+        if options.Header then
+            for _,property in ipairs({"Image","ImageTransparency","ImageColor3","ImageRectOffset","ImageRectSize"}) do saved[property]=options.Header[property] end
+        end
+        local ok,result=pcall(function()
+            local factory=loadModule("AnimatedEmblem")
+            assert(type(factory)=="function","Invalid artwork module")
+            local artwork=factory(options)
+            assert(type(artwork)=="table" and artwork.Root and type(artwork.Step)=="function" and type(artwork.Destroy)=="function","Invalid artwork controller")
+            return artwork
+        end)
+        if ok then return result end
+        for parent,existing in pairs(before) do
+            for _,child in ipairs(parent:GetChildren()) do if not existing[child] then pcall(function() child:Destroy() end) end end
+        end
+        if options.Header then for property,value in pairs(saved) do pcall(function() options.Header[property]=value end) end end
+        warn("Optional artwork disabled: "..tostring(result))
+        if options.IsAlive and not options.IsAlive() then error("Artwork load cancelled",0) end
+        Library:Notify("Artwork is unavailable. The rest of the menu still works.",5)
+        local root=make("Frame",{Name="ArtworkUnavailable",BackgroundTransparency=1,
+            AnchorPoint=Vector2.new(0.5,0.5),Position=options.Position or UDim2.fromScale(0.5,0.5),
+            Size=options.Size or UDim2.fromScale(0.92,0.96)},options.Parent)
+        return {Root=root,Unavailable=true,Step=function() end,Destroy=function() root:Destroy() end}
+    end
 local ok,err=xpcall(function()
     local viewport=Workspace.CurrentCamera and Workspace.CurrentCamera.ViewportSize or Vector2.new(1280,720)
     local window=Library:CreateWindow({
@@ -70,7 +157,7 @@ local ok,err=xpcall(function()
         Size=UDim2.new(1,-16,1,-12),Position=UDim2.fromOffset(8,6),ClipsDescendants=true},tab.Container)
     make("Frame",{BackgroundColor3=red,BackgroundTransparency=0.3,BorderSizePixel=0,
         Size=UDim2.new(1,0,0,1)},canvas)
-    local artwork=loadModule("AnimatedEmblem")({Parent=canvas,Header=window.IconHolder,
+    local artwork=optionalArtwork({Parent=canvas,Header=window.IconHolder,
         Name="VortexDemon",Style="demon",Accent=red,
         Position=UDim2.fromScale(0.5,0.42),Size=UDim2.new(0.74,0,0.6,0),
         URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/assets/vortex-demon-v1.png",
@@ -129,5 +216,18 @@ local ok,err=xpcall(function()
     tab:Show()
     Library:Toggle(true)
 end,debug.traceback)
-if not ok then controller:Unload() error(err,0) end
+if not ok then
+    if startup.Alive then startup.Failed=true end
+    controller:Unload() error(err,0)
+end
 return controller
+end
+local ok,result=xpcall(startVortex,debug.traceback)
+if not ok then
+    local cancelled=not startup.Alive and not startup.Failed
+    cleanupFailedStartup(startup)
+    local reported=true
+    if not cancelled then reported=reportStartupFailure("Prime Vortex",result) end
+    return nil,result,reported
+end
+return result

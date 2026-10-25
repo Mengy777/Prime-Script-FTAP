@@ -1,4 +1,4 @@
-local requireModule = ...
+local requireModule, registerStartup = ...
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -1619,6 +1619,7 @@ local ScreenGui = New("ScreenGui", {
 })
 ParentUI(ScreenGui)
 Library.ScreenGui = ScreenGui
+if type(registerStartup)=="function" then registerStartup(Library) end
 
 ScreenGui.DescendantRemoving:Connect(function(Instance)
     task.defer(function()

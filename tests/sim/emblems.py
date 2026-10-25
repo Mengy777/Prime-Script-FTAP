@@ -47,3 +47,18 @@ E=FACTORY(OPTIONS('phoenix')); PENDING[1]()
 assert(E.Destroyed and WRITES==previousWrites)
 ''')
 print('PASS opaque static PNG without IsLoaded gate, compact rainbow/spinning header marks, cache/retry transport, hidden pause and unload cleanup')
+
+lua.execute(r"""
+task.spawn=function(fn)fn()end
+CACHE={} PNG_ATTEMPTS=0
+request=nil
+game.HttpGet=function()
+ PNG_ATTEMPTS=PNG_ATTEMPTS+1
+ if PNG_ATTEMPTS<3 then error('temporary image HTTP failure') end
+ return PNG
+end
+F=FACTORY(OPTIONS('phoenix'))
+assert(F.TextureReady and PNG_ATTEMPTS==3 and F.Base.ImageTransparency==0)
+F:Destroy()
+""")
+print('PASS transient PNG download failure succeeds on the third bounded attempt')

@@ -76,15 +76,25 @@ return function(options)
             local path=folder.."/"..options.CacheName
             local cached,data=pcall(readfile,path)
             if not cached or not valid(data) then
-                local fetched,body=pcall(game.HttpGet,game,options.URL)
-                if fetched and valid(body) then data=body
-                else
-                    local fetch=request or http_request or (type(syn)=="table" and syn.request)
-                    assert(type(fetch)=="function","Image HTTP download failed")
-                    local response=fetch({Url=options.URL,Method="GET"})
-                    data=response and response.Body
+                local lastError
+                for attempt=1,3 do
+                    if not isAlive() then return end
+                    local url=options.URL..(attempt>1 and "?retry="..attempt or "")
+                    local fetched,body=pcall(game.HttpGet,game,url)
+                    if not isAlive() then return end
+                    if fetched and valid(body) then data=body
+                    else
+                        lastError=body
+                        local fetch=request or http_request or (type(syn)=="table" and syn.request)
+                        if type(fetch)=="function" then
+                            local sent,response=pcall(fetch,{Url=url,Method="GET"})
+                            if sent and response then data=response.Body else lastError=response end
+                        end
+                    end
+                    if valid(data) then break end
+                    if attempt<3 then task.wait(0.35*attempt) end
                 end
-                assert(valid(data),"Downloaded image is not the expected PNG")
+                assert(valid(data),"PNG download failed after 3 attempts: "..tostring(lastError))
                 if not isAlive() then return end
                 for _,directory in ipairs(options.Folders or {"PrimeVortex","PrimeVortex/Assets"}) do if not isfolder(directory) then makefolder(directory) end end
                 writefile(path,data) assert(valid(readfile(path)),"Image cache verification failed")

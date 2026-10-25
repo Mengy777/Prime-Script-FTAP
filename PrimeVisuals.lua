@@ -1,19 +1,69 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.1"
+local VERSION="2.1.2"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
 local sourceCache={}
-local function loadUIModule(name)
+local function loadUIModule(name,state)
     local filename=name=="Library" and "Obsidian" or name
-    if not sourceCache[name] then
-        sourceCache[name]=game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/lib/"..filename..".lua")
+    local chunk,source,message
+    for attempt=1,3 do
+        if state and not state.Alive then error("Prime Visuals module load cancelled",0) end
+        source=sourceCache[name]
+        if not source then
+            local url="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/lib/"..filename..".lua"
+            if attempt>1 then url=url.."?retry="..attempt end
+            local ok,result=pcall(game.HttpGet,game,url)
+            if ok and type(result)=="string" and result:find("%S") then source=result else message=tostring(result) end
+        end
+        if source then
+            local compiled,result,detail=pcall(loadstring,source,"PrimeVisuals/"..filename)
+            if compiled then chunk,message=result,detail else chunk,message=nil,result end
+        end
+        if chunk then break end
+        sourceCache[name]=nil
+        if attempt<3 then task.wait(0.35*attempt) end
     end
-    local chunk,message=loadstring(sourceCache[name],"PrimeVisuals/"..filename)
-    assert(chunk,message)
-    return chunk(loadUIModule)
+    if not chunk then error("Prime Visuals module "..filename.." unavailable after 3 attempts: "..tostring(message),0) end
+    if state and not state.Alive then error("Prime Visuals module load cancelled",0) end
+    local ok,result=pcall(chunk,function(child) return loadUIModule(child,state) end,
+        function(library) if state then state.Library=library end end)
+    if not ok then sourceCache[name]=nil error("Prime Visuals module "..filename.." failed: "..tostring(result),0) end
+    sourceCache[name]=source
+    return result
+end
+local function cleanupFailedStartup(state)
+    state.Alive=false
+    for _,key in ipairs({"SuppressSave","Close","CleanupEffects","RestoreSky"}) do
+        if type(state[key])=="function" then pcall(state[key]) end
+    end
+    for _,connection in ipairs(type(state.Connections)=="table" and state.Connections or {}) do pcall(function() connection:Disconnect() end) end
+    local library=state.Library
+    if type(library)=="table" then
+        if type(library.Unload)=="function" and not library.Unloaded then pcall(library.Unload,library) end
+        for _,connection in pairs(type(library.Signals)=="table" and library.Signals or {}) do pcall(function() connection:Disconnect() end) end
+        if library.ScreenGui then pcall(function() library.ScreenGui:Destroy() end) end
+        if state.Input and library.ShowCursorBinding then
+            pcall(function() game:GetService("RunService"):UnbindFromRenderStep(library.ShowCursorBinding) end)
+        end
+    end
+    if state.Gui then pcall(function() state.Gui:Destroy() end) end
+    if state.Input then pcall(function() state.Input.MouseBehavior=state.MouseBehavior state.Input.MouseIconEnabled=state.MouseIconEnabled end) end
+    for camera,value in pairs(type(state.CameraFOVs)=="table" and state.CameraFOVs or {}) do pcall(function() camera.FieldOfView=value end) end
+    if type(state.Environment)=="table" and state.Environment.Library==library then state.Environment.Library=nil end
+end
+local function reportStartupFailure(title,message)
+    warn(title.." startup: "..tostring(message))
+    return pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title=title,
+            Text="Не удалось загрузить обязательные компоненты. Повтори запуск. Подробности в консоли.",Duration=8})
+    end)
 end
 local function startVisuals(profileOverride)
+local startup={Alive=true}
+local requireModule=loadUIModule
+local function run()
+local function loadUIModule(name) return requireModule(name,startup) end
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -29,6 +79,11 @@ local cleanupExtra=function() end
 local profileChanged=function() end
 local flushProfile=function() end
 local discardAutosave=false
+startup.Connections=connections
+startup.CleanupEffects=function() cleanupExtra() end
+startup.SuppressSave=function() discardAutosave=true end
+startup.Input=UIS startup.MouseBehavior=UIS.MouseBehavior startup.MouseIconEnabled=UIS.MouseIconEnabled
+startup.Environment=(getgenv and getgenv()) or shared or _G
 local function listen(signal,fn)
     local c=signal:Connect(fn)
     table.insert(connections,c)
@@ -305,6 +360,8 @@ local black=Color3.fromRGB(9,9,11)
 
 -- Real Obsidian window and controls, vendored from the current Resonance UI modules.
 local Library=loadUIModule("Library")
+if type(Library)=="table" then startup.Library=Library end
+assert(type(Library)=="table" and type(Library.CreateWindow)=="function","Obsidian returned an invalid library")
 Library.ForceCheckbox=true
 Library.Scheme.AccentColor=purple
 local savedBehavior,savedIcon=UIS.MouseBehavior,UIS.MouseIconEnabled
@@ -320,12 +377,15 @@ local nativeWindow=Library:CreateWindow({
     TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
 })
 local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,Enabled=false},playerGui)
+startup.Gui=gui
+startup.Close=function() gui:Destroy() end
 local menuOpen=false
 local closing=false
 local initialFOV=Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView or 70
 local selected=math.clamp(math.round(initialFOV),30,120)
 local fovChanged=false
 local originalCameraFOVs=setmetatable({},{__mode="k"})
+startup.CameraFOVs=originalCameraFOVs
 local function applyFOV()
     local camera=Workspace.CurrentCamera
     if fovChanged and camera then
@@ -345,6 +405,7 @@ end
 local sourceSky=originalSkies[1]
 local skyProperties={"SkyboxBk","SkyboxDn","SkyboxFt","SkyboxLf","SkyboxRt","SkyboxUp"}
 local activeSky
+local skyRecoveryData
 local customSkyLoaded=false
 local onCustomSkyApplied=function() end
 local onSkyRestored=function() end
@@ -390,9 +451,11 @@ local function restoreSky()
         if o.Parent==nil then o.Parent=Lighting end
     end
     customSkyLoaded=false
+    skyRecoveryData=nil
     onSkyRestored()
     profileChanged()
 end
+startup.RestoreSky=restoreSky
 local function assetUrl(text)
     text=text:match("^%s*(.-)%s*$")
     local id=text:match("^(%d+)$") or text:match("^rbxassetid://(%d+)$") or text:match("[?&]id=(%d+)") or text:match("roblox.com/library/(%d+)") or text:match("roblox.com/store/asset/(%d+)")
@@ -406,6 +469,18 @@ local knownSkyboxes={
         SkyboxRt="rbxassetid://570557672",SkyboxUp="rbxassetid://570557727",CelestialBodiesShown=false}
 }
 local importedProperties={"CelestialBodiesShown","SunAngularSize","MoonAngularSize","StarCount","SunTextureId","MoonTextureId"}
+local function rememberSky()
+    if not activeSky or activeSky.Parent~=Lighting then return end
+    if customSkyLoaded and skyRecoveryData then
+        skyRecoveryData.SunAngularSize=activeSky.SunAngularSize
+        skyRecoveryData.CelestialBodiesShown=activeSky.CelestialBodiesShown
+    else
+        skyRecoveryData={}
+        for _,properties in ipairs({skyProperties,importedProperties}) do
+            for _,key in ipairs(properties) do skyRecoveryData[key]=activeSky[key] end
+        end
+    end
+end
 local function readSkyModel(url)
     local ok,objects=pcall(function() return game:GetObjects(url) end)
     if not ok or type(objects)~="table" then
@@ -465,9 +540,11 @@ local function applyCustomSky()
         if not data then skyFeedback(message,true) return end
         local ok,err=pcall(function()
             local sky=ensureSky()
+            skyRecoveryData=nil
             for property,value in pairs(data) do sky[property]=value end
             customSkyLoaded=true
             onCustomSkyApplied(data)
+            rememberSky()
         end)
         if not ok then skyFeedback("Could not apply skybox. Try another asset.",true) warn("Prime Visuals Sky: " .. tostring(err)) return end
         skyFeedback("Skybox loaded / six separate textures.",false)
@@ -490,6 +567,7 @@ local function buildVisualSystems()
     local profileDirty,profileSaveScheduled=false,false
     local profileGeneration=0
     local featurePanels={}
+    local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
     local clearLineSignals,restoreWater,mannequins
@@ -515,15 +593,28 @@ local function buildVisualSystems()
     local function notify(text) if alive and not Library.Unloaded then Library:Notify(tostring(text),5) end end
     local function job(name,signal,fn)
         if jobs[name] then jobs[name]:Disconnect() jobs[name]=nil end
-        if signal and fn then jobs[name]=signal:Connect(function(...)
-            if not alive then return end
+        if not signal or not fn then return end
+        local blockedUntil,failures,lastNotice=0,0,-math.huge
+        local connection
+        local running=false
+        connection=signal:Connect(function(...)
+            if running or not alive or jobs[name]~=connection then return end
+            local now=os.clock()
+            if now<blockedUntil then return end
+            running=true
             local ok,err=pcall(fn,...)
-            if not ok then
-                if jobs[name] then jobs[name]:Disconnect() jobs[name]=nil end
-                warn("Prime Visuals / " .. name .. ": " .. tostring(err))
-                notify(name .. ": stopped after an error. Toggle it off and report this feature.")
+            running=false
+            if ok then failures=0 blockedUntil=0 return end
+            if not alive or jobs[name]~=connection then return end
+            failures=failures+1
+            blockedUntil=now+math.min(0.5*2^math.min(failures-1,4),8)
+            if now-lastNotice>=30 then
+                lastNotice=now
+                warn("Prime Visuals / "..name..": "..tostring(err))
+                notify(name..(uiLanguage=="ru" and ": временный сбой, будет повторная попытка." or ": temporary error; retrying automatically."))
             end
-        end) end
+        end)
+        jobs[name]=connection
     end
     local function own(o) owned[o]=true return o end
     local function dispose(o) if o then owned[o]=nil o:Destroy() end end
@@ -542,8 +633,8 @@ local function buildVisualSystems()
         for _,layer in pairs(entry.layers) do if not top or layer.order>top.order then top=layer end end
         if o[property]~=top.value then o[property]=top.value end
     end
-    local function unpatch(feature)
-        for o,properties in pairs(patches) do
+    local function unpatch(feature,target)
+        local function restore(o,properties)
             for property,entry in pairs(properties) do
                 if entry.layers[feature] then
                     entry.layers[feature]=nil
@@ -555,6 +646,9 @@ local function buildVisualSystems()
             end
             if next(properties)==nil then patches[o]=nil end
         end
+        if target then
+            if patches[target] then restore(target,patches[target]) end
+        else for o,properties in pairs(patches) do restore(o,properties) end end
     end
     local function imageId(text)
         local value=assetUrl(tostring(text or ""))
@@ -772,6 +866,36 @@ local function buildVisualSystems()
         end
         return set
     end
+    local function optionalArtwork(options)
+        local before={}
+        for _,parent in ipairs({options.Parent,options.Header}) do
+            before[parent]={}
+            for _,child in ipairs(parent:GetChildren()) do before[parent][child]=true end
+        end
+        local saved={}
+        if options.Header then
+            for _,property in ipairs({"Image","ImageTransparency","ImageColor3","ImageRectOffset","ImageRectSize"}) do saved[property]=options.Header[property] end
+        end
+        local ok,result=pcall(function()
+            local factory=loadUIModule("AnimatedEmblem")
+            assert(type(factory)=="function","Invalid artwork module")
+            local artwork=factory(options)
+            assert(type(artwork)=="table" and artwork.Root and type(artwork.Step)=="function" and type(artwork.Destroy)=="function","Invalid artwork controller")
+            return artwork
+        end)
+        if ok then return result end
+        for parent,existing in pairs(before) do
+            for _,child in ipairs(parent:GetChildren()) do if not existing[child] then pcall(function() child:Destroy() end) end end
+        end
+        if options.Header then for property,value in pairs(saved) do pcall(function() options.Header[property]=value end) end end
+        warn("Optional artwork disabled: "..tostring(result))
+        if options.IsAlive and not options.IsAlive() then error("Artwork load cancelled",0) end
+        notify(uiLanguage=="ru" and "Оформление недоступно. Остальное меню работает." or "Artwork is unavailable. The rest of the menu still works.")
+        local root=make("Frame",{Name="ArtworkUnavailable",BackgroundTransparency=1,
+            AnchorPoint=Vector2.new(0.5,0.5),Position=options.Position or UDim2.fromScale(0.5,0.5),
+            Size=options.Size or UDim2.fromScale(0.92,0.96)},options.Parent)
+        return {Root=root,Unavailable=true,Step=function() end,Destroy=function() root:Destroy() end}
+    end
     local function action(g,text,fn)
         return g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
     end
@@ -799,6 +923,10 @@ local function buildVisualSystems()
             patch("third",player,"CameraMinZoomDistance",distance)
             patch("third",player,"CameraMaxZoomDistance",distance)
         else unpatch("third") end
+    end
+    maintenance.Camera=function()
+        if fovChanged then applyFOV() end
+        if controls.camThird then updateThirdPerson(true) end
     end
     do
         local g=group("Camera","View",2)
@@ -855,6 +983,7 @@ local function buildVisualSystems()
     -- LIGHTING: independently adjustable post-processing, without replacing game effects.
     local effects={}
     local function effect(name,class)
+        if effects[name] and effects[name].Parent~=Lighting then dispose(effects[name]) effects[name]=nil end
         if not effects[name] then effects[name]=own(make(class,{Name="PV_"..name,Enabled=false},Lighting)) end
         return effects[name]
     end
@@ -895,6 +1024,13 @@ local function buildVisualSystems()
             setters.lightTint(Color3.new(1,1,1),false)
         end)
     end
+    maintenance.Sky=function()
+        if activeSky and skyRecoveryData then
+            local sky=ensureSky()
+            for key,value in pairs(skyRecoveryData) do if sky[key]~=value then sky[key]=value end end
+        end
+    end
+    maintenance.Shaders=function() if controls.lightEnabled then shaders(true) end end
     -- Sky additions. Time and sun return here as compact optional controls.
     do
         local g=group("Sky","Sun",1)
@@ -907,10 +1043,11 @@ local function buildVisualSystems()
                 if (controls.skySun or 21)<=0 then setters.skySun(21,false) end
                 sky.SunAngularSize=controls.skySun or 21
             else sky.SunAngularSize=0 end
+            rememberSky()
         end)
         sliderControl(g,"skyTime","Time of day",0,24,originalClock,0.1,function(v) patch("skytime",Lighting,"ClockTime",v) end)
         sliderControl(featureSettings("skySunVisible"),"skySun","Sun size",0,60,sourceSky and sourceSky.SunAngularSize or 21,0.5,function(v)
-            if controls.skySunVisible then ensureSky().SunAngularSize=v end
+            if controls.skySunVisible then ensureSky().SunAngularSize=v rememberSky() end
         end)
         action(g,"Reset time and sun",function()
             unpatch("skytime") setters.skyTime(originalClock,false)
@@ -918,6 +1055,7 @@ local function buildVisualSystems()
             setters.skySun(value,false)
             setters.skySunVisible(originalSunVisible,true)
             for _,key in ipairs({"skyTime","skySun","skySunVisible"}) do appliedSettings[key]=nil end
+            if not customSkyLoaded then skyRecoveryData=nil end
         end)
         local h=group("Sky","Clouds",2)
         local cloud
@@ -939,6 +1077,7 @@ local function buildVisualSystems()
                 end
                 return
             end
+            if cloud and not cloud.Parent and owned[cloud] then dispose(cloud) cloud=nil end
             cloud=cloud and cloud.Parent and cloud or Terrain:FindFirstChildOfClass("Clouds")
             if not cloud then cloud=own(make("Clouds",{Enabled=false},Terrain)) end
             patch("clouds",cloud,"Enabled",true)
@@ -954,6 +1093,7 @@ local function buildVisualSystems()
         color(h,"skyCloudColor","Color",Color3.new(1,1,1),update,function(value)
             if cloud and cloud.Parent then patch("clouds",cloud,"Color",value) end
         end)
+        maintenance.Clouds=function() if controls.skyClouds then updateClouds(true) end end
         onCustomSkyApplied=function(data)
             setters.skySun(math.clamp(tonumber(data.SunAngularSize) or 21,0,60),false)
             setters.skySunVisible(false,true)
@@ -970,6 +1110,9 @@ local function buildVisualSystems()
     local particlePart,emitter
     local function updateParticles(on)
         if not on then job("Particles") dispose(particlePart) particlePart,emitter=nil,nil return end
+        if particlePart and (not particlePart.Parent or not emitter or not emitter.Parent) then
+            job("Particles") dispose(particlePart) particlePart,emitter=nil,nil
+        end
         if not particlePart then
             particlePart=own(make("Part",{Name="PV_Particles",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1,Size=Vector3.new(60,60,60)},Workspace))
             emitter=make("ParticleEmitter",{Enabled=true,LightEmission=0.7,Speed=NumberRange.new(0,2),Lifetime=NumberRange.new(4,7),SpreadAngle=Vector2.new(180,180),Rotation=NumberRange.new(0,360)},particlePart)
@@ -979,6 +1122,7 @@ local function buildVisualSystems()
         end
         local texture=controls.particleTexture or "Circles"
         local urls={Circles="rbxassetid://242109931",Snowflakes="rbxassetid://14443362047",Prime="rbxassetid://79685990879972"}
+        emitter.Enabled=true
         emitter.Texture=urls[texture] or imageId(controls.particleImage)
         emitter.Color=ColorSequence.new(controls.particleColor or purple)
         emitter.Rate=math.min(controls.particleCount or 150,controls.particleLimit or 1000)
@@ -1004,6 +1148,9 @@ local function buildVisualSystems()
         sliderControl(h,"particleArea","Area",10,300,60,5,update)
     end
     -- WORLD: FTAP ocean replacement in bounded chunks, with original terrain preserved.
+    maintenance.Particles=function()
+        if controls.particleEnabled and (not particlePart or not particlePart.Parent or not emitter or not emitter.Parent or not emitter.Enabled) then updateParticles(true) end
+    end
     local waterRegions={}
     local waterGeneration=0
     local waterParts={}
@@ -1054,6 +1201,7 @@ local function buildVisualSystems()
             if humanoid:GetState()==Enum.HumanoidStateType.Swimming then humanoid:ChangeState(Enum.HumanoidStateType.Freefall) end
         end
     end
+    maintenance.Swimming=function() if controls.waterEnabled and controls.waterSolid then updateSwimming() end end
     local function restoreChunk(entry)
         -- Native snapshots preserve terrain that existed before conversion, including empty cells.
         Terrain:PasteRegion(entry.snapshot,entry.corner,true)
@@ -1236,6 +1384,7 @@ local function buildVisualSystems()
         local function updateHat(on)
             job("Cone hat")
             if not on then dispose(hat) hat=nil hatMesh=nil return end
+            if hat and (not hat.Parent or not hatMesh or not hatMesh.Parent) then dispose(hat) hat=nil hatMesh=nil end
             if not hat then
                 hat=own(make("Part",{Name="PV_ConeHat",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Massless=true,Size=Vector3.new(1,1,1),Material=Enum.Material.Neon,Color=purple,Transparency=0.15},Workspace))
                 hatMesh=make("SpecialMesh",{MeshType=Enum.MeshType.FileMesh,MeshId="rbxassetid://1033714",Scale=Vector3.new(3,1.2,3)},hat)
@@ -1248,6 +1397,9 @@ local function buildVisualSystems()
                 hat.Color=controls.hatRainbow and Color3.fromHSV((os.clock()*0.12)%1,0.8,1) or controls.hatColor or purple
                 local size=controls.hatSize or 3 hatMesh.Scale=Vector3.new(size,1.2,size)
             end)
+        end
+        maintenance.Hat=function()
+            if controls.hatEnabled and (not hat or not hat.Parent or not hatMesh or not hatMesh.Parent) then updateHat(true) end
         end
         toggle(h,"hatEnabled","Cone hat",false,updateHat)
         h=featureSettings("hatEnabled")
@@ -1331,7 +1483,9 @@ local function buildVisualSystems()
         for _,o in pairs(entry.objects) do dispose(o) end
         espEntries[target]=nil
     end
+    local espNeedsRefresh=false
     local function addESP(target,category,owner)
+        if espRoot.Parent~=Workspace then espNeedsRefresh=true return end
         if espEntries[target] or not target.Parent then return end
         local part=target:IsA("BasePart") and target or target:FindFirstChild("HumanoidRootPart") or target:FindFirstChildWhichIsA("BasePart",true)
         if not part then return end
@@ -1369,6 +1523,12 @@ local function buildVisualSystems()
         end
     end
     local function refreshESP()
+        if espRoot.Parent~=Workspace then
+            for target in pairs(espEntries) do removeESP(target) end
+            dispose(espRoot)
+            espRoot=own(make("Folder",{Name="PV_ESP"},Workspace))
+        end
+        espNeedsRefresh=false
         local enabled=controls.espPlayers or controls.espServer or controls.espSticky or controls.espBlackholes
         job("ESP world") job("ESP render") job("ESP smooth")
         local active={Players=controls.espPlayers,Server=controls.espServer,Sticky=controls.espSticky,Blackholes=controls.espBlackholes}
@@ -1411,6 +1571,14 @@ local function buildVisualSystems()
                 end
             end
         end)
+    end
+    maintenance.ESP=function()
+        if not (controls.espPlayers or controls.espServer or controls.espSticky or controls.espBlackholes) then return end
+        local refresh=espNeedsRefresh or espRoot.Parent~=Workspace
+        for target,entry in pairs(espEntries) do
+            if not entry.hi.Parent or not entry.bill.Parent or (entry.proxy and not entry.proxy.Parent) then removeESP(target) refresh=true end
+        end
+        if refresh then refreshESP() end
     end
     local function watchPlayer(p)
         listen(p.CharacterAdded,function(character)
@@ -1485,9 +1653,16 @@ local function buildVisualSystems()
         config("Players",1) config("Server",2) config("Sticky",1) config("Blackholes",2)
     end
     -- TWEAKS: game-owned instances are edited locally and restored on disable.
-    local crossGui=own(make("ScreenGui",{Name="PrimeVisualsCrosshair",IgnoreGuiInset=true,ResetOnSpawn=false,DisplayOrder=900,Enabled=false},playerGui))
-    local crossImage=make("ImageLabel",{Name="Crosshair",AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromOffset(28,28),Image="rbxassetid://9943168532",BackgroundTransparency=1},crossGui)
+    local crossGui,crossImage
+    local function ensureCrosshair()
+        if crossGui and crossGui.Parent==playerGui and crossImage and crossImage.Parent==crossGui then return end
+        if crossGui then dispose(crossGui) end
+        crossGui=own(make("ScreenGui",{Name="PrimeVisualsCrosshair",IgnoreGuiInset=true,ResetOnSpawn=false,DisplayOrder=900,Enabled=false},playerGui))
+        crossImage=make("ImageLabel",{Name="Crosshair",AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromOffset(28,28),Image="rbxassetid://9943168532",BackgroundTransparency=1},crossGui)
+    end
+    ensureCrosshair()
     local function crosshair(on)
+        ensureCrosshair()
         crossGui.Enabled=on and not menuOpen
         job("Crosshair screen") job("Crosshair enabled")
         if not on then unpatch("crosshair") return end
@@ -1505,14 +1680,18 @@ local function buildVisualSystems()
             if controls.crossEnabled and o.Name=="Crosshairs" and o:IsA("ScreenGui") then patch("crosshair",o,"Enabled",false) end
         end)
     end
+    maintenance.Crosshair=function()
+        if controls.crossEnabled and (not crossGui or crossGui.Parent~=playerGui or not crossImage or crossImage.Parent~=crossGui) then crosshair(true) end
+    end
     local lineTextures={Laser="rbxassetid://8922958725",Chain="rbxassetid://81358145120405",["Chain 2"]="rbxassetid://132910145874066",
         ["Chain 3"]="rbxassetid://128466395060514",["Chain 4"]="rbxassetid://73368670987191",Pulse="rbxassetid://82163767314193",Rope="rbxassetid://78999022056924",
         Dots="rbxassetid://9169659357",Bubbles="rbxassetid://1249690853",Spring="rbxassetid://18837732116",Gamepass="rbxassetid://8933355899",Default="rbxassetid://8933346550"}
-    local lineBeams={}
-    local lineSignals={}
+    local lineBeams,lineSignals,lineRoots,pendingBeams={},{},{},{}
+    local lineRunning=false
+    local lineDesired
     clearLineSignals=function()
         for _,signals in pairs(lineSignals) do for _,connection in ipairs(signals) do connection:Disconnect() end end
-        lineSignals={}
+        lineSignals={} lineBeams={} lineRoots={} pendingBeams={} lineRunning=false
     end
     local function sameLineValue(property,current,wanted)
         if current==wanted then return true end
@@ -1522,69 +1701,143 @@ local function buildVisualSystems()
         for i,point in ipairs(a) do if point.Time~=b[i].Time or point.Value~=b[i].Value then return false end end
         return true
     end
-    local function lineRainbowColor()
-        return ColorSequence.new(Color3.fromHSV((os.clock()*0.12)%1,1,1))
+    local function lineRainbowColor() return ColorSequence.new(Color3.fromHSV((os.clock()*0.12)%1,1,1)) end
+    local function grabRoot(beam)
+        local node=beam.Parent
+        while node and node~=Workspace do
+            if node.Name=="GrabParts" and node:IsDescendantOf(Workspace) then return node end
+            node=node.Parent
+        end
     end
-    local function applyLine()
-        job("Grab line rainbow")
-        clearLineSignals()
-        unpatch("line") lineBeams={}
-        if not controls.lineEnabled then return end
-        local grab=Workspace:FindFirstChild("GrabParts")
-        if not grab then return end
-        local tint=controls.lineRainbow and lineRainbowColor() or ColorSequence.new(controls.lineColor or white)
-        for _,beam in ipairs(grab:GetDescendants()) do
-            if beam:IsA("Beam") then
-                local desired={Texture=lineTextures[controls.lineTexture] or imageId(controls.lineImage),Color=tint,TextureSpeed=controls.lineSpeed or 1}
-                lineBeams[beam]=desired
-                for property,value in pairs(desired) do patch("line",beam,property,value) end
-                local applying=false
-                local signals={}
-                lineSignals[beam]=signals
-                for _,property in ipairs({"Texture","Color","TextureSpeed"}) do
-                    table.insert(signals,beam:GetPropertyChangedSignal(property):Connect(function()
-                        if applying or not alive or not controls.lineEnabled or not beam:IsDescendantOf(grab) then return end
-                        if sameLineValue(property,beam[property],desired[property]) then return end
-                        applying=true
-                        local ok,err=pcall(patch,"line",beam,property,desired[property])
-                        applying=false
-                        if not ok then warn("Prime Visuals line: "..tostring(err)) end
-                    end))
-                end
+    local function releaseBeam(beam)
+        for _,connection in ipairs(lineSignals[beam] or {}) do connection:Disconnect() end
+        lineSignals[beam]=nil lineBeams[beam]=nil
+        if alive and controls.lineEnabled and beam:IsDescendantOf(Workspace) then pendingBeams[beam]=true end
+        unpatch("line",beam)
+    end
+    local function enforceBeam(beam,entry)
+        if not alive or not controls.lineEnabled then return true end
+        local root=grabRoot(beam)
+        if not root then return false end
+        lineRoots[root]=true
+        if beam.Enabled==false then return true end
+        if entry.applying then return true end
+        entry.applying=true
+        local ok,message=pcall(function()
+            for property,value in pairs(lineDesired) do
+                if not sameLineValue(property,beam[property],value) then patch("line",beam,property,value) end
+            end
+        end)
+        entry.applying=false
+        if not ok then error(message,0) end
+        return true
+    end
+    local function observeBeam(beam)
+        if not grabRoot(beam) then pendingBeams[beam]=true return end
+        pendingBeams[beam]=nil
+        local entry=lineBeams[beam]
+        if not entry then
+            entry={applying=false} lineBeams[beam]=entry
+            local signals={} lineSignals[beam]=signals
+            for _,property in ipairs({"Texture","Color","TextureSpeed"}) do
+                table.insert(signals,beam:GetPropertyChangedSignal(property):Connect(function()
+                    if entry.applying or not alive or not controls.lineEnabled then return end
+                    -- One failed or destroyed beam must not disable the whole line manager.
+                    pcall(enforceBeam,beam,entry)
+                end))
             end
         end
-        if controls.lineRainbow and next(lineBeams) then
-            local elapsed=0
-            job("Grab line rainbow",Run.Heartbeat,function(dt)
-                elapsed=elapsed+dt if elapsed<1/30 then return end elapsed=0
-                local color=lineRainbowColor()
-                for beam,desired in pairs(lineBeams) do
-                    if beam:IsDescendantOf(grab) then
-                        desired.Color=color patch("line",beam,"Color",color)
-                    else
-                        for _,connection in ipairs(lineSignals[beam] or {}) do connection:Disconnect() end
-                        lineSignals[beam]=nil lineBeams[beam]=nil
-                    end
-                end
-                if not next(lineBeams) then job("Grab line rainbow") end
-            end)
+        pcall(enforceBeam,beam,entry)
+    end
+    local function discoverLines(full)
+        for _,node in ipairs(full and Workspace:GetDescendants() or Workspace:GetChildren()) do
+            if node.Name=="GrabParts" then lineRoots[node]=true
+            elseif full and node:IsA("Beam") then pendingBeams[node]=true end
+        end
+        for root in pairs(lineRoots) do
+            if not root:IsDescendantOf(Workspace) or root.Name~="GrabParts" then lineRoots[root]=nil
+            else
+                for _,node in ipairs(root:GetDescendants()) do if node:IsA("Beam") then observeBeam(node) end end
+            end
+        end
+        for beam in pairs(pendingBeams) do
+            if not beam:IsDescendantOf(Workspace) then pendingBeams[beam]=nil
+            elseif grabRoot(beam) then observeBeam(beam) end
         end
     end
-    local grabbedInfo=own(make("ScreenGui",{Name="PrimeVisualsGrabInfo",ResetOnSpawn=false,Enabled=false,DisplayOrder=800},playerGui))
-    local infoText=make("TextLabel",{AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,50),Size=UDim2.fromOffset(480,58),BackgroundTransparency=1,
+    local function applyLine()
+        if not controls.lineEnabled then
+            job("Grab line") job("Grab line lifecycle")
+            clearLineSignals() unpatch("line")
+            return
+        end
+        lineDesired={Texture=lineTextures[controls.lineTexture] or imageId(controls.lineImage),
+            Color=controls.lineRainbow and lineRainbowColor() or ColorSequence.new(controls.lineColor or white),TextureSpeed=controls.lineSpeed or 1}
+        if not lineRunning then
+            lineRunning=true
+            -- Full discovery only on enable/reload; ongoing recovery scans known grab scopes.
+            discoverLines(true)
+            job("Grab line",Workspace.DescendantAdded,function(node)
+                if node:IsA("Beam") then observeBeam(node)
+                elseif node.Name=="GrabParts" then
+                    lineRoots[node]=true
+                    for _,child in ipairs(node:GetDescendants()) do if child:IsA("Beam") then observeBeam(child) end end
+                end
+            end)
+            local recoveryElapsed,enforceElapsed=0,0
+            job("Grab line lifecycle",Run.Heartbeat,function(dt)
+                recoveryElapsed=recoveryElapsed+dt enforceElapsed=enforceElapsed+dt
+                if recoveryElapsed>=1 then recoveryElapsed=recoveryElapsed%1 discoverLines(false) end
+                local interval=controls.lineRainbow and 1/30 or 0.1
+                if enforceElapsed<interval then return end
+                enforceElapsed=enforceElapsed%interval
+                if controls.lineRainbow then lineDesired.Color=lineRainbowColor() end
+                for beam,entry in pairs(lineBeams) do
+                    local ok,valid=pcall(enforceBeam,beam,entry)
+                    if ok and not valid then releaseBeam(beam) end
+                end
+            end)
+        else
+            for beam,entry in pairs(lineBeams) do
+                local ok,valid=pcall(enforceBeam,beam,entry)
+                if ok and not valid then releaseBeam(beam) end
+            end
+        end
+    end
+    local grabbedInfo,infoText
+    local function ensureGrabInfo()
+        if grabbedInfo and grabbedInfo.Parent==playerGui and infoText and infoText.Parent==grabbedInfo then return end
+        if grabbedInfo then dispose(grabbedInfo) end
+        grabbedInfo=own(make("ScreenGui",{Name="PrimeVisualsGrabInfo",ResetOnSpawn=false,Enabled=false,DisplayOrder=800},playerGui))
+        infoText=make("TextLabel",{AnchorPoint=Vector2.new(0.5,0),Position=UDim2.new(0.5,0,0,50),Size=UDim2.fromOffset(480,58),BackgroundTransparency=1,
         Text="",TextSize=14,Font=Enum.Font.BuilderSans,TextColor3=white,TextStrokeTransparency=0.25,TextWrapped=true},grabbedInfo)
+    end
+    ensureGrabInfo()
     local function updateGrabInfo()
         if not controls.grabInfo then return end
-        local grab=Workspace:FindFirstChild("GrabParts")
-        if not grab then infoText.Text="" return end
+        ensureGrabInfo()
+        local roots={}
+        for root in pairs(lineRoots) do if root:IsDescendantOf(Workspace) then roots[root]=true end end
+        for _,node in ipairs(Workspace:GetChildren()) do if node.Name=="GrabParts" then roots[node]=true end end
         local part
-        for _,beam in ipairs(grab:GetDescendants()) do if beam:IsA("Beam") and beam.Attachment1 then part=beam.Attachment1.Parent break end end
+        for root in pairs(roots) do
+            for _,beam in ipairs(root:GetDescendants()) do
+                if beam:IsA("Beam") and beam.Enabled~=false and beam.Attachment1 then
+                    local candidate=beam.Attachment1.Parent
+                    if candidate and candidate:IsA("BasePart") and candidate:IsDescendantOf(Workspace) then part=candidate break end
+                end
+            end
+            if part then break end
+        end
         if not part or not part:IsA("BasePart") then infoText.Text="" return end
         local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         local distance=root and (root.Position-part.Position).Magnitude or 0
         infoText.Text=string.format("%s  |  %.1f studs  |  %.1f mass\n%s",part.Name,distance,part.AssemblyMass,part.Material.Name)
     end
     local bhClones={}
+    maintenance.GrabInfo=function()
+        if controls.grabInfo and (not grabbedInfo.Parent or not infoText.Parent) then ensureGrabInfo() updateGrabInfo() end
+    end
     local blackholes={}
     local function addBlackhole(o)
         if o.Name=="BlackHoleKick" or o.Name=="StayedBH" then blackholes[o]=true end
@@ -1640,15 +1893,7 @@ local function buildVisualSystems()
     end
     do
         local g=group("Tweaks","Grab line",1)
-        toggle(g,"lineEnabled","Custom line",false,function(on)
-            job("Grab line") applyLine()
-            if on then job("Grab line",Workspace.DescendantAdded,function(o)
-                if o:IsA("Beam") or o.Name=="GrabParts" then task.defer(function()
-                    local grab=Workspace:FindFirstChild("GrabParts")
-                    if alive and controls.lineEnabled and grab and (o==grab or o:IsDescendantOf(grab)) then applyLine() end
-                end) end
-            end) end
-        end)
+        toggle(g,"lineEnabled","Custom line",false,applyLine)
         local lineSettings=featureSettings("lineEnabled")
         choice(lineSettings,"lineTexture","Texture",{"Laser","Chain","Chain 2","Chain 3","Chain 4","Pulse","Rope","Dots","Bubbles","Spring","Gamepass","Default","Custom"},"Chain",applyLine)
         field(lineSettings,"lineImage","Custom image","8922958725",applyLine)
@@ -1772,7 +2017,7 @@ local function buildVisualSystems()
                 local current=env.PrimeVortexUI
                 Library:Toggle(false)
                 -- Replace the original flame-only shell instead of reopening its stale preview.
-                if type(current)=="table" and (current.Version=="0.1.0" or current.Version=="0.2.0") and type(current.Unload)=="function" then
+                if type(current)=="table" and (current.Version=="0.1.0" or current.Version=="0.2.0" or current.Version=="0.2.1") and type(current.Unload)=="function" then
                     current:Unload()
                     current=nil
                 end
@@ -1785,7 +2030,12 @@ local function buildVisualSystems()
                 if not alive then return end
                 local chunk,compileError=loadstring(source,"PrimeVisuals/PrimeVortex")
                 assert(chunk,compileError)
-                chunk()
+                local opened,launchError,reported=chunk()
+                if (type(opened)~="table" or opened.Unloaded) and reported then
+                    if alive then Library:Toggle(wasOpen) end
+                    return
+                end
+                assert(type(opened)=="table" and not opened.Unloaded,launchError or "Prime Vortex did not start")
             end)
             vortexLaunching=false
             if not ok then
@@ -1811,9 +2061,9 @@ local function buildVisualSystems()
         local identity=profile:AddLabel({Text="",DoesWrap=true})
         local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
         local hero=homeTab:AddRightGroupbox("Prime Visuals","sparkles")
-        local emblemRow=hero:AddImage("homeEmblem",{Image="diamond",Height=240,Transparency=1,
+        local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=240,Transparency=1,
             BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
-        local artwork=loadUIModule("AnimatedEmblem")({Parent=emblemRow.Holder,Header=nativeWindow.IconHolder,
+        local artwork=optionalArtwork({Parent=emblemRow.Holder,Header=nativeWindow.IconHolder,
             Name="VisualsPhoenix",Style="phoenix",Accent=purple,
             URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
             CacheFolder="PrimeVisuals/Assets",Folders={"PrimeVisuals","PrimeVisuals/Assets"},
@@ -1822,7 +2072,8 @@ local function buildVisualSystems()
             Notify=function() notify(uiLanguage=="ru" and "Не удалось загрузить PNG превью. Подробности в консоли executor." or "Preview PNG could not load. Details are in the executor console.") end,
         })
         own(artwork.Root)
-        job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end)
+        if artwork.Unavailable then hero.BoxHolder.Visible=false
+        else job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end) end
         local statistics=homeTab:AddRightGroupbox("Session statistics","chart-no-axes-combined")
         local function richEscape(value)
             return tostring(value):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;"):gsub('"',"&quot;")
@@ -2295,6 +2546,7 @@ local function buildVisualSystems()
             -- Restore resolved sky before applying saved sun/cloud choices, without a network fetch.
             if profile.sky then
                 local sky=ensureSky()
+                skyRecoveryData=nil
                 for _,keys in ipairs({skyProperties,importedProperties}) do
                     for _,key in ipairs(keys) do if profile.sky[key]~=nil then sky[key]=profile.sky[key] end end
                 end
@@ -2347,6 +2599,7 @@ local function buildVisualSystems()
                 -- Startup always remains on Home, including autosave, slots and undo.
             end
             appliedSettings=profile.applied
+            rememberSky()
             restoringProfile=false
         end
         local payload,readError
@@ -2379,6 +2632,21 @@ local function buildVisualSystems()
     end
 -- PROFILE_BLOCK_END
 
+    -- Recreate only enabled effects whose game-owned containers were cleared/replaced.
+    local maintenanceElapsed=0
+    local maintenanceWarnings={}
+    job("Visual maintenance",Run.Heartbeat,function(dt)
+        maintenanceElapsed=maintenanceElapsed+dt
+        if maintenanceElapsed<1 then return end
+        maintenanceElapsed=maintenanceElapsed%1
+        for name,recover in pairs(maintenance) do
+            local ok,message=pcall(recover)
+            if not ok and os.clock()-(maintenanceWarnings[name] or -math.huge)>=30 then
+                maintenanceWarnings[name]=os.clock()
+                warn("Prime Visuals recovery / "..name..": "..tostring(message))
+            end
+        end
+    end)
     -- Lightweight lifecycle handling. No scans run every frame.
     job("Crosshair visibility",Run.RenderStepped,function()
         menuOpen=Library.Toggled
@@ -2399,6 +2667,7 @@ end
 local function shutdown()
     if closing then return end
     closing=true
+    startup.Alive=false
     if not discardAutosave then flushProfile(true) end
     cleanupExtra()
     restoreSky()
@@ -2417,6 +2686,8 @@ gui.Destroying:Connect(shutdown)
 Library:OnUnload(function() if not closing and gui.Parent then gui:Destroy() end end)
 local prepared,prepareError=xpcall(buildVisualSystems,debug.traceback)
 if not prepared then
+    if startup.Alive then startup.Failed=true end
+    discardAutosave=true
     gui:Destroy()
     error(prepareError,0)
 end
@@ -2424,5 +2695,14 @@ if not closing and gui.Parent then
     Library:Toggle(true)
     menuOpen=true
 end
+end
+local ok,message=xpcall(run,debug.traceback)
+if not ok then
+    local cancelled=not startup.Alive and not startup.Failed
+    cleanupFailedStartup(startup)
+    if not cancelled then reportStartupFailure("Prime Visuals",message) end
+    return nil,message
+end
+return true
 end
 startVisuals()
