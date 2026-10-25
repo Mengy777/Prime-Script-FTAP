@@ -1,6 +1,6 @@
--- Prime Vortex 0.2.0 | UI shell only. No gameplay hooks or features.
-local VERSION="0.2.0"
-local UI_TAG="vortex-v0.2.0"
+-- Prime Vortex 0.2.1 | UI shell only. No gameplay hooks or features.
+local VERSION="0.2.1"
+local UI_TAG="vortex-v0.2.1"
 local BASE="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/lib/"
 local env=(getgenv and getgenv()) or shared
 local previous=env.PrimeVortexUI
@@ -71,12 +71,13 @@ local ok,err=xpcall(function()
     make("Frame",{BackgroundColor3=red,BackgroundTransparency=0.3,BorderSizePixel=0,
         Size=UDim2.new(1,0,0,1)},canvas)
     local artwork=loadModule("AnimatedEmblem")({Parent=canvas,Header=window.IconHolder,
-        Name="VortexDemon",Style="demon",Accent=red,HueOffset=0.98,
+        Name="VortexDemon",Style="demon",Accent=red,
         Position=UDim2.fromScale(0.5,0.42),Size=UDim2.new(0.74,0,0.6,0),
         URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/assets/vortex-demon-v1.png",
-        CacheName="demon-422b782bef8e.png",Bytes=1421042,
+        CacheName="demon-422b782bef8e-hq.png",Bytes=1421042,
         IsAlive=function() return not controller.Unloaded end,
         IsVisible=function() return Library.Toggled end,
+        Notify=function() Library:Notify("Preview PNG could not load. Details are in the executor console.",5) end,
     })
     controller.Artwork=artwork
     make("TextLabel",{Name="VortexWordmark",BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0),

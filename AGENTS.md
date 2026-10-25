@@ -8,3 +8,5 @@
 - Preserve full reset/unload cleanup and original game state. Performance statistics must be measured, not placeholders presented as real values.
 - Validate with Luau compilation and relevant simulated regression checks. Distinguish simulation results from live FTAP verification.
 - The user authorized publishing each requested script update to this repository through Git. Keep the permanent loader path `PrimeVisuals.lua` stable and synchronize the development TXT/Lua copies.
+
+- User versioning rule: continue patch releases 2.1.1, 2.1.2, ... 2.1.9, then 2.2.0. Do not skip directly to the next minor for a normal update.

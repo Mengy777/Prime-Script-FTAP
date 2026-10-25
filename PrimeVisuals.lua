@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.0"
+local VERSION="2.1.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1772,7 +1772,7 @@ local function buildVisualSystems()
                 local current=env.PrimeVortexUI
                 Library:Toggle(false)
                 -- Replace the original flame-only shell instead of reopening its stale preview.
-                if type(current)=="table" and current.Version=="0.1.0" and type(current.Unload)=="function" then
+                if type(current)=="table" and (current.Version=="0.1.0" or current.Version=="0.2.0") and type(current.Unload)=="function" then
                     current:Unload()
                     current=nil
                 end
@@ -1811,15 +1811,15 @@ local function buildVisualSystems()
         local identity=profile:AddLabel({Text="",DoesWrap=true})
         local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
         local hero=homeTab:AddRightGroupbox("Prime Visuals","sparkles")
-        local emblemRow=hero:AddImage("homeEmblem",{Image="diamond",Height=204,Transparency=1,
+        local emblemRow=hero:AddImage("homeEmblem",{Image="diamond",Height=240,Transparency=1,
             BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
         local artwork=loadUIModule("AnimatedEmblem")({Parent=emblemRow.Holder,Header=nativeWindow.IconHolder,
-            Name="VisualsPhoenix",Style="phoenix",Accent=purple,HueOffset=0.72,
+            Name="VisualsPhoenix",Style="phoenix",Accent=purple,
             URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
             CacheFolder="PrimeVisuals/Assets",Folders={"PrimeVisuals","PrimeVisuals/Assets"},
-            CacheName="phoenix-d8d557849ed3.png",Bytes=2068952,
+            CacheName="phoenix-d8d557849ed3-hq.png",Bytes=2068952,
             IsAlive=function() return alive end,IsVisible=function() return Library.Toggled end,
-            HeroVisible=function() return Library.ActiveTab==homeTab end,
+            Notify=function() notify(uiLanguage=="ru" and "Не удалось загрузить PNG превью. Подробности в консоли executor." or "Preview PNG could not load. Details are in the executor console.") end,
         })
         own(artwork.Root)
         job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end)
@@ -1858,7 +1858,8 @@ local function buildVisualSystems()
         for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder},column) end
         profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
         about.BoxHolder.Parent=left about.BoxHolder.LayoutOrder=1
-        statistics.BoxHolder.Parent=right
+        hero.BoxHolder.Parent=right hero.BoxHolder.LayoutOrder=0
+        statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=1
         for _,side in ipairs(homeTab.Sides) do side.Visible=false end
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)

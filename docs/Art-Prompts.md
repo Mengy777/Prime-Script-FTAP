@@ -1,6 +1,6 @@
 # Prime Visuals / Prime Vortex — generated emblem assets
 
-Created with the built-in `image_gen` tool, not the fallback CLI. Original generated PNGs were copied into the repository without resizing or repainting. Both final assets are 1254 × 1254 RGBA PNGs. Their animation is implemented in `lib/AnimatedEmblem.lua`: moving colored sheen, restrained aura and a native fallback. Asset bytes are cached locally once per content-hashed filename.
+Created with the built-in `image_gen` tool, not the fallback CLI. Original generated PNGs were copied into the repository without resizing or repainting. Both final assets are 1254 × 1254 RGBA PNGs. Since 2.1.1 the large illustrations are static, un-tinted ImageLabels. `lib/AnimatedEmblem.lua` only animates independent compact header marks: a rainbow prism for Visuals and a red spinning rotor for Vortex. Asset bytes are cached locally once per content-hashed filename.
 
 - `assets/visuals-phoenix-v1.png` — Prime Visuals Home and header.
 - `assets/vortex-demon-v1.png` — Prime Vortex main preview and header.
