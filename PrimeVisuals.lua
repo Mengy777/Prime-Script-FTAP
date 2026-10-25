@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.6"
+local VERSION="2.1.7"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1121,6 +1121,45 @@ local function buildVisualSystems()
     -- Correct only the local multiplier, after the camera; preserve actual Transparency and effect layers.
     local thirdParts,thirdCharacter={},nil
     local thirdVisibilityBound=false
+    local thirdPan,thirdPanOriginal,thirdPanOwned,thirdPanBound,thirdPanAttempted
+    local function releaseThirdPan()
+        if thirdPanOwned then
+            pcall(thirdPan.setTogglePan,thirdPanOriginal)
+            thirdPanOwned=false
+        end
+        unpatch("thirdMouse")
+    end
+    local function updateThirdPan()
+        local camera=Workspace.CurrentCamera
+        local active=alive and controls.camThird and not Library.Toggled and not UIS:GetFocusedTextBox()
+            and not controls.freeCameraEnabled and not controls.spectateEnabled and not controls.camNoclip
+            and camera and camera.CameraType~=Enum.CameraType.Scriptable
+        if not active or not thirdPan then releaseThirdPan() return end
+        if not thirdPanOwned then thirdPanOriginal=thirdPan.getTogglePan() thirdPanOwned=true end
+        thirdPan.setTogglePan(true)
+        patch("thirdMouse",UIS,"MouseBehavior",Enum.MouseBehavior.LockCenter)
+    end
+    local function startThirdPan()
+        if thirdPanBound then return end
+        if thirdPanAttempted and not thirdPan then return end
+        thirdPanAttempted=true
+        local ok,result=pcall(function()
+            local scripts=player:FindFirstChild("PlayerScripts")
+            local module=scripts and scripts:FindFirstChild("PlayerModule")
+            local cameras=module and module:FindFirstChild("CameraModule")
+            local input=cameras and cameras:FindFirstChild("CameraInput")
+            if not input then return nil end
+            return require(input)
+        end)
+        if not ok or type(result)~="table" or type(result.setTogglePan)~="function" or type(result.getTogglePan)~="function" then
+            warn("Prime Visuals: native CameraInput unavailable; third person keeps RMB rotation")
+            return
+        end
+        thirdPan=result
+        Run:BindToRenderStep("PrimeVisualsThirdPan",Enum.RenderPriority.Camera.Value-1,updateThirdPan)
+        Run:BindToRenderStep("PrimeVisualsThirdPanMouse",Enum.RenderPriority.Camera.Value+3,updateThirdPan)
+        thirdPanBound=true
+    end
     local function thirdPart(part)
         if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then thirdParts[part]=true end
     end
@@ -1141,6 +1180,11 @@ local function buildVisualSystems()
         end
     end
     clearThirdVisibility=function()
+        if thirdPanBound then
+            Run:UnbindFromRenderStep("PrimeVisualsThirdPan")
+            Run:UnbindFromRenderStep("PrimeVisualsThirdPanMouse") thirdPanBound=false
+        end
+        releaseThirdPan()
         job("Third-person parts") job("Third-person visibility")
         if thirdVisibilityBound then Run:UnbindFromRenderStep("PrimeVisualsThirdBody") thirdVisibilityBound=false end
         unpatch("thirdBody") thirdParts={} thirdCharacter=nil
@@ -1167,6 +1211,7 @@ local function buildVisualSystems()
             patch("third",player,"CameraMinZoomDistance",distance)
             patch("third",player,"CameraMaxZoomDistance",distance)
             startThirdVisibility()
+            startThirdPan()
         else clearThirdVisibility() unpatch("third") end
     end
     maintenance.Camera=function()
