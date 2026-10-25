@@ -82,6 +82,7 @@ function methods:IsA(class)
  if class==self._class or class=='Instance' then return true end
  if class=='GuiObject' then return ({Frame=true,CanvasGroup=true,ScrollingFrame=true,TextButton=true,TextBox=true,TextLabel=true,ImageLabel=true})[self._class] or false end
  if class=='BasePart' then return self._class=='Part' or self._class=='MeshPart' end
+ if class=='PostEffect' then return ({ColorCorrectionEffect=true,BloomEffect=true,BlurEffect=true,DepthOfFieldEffect=true,SunRaysEffect=true})[self._class] or false end
  return false
 end
 function methods:IsDescendantOf(root) local p=self.Parent while p do if p==root then return true end p=p.Parent end return false end
@@ -172,3 +173,8 @@ lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url
 lua.execute("NumberSequenceKeypoint={new=function(t,v) return {Time=t,Value=v} end}")
 lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text(encoding="utf-8-sig")
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
+
+# Execute the actual source-reviewed pack and preset data, not a replacement stub.
+for module in ("VisualExpansion","VisualPresets"):
+ lua.globals().TEST_VISUAL_SOURCE=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
+ lua.execute("local source=TEST_VISUAL_SOURCE; local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('"+module+".lua',1,true) then return source end return previous(self,url) end")

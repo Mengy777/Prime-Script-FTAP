@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.2"
+local VERSION="2.1.3"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -93,6 +93,95 @@ end
 local uiLanguage="en"
 local refreshHome=function() end
 local ru={
+    ["Local position history"]="Локальная история позиции",
+    ["Estimated server position"]="Оценка серверной позиции",
+    ["Client history delayed by ping; an estimate, not server telemetry."]="История клиента с задержкой по пингу; оценка, не данные сервера.",
+    ["Animations"]="Анимации",
+    ["Custom animation"]="Своя анимация",
+    ["Animation"]="Анимация",
+    ["Animation speed"]="Скорость анимации",
+    ["Stop animation"]="Остановить анимацию",
+
+    ["Hide accessories"]="Скрывать аксессуары",
+    ["Hide face"]="Скрывать лицо",
+    ["Ocean appearance"]="Внешний вид океана",
+    ["Ocean material and color"]="Материал и цвет океана",
+    ["Body appearance"]="Внешний вид тела",
+    ["Body colors and transparency"]="Цвета и прозрачность тела",
+    ["Animated blackholes"]="Анимированные чёрные дыры",
+    ["Animated blackhole image"]="Анимированное изображение дыры",
+    ["Hide original visual"]="Скрывать исходный эффект",
+    ["Hide at map origin"]="Скрывать у центра карты",
+    ["Toggle key"]="Клавиша переключения",
+    ["None"]="Нет",
+    ["Shuriken"]="Сюрикен",
+    ["Kunai"]="Кунай",
+    ["Pickaxe"]="Кирка",
+    ["Banana"]="Банан",
+    ["Snowball"]="Снежок",
+    ["WASD / Q E · RMB look · Shift / Ctrl · wheel speed"]="WASD / Q E · ПКМ: обзор · Shift / Ctrl · колесо: скорость",
+    ["Head color"]="Голова: цвет",
+    ["Head transparency"]="Голова: прозрачность",
+    ["Torso color"]="Тело: цвет",
+    ["Torso transparency"]="Тело: прозрачность",
+    ["LeftArm color"]="Левая рука: цвет",
+    ["LeftArm transparency"]="Левая рука: прозрачность",
+    ["RightArm color"]="Правая рука: цвет",
+    ["RightArm transparency"]="Правая рука: прозрачность",
+    ["LeftLeg color"]="Левая нога: цвет",
+    ["LeftLeg transparency"]="Левая нога: прозрачность",
+    ["RightLeg color"]="Правая нога: цвет",
+    ["RightLeg transparency"]="Правая нога: прозрачность",
+
+    ["Movement visuals"]="Эффекты движения",
+    ["Jump circle"]="Круг прыжка",
+    ["Diameter"]="Диаметр",
+    ["Lifetime"]="Время жизни",
+    ["Character trail"]="След персонажа",
+    ["Initial transparency"]="Начальная прозрачность",
+    ["Gradient"]="Градиент",
+    ["Gradient start"]="Начало градиента",
+    ["Gradient end"]="Конец градиента",
+    ["Death visuals"]="Эффекты смерти",
+    ["Disintegration dust"]="Рассыпание в пыль",
+    ["Snowfall"]="Снегопад",
+    ["Layered snowfall"]="Многослойный снегопад",
+    ["Wind"]="Ветер",
+    ["Geometry"]="Геометрия",
+    ["Box ESP"]="Рамки игроков",
+    ["Skeleton ESP"]="Скелеты игроков",
+    ["Maximum distance"]="Максимальная дистанция",
+    ["Target trace"]="Трассировка игрока",
+    ["Trace to player"]="Линия к игроку",
+    ["Player username"]="Юзернейм игрока",
+    ["Target marker"]="Метка игрока",
+    ["Marker size"]="Размер метки",
+    ["Marker image"]="Изображение метки",
+    ["Self ESP"]="Своя подсветка",
+    ["Self highlight"]="Подсветка себя",
+    ["Object highlights"]="Подсветка предметов",
+    ["Blobman / Gucci ESP"]="Подсветка Blobman / Gucci",
+    ["Anti-kick objects ESP"]="Подсветка анти-кик предметов",
+    ["Other players only"]="Только чужие предметы",
+    ["Combat items ESP"]="Подсветка боевых предметов",
+    ["Item names"]="Названия предметов",
+    ["Icon size"]="Размер иконки",
+    ["Reveal invisible characters"]="Показывать невидимых персонажей",
+    ["Scene presets"]="Готовые сцены",
+    ["Atmosphere preset"]="Готовая атмосфера",
+    ["Preset"]="Вариант",
+    ["Fullbright"]="Полное освещение",
+    ["Skybox collection"]="Коллекция неба",
+    ["Apply selected skybox"]="Применить выбранное небо",
+    ["Cinematic camera"]="Кинематографичная камера",
+    ["Smooth camera"]="Плавная камера",
+    ["Smoothness"]="Плавность",
+    ["Free camera"]="Свободная камера",
+    ["Spectate player"]="Наблюдать за игроком",
+    ["Show health"]="Показывать здоровье",
+    ["Show distance"]="Показывать дистанцию",
+    ["Name background"]="Фон имени",
+
     ["Enter a name of 1–160 bytes"]="Укажи короткое непустое название конфига.",
     ["This slot is empty or unreadable"]="Слот пуст или файл повреждён.",
     ["Unsupported config format"]="Этот формат конфигурации не поддерживается.",
@@ -407,6 +496,7 @@ local skyProperties={"SkyboxBk","SkyboxDn","SkyboxFt","SkyboxLf","SkyboxRt","Sky
 local activeSky
 local skyRecoveryData
 local customSkyLoaded=false
+local beforeSkyChange=function() end
 local onCustomSkyApplied=function() end
 local onSkyRestored=function() end
 local skyLoadGeneration=0
@@ -432,6 +522,7 @@ local function clearHaze(enabled)
     end
 end
 local function ensureSky()
+    beforeSkyChange()
     if activeSky and activeSky.Parent==Lighting then return activeSky end
     if activeSky then activeSky:Destroy() end
     activeSky=sourceSky and sourceSky:Clone() or Instance.new("Sky")
@@ -443,6 +534,7 @@ local function ensureSky()
     return activeSky
 end
 local function restoreSky()
+    if not closing then beforeSkyChange() end
     skyLoadGeneration=skyLoadGeneration+1
     skyLoadBusy=false
     if hazeEnabled then clearHaze(false) end
@@ -570,7 +662,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins
+    local clearLineSignals,restoreWater,mannequins,visualExpansion
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -583,6 +675,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
+        if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
         if restoreWater then attempt("water",restoreWater) end
         for o,properties in pairs(patches) do
             for property,entry in pairs(properties) do attempt("property",function() o[property]=entry.original end) end
@@ -777,7 +870,7 @@ local function buildVisualSystems()
     local legacyRainbowColors={lineColor=true,characterColor=true,hatColor=true}
     local rainbowColors={}
     local colorOwners={lightTint="lightEnabled",skyCloudColor="skyClouds",particleColor="particleEnabled",
-        waterColor="waterEnabled",crossColor="crossEnabled",bhColor="bhTintEnabled"}
+        waterColor="waterEnabled",crossColor="crossEnabled",bhColor="bhTintEnabled",lineGradientStart="lineEnabled",lineGradientEnd="lineEnabled"}
     local colorWarningShown=false
     local function color(g,key,text,initial,callback,rainbowApply)
         put(key,initial)
@@ -1025,12 +1118,12 @@ local function buildVisualSystems()
         end)
     end
     maintenance.Sky=function()
-        if activeSky and skyRecoveryData then
+        if activeSky and skyRecoveryData and not (controls.visualPresetEnabled and controls.visualPreset=="Tokyowami") then
             local sky=ensureSky()
             for key,value in pairs(skyRecoveryData) do if sky[key]~=value then sky[key]=value end end
         end
     end
-    maintenance.Shaders=function() if controls.lightEnabled then shaders(true) end end
+    maintenance.Shaders=function() if controls.lightEnabled and not (controls.visualPresetEnabled and controls.visualPreset=="Pale Frost") then shaders(true) end end
     -- Sky additions. Time and sun return here as compact optional controls.
     do
         local g=group("Sky","Sun",1)
@@ -1094,6 +1187,9 @@ local function buildVisualSystems()
             if cloud and cloud.Parent then patch("clouds",cloud,"Color",value) end
         end)
         maintenance.Clouds=function() if controls.skyClouds then updateClouds(true) end end
+        beforeSkyChange=function()
+            if controls.visualPresetEnabled and controls.visualPreset=="Tokyowami" then setters.visualPresetEnabled(false,true) end
+        end
         onCustomSkyApplied=function(data)
             setters.skySun(math.clamp(tonumber(data.SunAngularSize) or 21,0,60),false)
             setters.skySunVisible(false,true)
@@ -1509,7 +1605,7 @@ local function buildVisualSystems()
     end
     local function espCandidate(o)
         if o:IsDescendantOf(espRoot) then return end
-        if controls.espServer and o:IsA("BasePart") and o.Name=="PlayerCharacterLocationDetector" and o.Parent==Workspace then addESP(o,"Server",nearestOwner(o)) end
+        if controls.espServer and o:IsA("BasePart") and (o.Name=="PlayerCharacterLocationDetector" or o.Name:lower()=="partesp") then addESP(o,"Server",nearestOwner(o)) end
         if controls.espSticky and o:IsA("BasePart") and o.Name=="StickyPart" then addESP(o.Parent,"Sticky") end
         if controls.espBlackholes then
             if o.Name=="BlackHoleKick" or o.Name=="StayedBH" then addESP(o,"Blackholes")
@@ -1558,16 +1654,33 @@ local function buildVisualSystems()
                     e.bill.Enabled=cfg.names e.bill.StudsOffsetWorldSpace=Vector3.new(0,cfg.offset,0)
                     if e.category=="Server" then e.owner=nearestOwner(e.part) end
                     local title=e.owner and e.owner.DisplayName or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
+                    local inRange=true
+                    if e.category=="Players" then
+                        local camera=Workspace.CurrentCamera
+                        local distance=camera and (e.part.Position-camera.CFrame.Position).Magnitude or 0
+                        inRange=distance<=(controls.espPlayersMaxDistance or 5000)
+                        local details={}
+                        if controls.espPlayersHealth then
+                            local humanoid=target:FindFirstChildOfClass("Humanoid")
+                            if humanoid then details[#details+1]=string.format("%d HP",math.floor(math.max(0,humanoid.Health))) end
+                        end
+                        if controls.espPlayersShowDistance then details[#details+1]=string.format("%d st",math.floor(distance)) end
+                        if #details>0 then title=title.."  |  "..table.concat(details,"  |  ") end
+                        e.bill.Enabled=cfg.names and inRange
+                        hi.Enabled=cfg.highlight and inRange
+                        e.text.BackgroundTransparency=controls.espPlayersBackground and 0.35 or 1
+                        e.text.BackgroundColor3=Color3.fromRGB(10,10,14)
+                    end
                     if cfg.icon then title="[+] "..title end
                     e.text.Text=title e.text.TextSize=cfg.size e.text.TextColor3=cfg.text e.text.TextStrokeColor3=cfg.textOutline e.text.TextStrokeTransparency=cfg.textStroke
-                    local font=cfg.font=="Code" and Enum.Font.Code or cfg.font=="Roboto" and Enum.Font.Roboto or cfg.bold and Enum.Font.BuilderSansBold or Enum.Font.BuilderSans
+                    local font=cfg.font=="Code" and Enum.Font.Code or cfg.font=="Roboto" and Enum.Font.Roboto or cfg.font=="Rounded" and Enum.Font.FredokaOne or cfg.font=="Arcade" and Enum.Font.Arcade or cfg.font=="Source" and Enum.Font.SourceSansBold or cfg.font=="Gotham" and Enum.Font.GothamBold or cfg.bold and Enum.Font.BuilderSansBold or Enum.Font.BuilderSans
                     e.text.Font=font
                     if e.owner and e.category=="Server" and e.owner.Character then
                         local root=e.owner.Character:FindFirstChild("HumanoidRootPart")
                         if root then e.bill.Enabled=cfg.names and (root.Position-e.part.Position).Magnitude>=cfg.nameDistance end
                     end
-                    if e.boxFill then e.boxFill.Visible=cfg.highlight e.boxFill.Color3=fillColor e.boxFill.Transparency=cfg.fillAlpha e.boxFill.Size=e.part.Size end
-                    if e.selection then e.selection.Visible=cfg.highlight e.selection.Color3=cfg.outline e.selection.Transparency=cfg.outlineAlpha e.selection.LineThickness=cfg.thickness end
+                    if e.boxFill then e.boxFill.Visible=cfg.highlight and (e.part.Position-(Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame.Position or e.part.Position)).Magnitude<=(controls.espServerMaxDistance or 5000) e.boxFill.Color3=fillColor e.boxFill.Transparency=cfg.fillAlpha e.boxFill.Size=e.part.Size end
+                    if e.selection then e.selection.Visible=cfg.highlight and (e.category~="Server" or (e.part.Position-(Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame.Position or e.part.Position)).Magnitude<=(controls.espServerMaxDistance or 5000)) e.selection.Color3=cfg.outline e.selection.Transparency=cfg.outlineAlpha e.selection.LineThickness=cfg.thickness end
                 end
             end
         end)
@@ -1640,7 +1753,7 @@ local function buildVisualSystems()
             sliderControl(g,"esp"..category.."OutlineAlpha","Outline transparency",0,1,cfg.outlineAlpha,0.05,function(v) cfg.outlineAlpha=v end)
             if category=="Server" or category=="Sticky" then sliderControl(g,"esp"..category.."Thickness","Outline thickness",0.01,0.2,0.03,0.01,function(v) cfg.thickness=v end) end
             toggle(g,"esp"..category.."Names","Name",true,function(v) cfg.names=v end)
-            choice(g,"esp"..category.."Font","Font",{"Builder Sans","Code","Roboto"},"Builder Sans",function(v) cfg.font=v end)
+            choice(g,"esp"..category.."Font","Font",{"Builder Sans","Code","Roboto","Rounded","Gotham","Arcade","Source"},"Builder Sans",function(v) cfg.font=v end)
             toggle(g,"esp"..category.."Bold","Bold",false,function(v) cfg.bold=v end)
             toggle(g,"esp"..category.."Icon","Name icon",false,function(v) cfg.icon=v end)
             color(g,"esp"..category.."Text","Text color",white,function(v) cfg.text=v end)
@@ -1648,7 +1761,16 @@ local function buildVisualSystems()
             sliderControl(g,"esp"..category.."TextAlpha","Text outline transparency",0,1,0,0.05,function(v) cfg.textStroke=v end)
             sliderControl(g,"esp"..category.."Size","Text size",8,30,14,1,function(v) cfg.size=v end)
             sliderControl(g,"esp"..category.."Offset","Vertical offset",0,15,3,0.25,function(v) cfg.offset=v end)
-            if category=="Server" then sliderControl(g,"espServerDistance","Show owner when apart",0,50,0,1,function(v) cfg.nameDistance=v end) end
+            if category=="Server" then
+                sliderControl(g,"espServerDistance","Show owner when apart",0,50,0,1,function(v) cfg.nameDistance=v end)
+                sliderControl(g,"espServerMaxDistance","Maximum distance",50,5000,5000,1,function() end)
+            end
+            if category=="Players" then
+                toggle(g,"espPlayersHealth","Show health",false,function() end)
+                toggle(g,"espPlayersShowDistance","Show distance",false,function() end)
+                toggle(g,"espPlayersBackground","Name background",false,function() end)
+                sliderControl(g,"espPlayersMaxDistance","Maximum distance",50,5000,5000,1,function() end)
+            end
         end
         config("Players",1) config("Server",2) config("Sticky",1) config("Blackholes",2)
     end
@@ -1772,7 +1894,7 @@ local function buildVisualSystems()
             return
         end
         lineDesired={Texture=lineTextures[controls.lineTexture] or imageId(controls.lineImage),
-            Color=controls.lineRainbow and lineRainbowColor() or ColorSequence.new(controls.lineColor or white),TextureSpeed=controls.lineSpeed or 1}
+            Color=controls.lineRainbow and lineRainbowColor() or (controls.lineGradient and ColorSequence.new(controls.lineGradientStart or white,controls.lineGradientEnd or purple) or ColorSequence.new(controls.lineColor or white)),TextureSpeed=controls.lineSpeed or 1}
         if not lineRunning then
             lineRunning=true
             -- Full discovery only on enable/reload; ongoing recovery scans known grab scopes.
@@ -1899,6 +2021,9 @@ local function buildVisualSystems()
         field(lineSettings,"lineImage","Custom image","8922958725",applyLine)
         color(lineSettings,"lineColor","Color",white,applyLine)
         toggle(lineSettings,"lineRainbow","Rainbow",false,applyLine)
+        toggle(lineSettings,"lineGradient","Gradient",false,applyLine)
+        color(lineSettings,"lineGradientStart","Gradient start",white,applyLine)
+        color(lineSettings,"lineGradientEnd","Gradient end",purple,applyLine)
         sliderControl(lineSettings,"lineSpeed","Texture speed",-10,10,1,0.25,applyLine)
         toggle(g,"grabInfo","Grabbed object info",false,function(on)
             grabbedInfo.Enabled=on job("Grab info")
@@ -2049,6 +2174,31 @@ local function buildVisualSystems()
         end)
     end
 
+    -- Source-reviewed pack uses the same control registry, profiles, panels and cleanup.
+    do
+        local lastWarning={}
+        visualExpansion=loadUIModule("VisualExpansion")({
+            Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
+            Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
+            Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
+            Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
+            TrackCleanup=function(fn) visualExpansion={Destroy=fn} end,
+            MenuOpen=function() return Library.Toggled end,
+            WarnOnce=function(name,message)
+                if os.clock()-(lastWarning[name] or -math.huge)>=30 then
+                    lastWarning[name]=os.clock() warn("Prime Visuals / "..name..": "..tostring(message))
+                end
+            end,
+            GetSky=ensureSky,
+            ApplySky=function(data)
+                skyLoadGeneration=skyLoadGeneration+1 skyLoadBusy=false
+                local sky=ensureSky() skyRecoveryData=nil
+                for property,value in pairs(data) do sky[property]=value end
+                customSkyLoaded=true onCustomSkyApplied(data) rememberSky() profileChanged()
+            end,
+        })
+    end
+
     -- HOME: profile, build information and live session statistics in native Obsidian cards.
     do
         local homeTab=categoryTabs.Home
@@ -2116,6 +2266,7 @@ local function buildVisualSystems()
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
             "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
+            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","smoothCameraEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled","animationEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local lastLanguage

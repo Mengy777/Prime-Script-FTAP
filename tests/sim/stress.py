@@ -3,7 +3,7 @@ import json,copy,random
 rng=random.Random(2000)
 d=Disk();lua,s,_,_=session(d)
 base=json.loads(d.files['PrimeVisuals/Configs/1234/autosave.json'])
-# All 178 keys receive non-default data in complete real imports, not a hand-written imitation of serialization.
+# All registered keys receive non-default data in complete real imports, not a hand-written imitation of serialization.
 for iteration in range(8):
  doc=copy.deepcopy(base);payload=doc['payload'];payload['applied']={k:True for k in payload['values']};payload['fovApplied']=True
  for key,value in list(payload['values'].items()):
@@ -35,7 +35,7 @@ for iteration in range(8):
  lu,_,_,_=session(d,user)
  persisted=json.loads(d.files[f'PrimeVisuals/Configs/{user}/autosave.json'])['payload']
  assert persisted['values']==actual['values'] and persisted['ui']==actual['ui']
-print('PASS 8 seeded randomized complete profiles, 1,424 varied setting values; imports, offline-player selections, UI positions/panels, Home startup and cold restart')
+print(f'PASS 8 seeded randomized complete profiles, {8*len(base["payload"]["values"]):,} varied setting values; imports, offline-player selections, UI positions/panels, Home startup and cold restart')
 # Native main-script reload: repeat in the same simulated game and count effect resources.
 e=Disk();lu,s,_,_=session(e)
 lu.execute("TEST_OPTIONS.cameraFOV:SetValue(94); TEST_OPTIONS.lightEnabled:SetValue(true); TEST_OPTIONS.particleEnabled:SetValue(true); TEST_OPTIONS.crossEnabled:SetValue(true); TEST_OPTIONS.skyAsset:SetValue('570559352'); TEST_ACTIONS.Load(); TEST_DRAIN()")
