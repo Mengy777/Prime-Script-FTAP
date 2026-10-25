@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.7.2"
+local VERSION="1.8.0"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -278,6 +278,7 @@ local nativeWindow=Library:CreateWindow({
     Animations={ToggleWindow=false,TabSwitch=true,Dropdown=true,Groupbox=true,KeyPicker=true},
     TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
 })
+Library:GiveSignal(loadUIModule("PrimeIcon")(nativeWindow.IconHolder,nativeWindow.MainFrame,RunService))
 local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,Enabled=false},playerGui)
 local menuOpen=false
 local closing=false

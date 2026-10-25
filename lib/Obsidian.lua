@@ -14204,6 +14204,7 @@ function Library:CreateWindow(WindowInfo)
     end))
 
     Window.MainFrame = MainFrame
+    Window.IconHolder = WindowIcon
     Library.Window = Window
 
     return Window
