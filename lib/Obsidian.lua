@@ -1933,12 +1933,14 @@ function Library:GetTextBounds(Text: string, Font: Font, Size: number, Width: nu
     return math.ceil(Bounds.X / Scale), math.ceil(Bounds.Y / Scale)
 end
 
-function Library:MouseIsOverFrame(Frame: GuiObject, Mouse: Vector2): boolean
+function Library:MouseIsOverFrame(Frame: GuiObject, Point: Vector2?): boolean
+    if not Frame then return false end
+    Point = Point or Vector2.new(Mouse.X, Mouse.Y)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-    return Mouse.X >= AbsPos.X
-        and Mouse.X <= AbsPos.X + AbsSize.X
-        and Mouse.Y >= AbsPos.Y
-        and Mouse.Y <= AbsPos.Y + AbsSize.Y
+    return Point.X >= AbsPos.X
+        and Point.X <= AbsPos.X + AbsSize.X
+        and Point.Y >= AbsPos.Y
+        and Point.Y <= AbsPos.Y + AbsSize.Y
 end
 
 function Library:IsInsideFrame(ParentFrame: GuiObject, Frame: GuiObject)
@@ -7114,7 +7116,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
-            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton) then return end
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Mouse.X, Mouse.Y)) then return end
             if Toggle.Disabled then
                 return
             end
@@ -7389,7 +7391,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
-            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton) then return end
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Mouse.X, Mouse.Y)) then return end
             if Toggle.Disabled then
                 return
             end
@@ -7627,15 +7629,12 @@ do
         end
 
         if Input.Finished then
-            table.insert(Input.Connections, Box.FocusLost:Connect(function(Enter)
-                if not Enter then
-                    if Input.ClearTextOnBlur then
-                        Box.Text = Input.Value
-                    end
-
+            table.insert(Input.Connections, Box.FocusLost:Connect(function(Enter, Trigger)
+                local Cancelled = Trigger and Trigger.KeyCode == Enum.KeyCode.Escape
+                if not Enter and (Input.Disabled or not Info.CommitOnBlur or Cancelled) then
+                    if Input.ClearTextOnBlur or Cancelled then Box.Text = Input.Value end
                     return
                 end
-
                 Input:SetValue(Box.Text)
             end))
         else
@@ -10316,7 +10315,8 @@ function Library:AddFeatureSettings(Toggle, Info)
     })
     New("UIStroke", { Color = "OutlineColor", Thickness = 1, Parent = Panel })
     New("Frame", { BackgroundColor3 = "AccentColor", BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 2), Parent = Panel })
-    if not Docked then table.insert(Library.DraggableElements, Panel) end
+    -- Registered as an interaction surface even when its position is docked.
+    table.insert(Library.DraggableElements, Panel)
     local Scale = New("UIScale", { Scale = Library.DPIScale, Parent = Panel })
     table.insert(Library.Scales, Scale)
     local Header = New("TextLabel", {

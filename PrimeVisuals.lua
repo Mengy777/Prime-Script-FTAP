@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.4"
+local VERSION="2.1.5"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -956,7 +956,7 @@ local function buildVisualSystems()
         return register(key,widget,initial,callback,false,{Kind="Slider",Min=low,Max=high})
     end
     local function field(g,key,text,initial,callback,live)
-        local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=not live,Callback=changed(key,callback)})
+        local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=not live,CommitOnBlur=true,Callback=changed(key,callback)})
         return register(key,widget,tostring(initial or ""),callback,false,{Kind="Input"})
     end
     local function choice(g,key,text,values,initial,callback)
