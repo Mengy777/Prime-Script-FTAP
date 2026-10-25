@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.3"
+local VERSION="2.1.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -93,6 +93,75 @@ end
 local uiLanguage="en"
 local refreshHome=function() end
 local ru={
+    ["Nothing found"]="Ничего не найдено",
+    ["Weather"]="Погода",
+    ["Water & FPS"]="Вода и FPS",
+    ["Appearance"]="Оформление",
+    ["Movement"]="Движение",
+    ["General"]="Основное",
+    ["Profiles"]="Конфиги",
+    ["Camera tools"]="Инструменты камеры",
+    ["Custom skybox"]="Своё небо",
+    ["Sun and clouds"]="Солнце и облака",
+    ["Sky collection"]="Коллекция неба",
+    ["Body style"]="Оформление тела",
+    ["Accessories"]="Аксессуары",
+    ["Movement effects"]="Эффекты движения",
+    ["Player highlight"]="Подсветка игроков",
+    ["Player overlays"]="Рамки и скелеты",
+    ["World markers"]="Метки объектов",
+    ["Item highlights"]="Подсветка предметов",
+    ["Player tracker"]="Поиск игрока",
+    ["Position history"]="История позиции",
+    ["Blackhole animation"]="Анимация чёрной дыры",
+    ["Mute sounds"]="Отключение звуков",
+    ["Blackhole audio"]="Звук чёрной дыры",
+    ["Saved profiles"]="Сохранённые конфиги",
+    ["Share profiles"]="Обмен конфигами",
+    ["Session details"]="Подробнее о сессии",
+    ["Third-person camera"]="Камера от третьего лица",
+    ["Camera through walls"]="Камера сквозь стены",
+    ["Clear ragdoll blur"]="Убрать размытие при рагдолле",
+    ["First-person body"]="Тело от первого лица",
+    ["Manual lighting"]="Свои настройки света",
+    ["Lighting preset"]="Готовое освещение",
+    ["Forcefield material"]="Материал ForceField",
+    ["Own outline"]="Своя подсветка",
+    ["Body colors"]="Цвета тела",
+    ["Server markers"]="Метки позиций",
+    ["My delayed position"]="Моя позиция с задержкой",
+    ["Grab line style"]="Оформление линии",
+    ["Line to player"]="Линия к игроку",
+    ["Floating particles"]="Частицы вокруг камеры",
+    ["Reveal hidden players"]="Показать скрытых игроков",
+    ["Anti-kick items"]="Анти-кик предметы",
+    ["Combat items"]="Боевые предметы",
+    ["Enable this effect to edit its settings"]="Включи функцию, чтобы открыть её настройки",
+    ["Follow your character from a distance. Rotate with RMB; change distance in settings."]="Камера следует за персонажем. ПКМ — поворот; дистанция меняется в настройках.",
+    ["Let the camera pass through walls."]="Камера проходит сквозь стены.",
+    ["Remove the game's ragdoll blur."]="Убирает игровое размытие при рагдолле.",
+    ["Show your own body while playing in first person."]="Показывает своё тело при игре от первого лица.",
+    ["Apply a ForceField material to your character and selected objects."]="Меняет материал тела и выбранных объектов на ForceField.",
+    ["Draw an outline around your own character."]="Подсвечивает контур собственного персонажа.",
+    ["Choose Pale Frost, Dreamy Night or Tokyowami in settings."]="Выбери Pale Frost, Dreamy Night или Tokyowami в настройках.",
+    ["Adjust brightness, colors, bloom and blur yourself."]="Настрой яркость, цвет, свечение и размытие вручную.",
+    ["Move only the camera. Your character stays in place. RMB looks around; WASD moves."]="Персонаж остаётся на месте, летает только камера. ПКМ — обзор, WASD — движение.",
+    ["Watch another player's camera subject. Enter their username in settings."]="Наблюдение за другим игроком. Укажи его юзернейм в настройках.",
+    ["Smooth camera movement without slowing down mouse rotation."]="Сглаживает перемещение камеры, сохраняя обычный поворот мышью.",
+    ["An estimated delayed position from your own movement history and ping; not server telemetry."]="Оценка позиции по собственной истории движения с задержкой по пингу.",
+    ["Draw a line to a player. Enter their username in settings."]="Рисует линию к игроку. Укажи его юзернейм в настройках.",
+    ["Leave a colored trail behind your character."]="Оставляет цветной след за персонажем.",
+    ["Show an expanding ring on the ground when you jump."]="При прыжке на земле расходится кольцо.",
+    ["Make dead characters dissolve into a local particle effect."]="Локальный эффект рассыпания персонажей в пыль при смерти.",
+    ["Three layers of falling snow with adjustable wind."]="Три слоя падающего снега с настройкой ветра.",
+    ["Surround the camera with decorative particles."]="Декоративные частицы вокруг камеры.",
+    ["Highlight all players or choose specific players in settings."]="Подсвечивает всех или выбранных в настройках игроков.",
+    ["Show the game's character location detectors."]="Показывает игровые детекторы позиции персонажей.",
+    ["Highlight Shuriken, Kunai, Plate, Pickaxe and Pallet objects. This is not anti-kick protection."]="Подсвечивает Shuriken, Kunai, Plate, Pickaxe и Pallet.",
+    ["Highlight selected toy types and show their item icons."]="Подсвечивает выбранные виды игрушек и показывает их иконки.",
+    ["Choose an emote, dance or FTAP pose in settings. Asset availability depends on the game and rig."]="Выбери эмоцию, танец или позу FTAP. Доступность зависит от игры и типа тела.",
+    ["Show a rotating, pulsing picture at a blackhole."]="Вращающаяся пульсирующая картинка на месте чёрной дыры.",
+
     ["Local position history"]="Локальная история позиции",
     ["Estimated server position"]="Оценка серверной позиции",
     ["Client history delayed by ping; an estimate, not server telemetry."]="История клиента с задержкой по пингу; оценка, не данные сервера.",
@@ -461,7 +530,7 @@ local nativeWindow=Library:CreateWindow({
     Title="Prime Visuals",Footer="",Icon="diamond",IconSize=UDim2.fromOffset(26,26),
     Size=UDim2.fromOffset(windowWidth,windowHeight),Center=true,AutoShow=false,Resizable=false,
     ToggleKeybind=Enum.KeyCode.RightShift,EnableSidebarResize=false,Compact=true,
-    ShowCustomCursor=true,UnlockMouseWhileOpen=true,Font=Enum.Font.Code,CornerRadius=6,
+    ShowCustomCursor=true,UnlockMouseWhileOpen=true,Font=Enum.Font.BuilderSans,CornerRadius=6,
     Animations={ToggleWindow=false,TabSwitch=true,Dropdown=true,Groupbox=true,KeyPicker=true},
     TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
 })
@@ -662,7 +731,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -676,6 +745,7 @@ local function buildVisualSystems()
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
         if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
+        if navigation then attempt("navigation",function() navigation:Destroy() end) end
         if restoreWater then attempt("water",restoreWater) end
         for o,properties in pairs(patches) do
             for property,entry in pairs(properties) do attempt("property",function() o[property]=entry.original end) end
@@ -794,6 +864,8 @@ local function buildVisualSystems()
             settingSpecs[key]=spec or {Kind=isColor and "ColorPicker" or widget.Type}
             settingSpecs[key].Default=initial
         end
+        local searchText=widget.Text or (widget.Info and widget.Info.Text) or ""
+        widget.SearchAliases=widget.SearchAliases or key.." "..(ru[searchText] or "")
         put(key,initial) widgets[key]=widget
         local function set(value,apply)
             local previous=controls[key]
@@ -838,18 +910,43 @@ local function buildVisualSystems()
         end
     end
     local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
+    navigation=loadUIModule("Navigation")({Library=Library,Make=make,Listen=listen,Tabs=categoryTabs,Translate=function(text) return ru[text] or text end})
     local function group(tab,title,side)
-        local collapsed=title=="Emission" or title=="Post-processing" or (tab=="ESP" and title~="Visibility")
-        local parent=tabs[tab]
-        if side==2 then return parent:AddRightGroupbox(title,groupIcons[tab],true,collapsed) end
-        return parent:AddLeftGroupbox(title,groupIcons[tab],true,collapsed)
+        return navigation:Group(tab,title,side,groupIcons[tab])
     end
+    local featureLabels={
+        camThird="Third-person camera",camNoclip="Camera through walls",camBlur="Clear ragdoll blur",camBody="First-person body",
+        lightEnabled="Manual lighting",visualPresetEnabled="Lighting preset",characterEnabled="Forcefield material",selfESP="Own outline",
+        bodyAppearance="Body colors",holeSprite="Blackhole animation",espServer="Server markers",serverGhostEnabled="My delayed position",
+        lineEnabled="Grab line style",traceEnabled="Line to player",particleEnabled="Floating particles",snowEnabled="Snowfall",
+        animationEnabled="Animations",revealInvisible="Reveal hidden players",antiKickESP="Anti-kick items",combatESP="Combat items",
+    }
+    local featureTips={
+        camThird="Follow your character from a distance. Rotate with RMB; change distance in settings.",
+        camNoclip="Let the camera pass through walls.",camBlur="Remove the game's ragdoll blur.",camBody="Show your own body while playing in first person.",
+        characterEnabled="Apply a ForceField material to your character and selected objects.",selfESP="Draw an outline around your own character.",
+        visualPresetEnabled="Choose Pale Frost, Dreamy Night or Tokyowami in settings.",lightEnabled="Adjust brightness, colors, bloom and blur yourself.",
+        freeCameraEnabled="Move only the camera. Your character stays in place. RMB looks around; WASD moves.",
+        spectateEnabled="Watch another player's camera subject. Enter their username in settings.",
+        smoothCameraEnabled="Smooth camera movement without slowing down mouse rotation.",
+        serverGhostEnabled="An estimated delayed position from your own movement history and ping; not server telemetry.",
+        traceEnabled="Draw a line to a player. Enter their username in settings.",
+        bodyTrailEnabled="Leave a colored trail behind your character.",jumpCircleEnabled="Show an expanding ring on the ground when you jump.",
+        deathDustEnabled="Make dead characters dissolve into a local particle effect.",
+        snowEnabled="Three layers of falling snow with adjustable wind.",particleEnabled="Surround the camera with decorative particles.",
+        espPlayers="Highlight all players or choose specific players in settings.",espServer="Show the game's character location detectors.",
+        antiKickESP="Highlight Shuriken, Kunai, Plate, Pickaxe and Pallet objects. This is not anti-kick protection.",
+        combatESP="Highlight selected toy types and show their item icons.",
+        animationEnabled="Choose an emote, dance or FTAP pose in settings. Asset availability depends on the game and rig.",
+        holeSprite="Show a rotating, pulsing picture at a blackhole.",
+    }
     local function toggle(g,key,text,initial,callback)
-        local widget=g:AddToggle(key,{Text=text,Default=initial,Callback=changed(key,callback)})
+        local widget=g:AddToggle(key,{Text=featureLabels[key] or text,Tooltip=featureTips[key],Default=initial,RowHeight=(g.Type=="FeatureSettings" or g.Type=="FeaturePage") and 20 or 24,Callback=changed(key,callback)})
+        widget.SearchAliases=key.." "..(ru[featureLabels[key] or text] or "").." "..(ru[featureTips[key] or ""] or "")
         return register(key,widget,initial,callback,false,{Kind="Toggle"})
     end
     local function featureSettings(key)
-        local panel=Library:AddFeatureSettings(widgets[key])
+        local panel=Library:AddFeatureSettings(widgets[key],{Docked=true,Window=nativeWindow.MainFrame})
         featurePanels[key]=panel
         return panel
     end
@@ -894,6 +991,17 @@ local function buildVisualSystems()
                 local partial=picker
                 if not partial then
                     pcall(function() partial=Library.Options and Library.Options[key] end)
+                end
+                -- Inline rainbow belongs to the independent setting registry: preserve it if the swatch fails.
+                local rainbowWidget=widgets[key.."Rainbow"]
+                if rainbowWidget and rainbowWidget.Holder and label and label.TextLabel and g.Container then
+                    pcall(function()
+                        if rainbowWidget.Holder:IsDescendantOf(label.TextLabel) then
+                            rainbowWidget.Holder.Parent=g.Container
+                            rainbowWidget.Holder.Size=UDim2.new(1,0,0,20)
+                            if rainbowWidget.TextLabel then rainbowWidget.TextLabel.Text=rainbowWidget.Text end
+                        end
+                    end)
                 end
                 if type(partial)=="table" and type(partial.Destroy)=="function" then pcall(partial.Destroy,partial) end
                 if type(label)=="table" and type(label.Destroy)=="function" then pcall(label.Destroy,label) end
@@ -956,6 +1064,7 @@ local function buildVisualSystems()
                 if on then rainbowState.manual=controls[key]
                 else set(rainbowState.manual,true) end
             end)
+            if pickerReady and type(Library.CompactColorRainbow)=="function" then pcall(Library.CompactColorRainbow,Library,label,widgets[rainbowKey]) end
         end
         return set
     end
@@ -990,7 +1099,9 @@ local function buildVisualSystems()
         return {Root=root,Unavailable=true,Step=function() end,Destroy=function() root:Destroy() end}
     end
     local function action(g,text,fn)
-        return g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
+        local button=g:AddButton({Text=text,Func=function() if alive then safe(fn) end end})
+        button.SearchAliases=ru[text] or text
+        return button
     end
     local cameraGroup=group("Camera","Camera",1)
     sliderControl(cameraGroup,"cameraFOV","FOV",30,120,selected,1,function(value)
@@ -1721,12 +1832,18 @@ local function buildVisualSystems()
         end
     end)
     do
-        local g=group("ESP","Visibility",1)
-        for _,entry in ipairs({{"espPlayers","Players"},{"espServer","Server detectors"},{"espSticky","Stickies"},{"espBlackholes","Blackholes"}}) do toggle(g,entry[1],entry[2],false,refreshESP) end
+        local playersGroup=group("ESP","Player markers",1)
+        local objectsGroup=group("ESP","World markers",1)
+        for _,entry in ipairs({{"espPlayers","Players"},{"espServer","Server detectors"},{"espSticky","Stickies"},{"espBlackholes","Blackholes"}}) do
+            toggle(entry[1]=="espPlayers" and playersGroup or objectsGroup,entry[1],entry[2],false,refreshESP)
+        end
         local function config(category,side)
             local cfg=categories[category]
             local masterKeys={Players="espPlayers",Server="espServer",Sticky="espSticky",Blackholes="espBlackholes"}
-            local g=featureSettings(masterKeys[category])
+            local settings=featureSettings(masterKeys[category])
+            local general=settings:AddPage("General")
+            local appearance=settings:AddPage("Appearance")
+            local g=general
             if category=="Players" then
                 toggle(g,"espAllPlayers","All players",true,refreshESP)
                 local function rememberPlayerSelection(values)
@@ -1746,13 +1863,14 @@ local function buildVisualSystems()
             end
             if category=="Server" then toggle(g,"espServerSmooth","Smooth movement",true,function(v) cfg.smooth=v end) end
             toggle(g,"esp"..category.."Highlight","Highlight",true,function(v) cfg.highlight=v end)
+            g=appearance
             color(g,"esp"..category.."Fill","Fill",cfg.fill,function(v) cfg.fill=v end)
             toggle(g,"esp"..category.."Rainbow","Rainbow fill",false,function(v) cfg.rainbow=v end)
             color(g,"esp"..category.."Outline","Outline",cfg.outline,function(v) cfg.outline=v end)
             sliderControl(g,"esp"..category.."FillAlpha","Fill transparency",0,1,cfg.fillAlpha,0.05,function(v) cfg.fillAlpha=v end)
             sliderControl(g,"esp"..category.."OutlineAlpha","Outline transparency",0,1,cfg.outlineAlpha,0.05,function(v) cfg.outlineAlpha=v end)
             if category=="Server" or category=="Sticky" then sliderControl(g,"esp"..category.."Thickness","Outline thickness",0.01,0.2,0.03,0.01,function(v) cfg.thickness=v end) end
-            toggle(g,"esp"..category.."Names","Name",true,function(v) cfg.names=v end)
+            toggle(general,"esp"..category.."Names","Name",true,function(v) cfg.names=v end)
             choice(g,"esp"..category.."Font","Font",{"Builder Sans","Code","Roboto","Rounded","Gotham","Arcade","Source"},"Builder Sans",function(v) cfg.font=v end)
             toggle(g,"esp"..category.."Bold","Bold",false,function(v) cfg.bold=v end)
             toggle(g,"esp"..category.."Icon","Name icon",false,function(v) cfg.icon=v end)
@@ -1762,14 +1880,14 @@ local function buildVisualSystems()
             sliderControl(g,"esp"..category.."Size","Text size",8,30,14,1,function(v) cfg.size=v end)
             sliderControl(g,"esp"..category.."Offset","Vertical offset",0,15,3,0.25,function(v) cfg.offset=v end)
             if category=="Server" then
-                sliderControl(g,"espServerDistance","Show owner when apart",0,50,0,1,function(v) cfg.nameDistance=v end)
-                sliderControl(g,"espServerMaxDistance","Maximum distance",50,5000,5000,1,function() end)
+                sliderControl(general,"espServerDistance","Show owner when apart",0,50,0,1,function(v) cfg.nameDistance=v end)
+                sliderControl(general,"espServerMaxDistance","Maximum distance",50,5000,5000,1,function() end)
             end
             if category=="Players" then
-                toggle(g,"espPlayersHealth","Show health",false,function() end)
-                toggle(g,"espPlayersShowDistance","Show distance",false,function() end)
+                toggle(general,"espPlayersHealth","Show health",false,function() end)
+                toggle(general,"espPlayersShowDistance","Show distance",false,function() end)
                 toggle(g,"espPlayersBackground","Name background",false,function() end)
-                sliderControl(g,"espPlayersMaxDistance","Maximum distance",50,5000,5000,1,function() end)
+                sliderControl(general,"espPlayersMaxDistance","Maximum distance",50,5000,5000,1,function() end)
             end
         end
         config("Players",1) config("Server",2) config("Sticky",1) config("Blackholes",2)
@@ -2241,12 +2359,16 @@ local function buildVisualSystems()
         localizedLabel(about,"<b>Prime Visuals</b>  ·  v"..VERSION,"<b>Prime Visuals</b>  ·  v"..VERSION,15)
         localizedLabel(about,"Author: <b>@876osamuha</b>","Автор: <b>@876osamuha</b>")
         localizedLabel(about,"Visual customization for Fling Things and People.","Визуальная настройка Fling Things and People.")
-        localizedLabel(about,"License status: no license-key system.","Статус лицензии: система ключей не используется.")
-        localizedLabel(about,"View: confirmed by the user. Other sections: testing in progress.","Обзор: подтверждён пользователем. Остальные разделы: тестирование.")
         local rows={}
         for _,name in ipairs({"fps","frame","ping","memory","players","server","fov","effects","uptime","clock"}) do
             rows[name]=statistics:AddLabel({Text="—",DoesWrap=true})
         end
+        local showDetails=false
+        for _,name in ipairs({"frame","memory","server","clock"}) do rows[name]:SetVisible(false) end
+        action(statistics,"Session details",function()
+            showDetails=not showDetails
+            for _,name in ipairs({"frame","memory","server","clock"}) do rows[name]:SetVisible(showDetails) end
+        end)
         local scroll=make("ScrollingFrame",{Name="PrimeHomeScroll",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
             BorderSizePixel=0,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollBarThickness=3,
             ScrollBarImageColor3=purple,ScrollingDirection=Enum.ScrollingDirection.Y},homeTab.Container)
@@ -2499,7 +2621,7 @@ local function buildVisualSystems()
                 end
             end
             for key,panel in pairs(featurePanels) do
-                local position=(panel.Holder and panel.Holder.Visible and panel.Holder.Position) or panel.LastPosition
+                local position=(not panel.Docked and panel.Holder and panel.Holder.Visible and panel.Holder.Position) or panel.LastPosition
                 if position then panels[key]=positionData(position) end
             end
             local tabName="Home"
@@ -2620,7 +2742,6 @@ local function buildVisualSystems()
             refreshSlots() report(uiLanguage=="ru" and "Слот очищен." or "Slot cleared.")
         end)
         local transfer=group("Settings","Import / export",2)
-        transfer:AddLabel({Text=profileStore.Root,DoesWrap=true})
         action(transfer,"Copy folder path",function()
             if type(setclipboard)=="function" then setclipboard(profileStore.Root)
             else report(profileStore.Root) end
@@ -2776,7 +2897,7 @@ local function buildVisualSystems()
         if profileDirty then flushProfile() end
         listen(nativeWindow.MainFrame:GetPropertyChangedSignal("Position"),function() profileChanged() end)
         for _,panel in pairs(featurePanels) do
-            if panel.Holder then listen(panel.Holder:GetPropertyChangedSignal("Position"),function() profileChanged() end) end
+            if panel.Holder and not panel.Docked then listen(panel.Holder:GetPropertyChangedSignal("Position"),function() profileChanged() end) end
         end
         -- Saving on game shutdown is best-effort; normal changes are already written after 0.4s.
         listen(Players.PlayerRemoving,function(leaving) if leaving==player then flushProfile(true) end end)

@@ -783,6 +783,16 @@ local function FuzzyScore(Text: string, Search: string): (boolean, number)
     return true, Score
 end
 
+local function SearchCasefold(Text: string): string
+    local Characters = {}
+    for _, Code in utf8.codes(Text) do
+        if Code >= 65 and Code <= 90 then Code = Code + 32 end
+        if Code >= 0x410 and Code <= 0x42F then Code = Code + 32 elseif Code == 0x401 then Code = 0x451 end
+        Characters[#Characters + 1] = utf8.char(Code)
+    end
+    return table.concat(Characters)
+end
+
 local function NormalizeSearch(Search: string): string
     return (Search:gsub("%s+", ""))
 end
@@ -792,7 +802,7 @@ local function TryFuzzyMatch(Text: any, Search: string): (boolean, number)
         return false, 0
     end
 
-    return FuzzyScore(Text:lower(), Search)
+    return FuzzyScore(SearchCasefold(Text), Search)
 end
 
 local function FuzzyMatchScore(Text: any, Search: string): number
@@ -800,7 +810,7 @@ local function FuzzyMatchScore(Text: any, Search: string): number
         return 0
     end
 
-    local Normalized = NormalizeSearch(Text:lower())
+    local Normalized = NormalizeSearch(SearchCasefold(Text))
     local Matched, Score = FuzzyScore(Normalized, Search)
     if not Matched then
         return 0
@@ -824,6 +834,10 @@ local function MatchesSearch(ElementInfo, Search: string, ForceMatch: boolean?):
     if TryFuzzyMatch(ElementInfo.Text, Search) then
         return true
     end
+    local VisibleLabel = ElementInfo.TextLabel or ElementInfo.Label
+    if typeof(VisibleLabel) == "Instance" and (VisibleLabel:IsA("TextLabel") or VisibleLabel:IsA("TextButton"))
+        and TryFuzzyMatch(VisibleLabel.Text, Search) then return true end
+    if TryFuzzyMatch(ElementInfo.SearchAliases, Search) then return true end
     if TryFuzzyMatch(ElementInfo.Tooltip, Search) then
         return true
     end
@@ -1070,8 +1084,8 @@ local function ApplySearchToTab(Tab, Search)
             continue
         end
 
-        local GroupboxMatches = TabMatches or (TryFuzzyMatch(Groupbox.Name, Search) or TryFuzzyMatch(Groupbox.Description, Search))
-        BestScore = math.max(BestScore, FuzzyMatchScore(Groupbox.Name, Search), FuzzyMatchScore(Groupbox.Description, Search))
+        local GroupboxMatches = TabMatches or (TryFuzzyMatch(Groupbox.Name, Search) or TryFuzzyMatch(Groupbox.Description, Search) or TryFuzzyMatch(Groupbox.SearchAliases, Search))
+        BestScore = math.max(BestScore, FuzzyMatchScore(Groupbox.Name, Search), FuzzyMatchScore(Groupbox.Description, Search), FuzzyMatchScore(Groupbox.SearchAliases, Search))
 
         local VisibleElements = 0
         for _, ElementInfo in Groupbox.Elements do
@@ -1307,7 +1321,7 @@ function Library:UpdateSearch(SearchText)
         ResetTab(Tab)
     end
 
-    local Search = NormalizeSearch(SearchText:lower())
+    local Search = NormalizeSearch(SearchCasefold(SearchText))
     if Trim(Search) == "" then
         Library.Searching = false
         Library.LastSearchTab = nil
@@ -1369,6 +1383,12 @@ function Library:UpdateSearch(SearchText)
     end
 
     Library.LastSearchTab = nil
+end
+
+function Library:ClearSearch()
+    local Box = Library.Window and Library.Window.SearchBox
+    if Box then Box.Text = "" end
+    if Library.Searching then Library:UpdateSearch("") end
 end
 
 function Library:AddToRegistry(Instance, Properties)
@@ -7094,6 +7114,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton) then return end
             if Toggle.Disabled then
                 return
             end
@@ -7205,7 +7226,7 @@ do
         local Button = New("TextButton", {
             Active = not Toggle.Disabled,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 18),
+            Size = UDim2.new(1, 0, 0, Info.RowHeight or 18),
             Text = "",
             Visible = Toggle.Visible,
             Parent = Container,
@@ -7229,9 +7250,9 @@ do
         })
 
         local Switch = New("Frame", {
-            AnchorPoint = Vector2.new(1, 0),
+            AnchorPoint = Vector2.new(1, 0.5),
             BackgroundColor3 = "MainColor",
-            Position = UDim2.fromScale(1, 0),
+            Position = UDim2.fromScale(1, 0.5),
             Size = UDim2.fromOffset(32, 18),
             Parent = Button,
         })
@@ -7368,6 +7389,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton) then return end
             if Toggle.Disabled then
                 return
             end
@@ -10286,18 +10308,15 @@ end
 local ActiveFeatureSettings
 function Library:AddFeatureSettings(Toggle, Info)
     Info = Info or {}
+    local Docked = Info.Docked == true and Info.Window ~= nil
     local Panel = New("Frame", {
         Name = "FeatureSettings", BackgroundColor3 = "BackgroundColor",
         Size = UDim2.fromOffset(312, 100), Visible = false, Active = true,
         ZIndex = 1, Parent = Floats,
     })
-    New("UIStroke", { Color = "AccentColor", Thickness = 1.5, Transparency = 0.1, Parent = Panel })
-    local Halo = New("Frame", {
-        BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1),
-        Active = false, ZIndex = 0, Parent = Panel,
-    })
-    New("UIStroke", { Color = "AccentColor", Thickness = 5, Transparency = 0.85, Parent = Halo })
-    table.insert(Library.DraggableElements, Panel)
+    New("UIStroke", { Color = "OutlineColor", Thickness = 1, Parent = Panel })
+    New("Frame", { BackgroundColor3 = "AccentColor", BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 2), Parent = Panel })
+    if not Docked then table.insert(Library.DraggableElements, Panel) end
     local Scale = New("UIScale", { Scale = Library.DPIScale, Parent = Panel })
     table.insert(Library.Scales, Scale)
     local Header = New("TextLabel", {
@@ -10306,7 +10325,7 @@ function Library:AddFeatureSettings(Toggle, Info)
         TextColor3 = "AccentColor", TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
     })
     New("UIPadding", { PaddingLeft = UDim.new(0, 10), Parent = Header })
-    Library:MakeDraggable(Panel, Header, false)
+    if not Docked then Library:MakeDraggable(Panel, Header, false) end
     local CloseButton = New("TextButton", {
         BackgroundColor3 = "MainColor", Position = UDim2.new(1, -32, 0, 0),
         Size = UDim2.fromOffset(32, 32), Text = "×", TextSize = 20, Parent = Panel,
@@ -10326,15 +10345,97 @@ function Library:AddFeatureSettings(Toggle, Info)
     local Settings = setmetatable({
         Type = "FeatureSettings", Container = Body, Holder = Panel, BoxHolder = Panel,
         Elements = {}, DependencyBoxes = {}, Connections = {}, Destroyed = false,
-        Visible = true, Owner = Toggle,
+        Visible = true, Owner = Toggle, Docked = Docked, Pages = {},
     }, BaseGroupbox)
+    local SettingsButton = New("TextButton", {
+        Name = "FeatureSettingsButton", BackgroundTransparency = 1, Text = "",
+        AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(1, -62, 0.5, 0),
+        Size = UDim2.fromOffset(22, 22), Parent = Toggle.Holder,
+    })
+    local SettingsIcon = New("ImageLabel", {
+        Name = "SettingsIcon", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(16, 16), Parent = SettingsButton,
+    })
+    local CustomIcon = Library:GetCustomIcon("sliders-horizontal")
+    if CustomIcon then Library:ApplyLucideIcon(SettingsIcon, CustomIcon) else SettingsButton.Text = "…" end
+    Toggle.SettingsButton = SettingsButton
+    if Toggle.TextLabel then
+        local OriginalSize = Toggle.TextLabel.Size
+        Toggle.TextLabel.Size = UDim2.new(OriginalSize.X.Scale, OriginalSize.X.Offset - 26, OriginalSize.Y.Scale, OriginalSize.Y.Offset)
+    end
+    local SettingsTooltip = Library:AddTooltip("Settings", "Enable this effect to edit its settings", SettingsButton)
+    local OriginalDisplay = Toggle.Display
+    local function DisplayOwner(self)
+        if OriginalDisplay then OriginalDisplay(self) end
+        if not Settings.Destroyed then
+            SettingsIcon.ImageTransparency = Toggle.Value and 0.1 or 0.75
+            SettingsIcon.ImageColor3 = Toggle.Value and Library.Scheme.AccentColor or Library.Scheme.FontColor
+            SettingsTooltip.Disabled = not Toggle.Value
+        end
+    end
+    Toggle.Display = DisplayOwner
+    DisplayOwner(Toggle)
     function Settings:Resize()
+        if Settings.Destroyed then return end
         local DPI = math.max(Library.DPIScale, 0.1)
-        local View = Floats.AbsoluteSize
-        local Width = math.min(312, math.max(100, (View.X - 16) / DPI))
+        local View = Docked and Info.Window.AbsoluteSize or Floats.AbsoluteSize
+        local Width = math.min(312, math.max(100, (View.X - (Docked and 20 * DPI or 16)) / DPI))
         local Height = math.min(List.AbsoluteContentSize.Y / DPI + 18,
-            math.max(40, math.min(460, (View.Y - 24) / DPI - 32)))
+            math.max(40, math.min(460, (View.Y - (Docked and 80 * DPI or 24)) / DPI - 32)))
         Panel.Size = UDim2.fromOffset(Width, Height + 32)
+    end
+    local function PositionPanel()
+        if not Docked then return end
+        local DPI = math.max(Library.DPIScale, 0.1)
+        local Origin = Info.Window.AbsolutePosition - Floats.AbsolutePosition
+        local Size = Info.Window.AbsoluteSize
+        local X = Origin.X + Size.X - Panel.Size.X.Offset * DPI - 10 * DPI
+        local Y = Origin.Y + 54 * DPI
+        local View = Floats.AbsoluteSize
+        Panel.Position = UDim2.fromOffset(math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8)),
+            math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8)))
+    end
+    function Settings:AddPage(Name)
+        if not Settings.PageBar then
+            Settings.PageBar = New("Frame", { Name = "SettingsPages", BackgroundTransparency = 1,
+                LayoutOrder = -1000, Size = UDim2.new(1, 0, 0, 28), Parent = Body })
+        end
+        local Index = #Settings.Pages + 1
+        local Button = New("TextButton", { BackgroundColor3 = "MainColor", Text = Name, TextSize = 13, Parent = Settings.PageBar })
+        local Container = New("Frame", { Name = "Page_" .. Name, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 0), Visible = Index == 1, Parent = Body })
+        local Layout = New("UIListLayout", { Padding = UDim.new(0, 8), Parent = Container })
+        local Page = setmetatable({ Type = "FeaturePage", Container = Container, Holder = Container, BoxHolder = Container,
+            Elements = {}, DependencyBoxes = {}, Connections = {}, Visible = true, Destroyed = false, Button = Button }, BaseGroupbox)
+        function Page:Resize()
+            if Settings.Destroyed then return end
+            Container.Size = UDim2.new(1, 0, 0, Layout.AbsoluteContentSize.Y / math.max(Library.DPIScale, 0.1))
+            Settings:Resize()
+        end
+        function Page:Show()
+            if CurrentMenu and CurrentMenu.Holder:IsDescendantOf(Panel) then CurrentMenu:Close() end
+            for _, Other in ipairs(Settings.Pages) do
+                local Selected = Other == Page
+                Other.Container.Visible = Selected
+                Other.Button.TextTransparency = Selected and 0 or 0.4
+                Other.Button.BackgroundTransparency = Selected and 0.8 or 0
+                Other.Button.BackgroundColor3 = Selected and Library.Scheme.AccentColor or Library.Scheme.MainColor
+                Library.Registry[Other.Button].BackgroundColor3 = Selected and "AccentColor" or "MainColor"
+            end
+            Settings.ActivePage = Page
+            Body.CanvasPosition = Vector2.new(0, 0)
+            Page:Resize()
+        end
+        table.insert(Settings.Pages, Page)
+        for I, Other in ipairs(Settings.Pages) do
+            Other.Button.Size = UDim2.new(1 / #Settings.Pages, -3, 1, 0)
+            Other.Button.Position = UDim2.new((I - 1) / #Settings.Pages, 1, 0, 0)
+        end
+        Library:GiveSignal(Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Page:Resize() end))
+        Library:GiveSignal(Button.MouseButton1Click:Connect(function() Page:Show() end))
+        local SelectedPage = Settings.ActivePage or Page
+        SelectedPage:Show()
+        return Page
     end
     function Settings:ContainsPoint(Point)
         -- Absolute bounds already include current drag position, layout and DPI.
@@ -10344,7 +10445,7 @@ function Library:AddFeatureSettings(Toggle, Info)
             and Menu.Menu.Visible and Library:MouseIsOverFrame(Menu.Menu, Point)
     end
     function Settings:Close()
-        if Panel.Visible then Settings.LastPosition = Panel.Position end
+        if Panel.Visible and not Docked then Settings.LastPosition = Panel.Position end
         Panel.Visible = false
         if ActiveFeatureSettings == Settings then ActiveFeatureSettings = nil end
         if Settings.Watch then Settings.Watch:Disconnect() Settings.Watch = nil end
@@ -10372,10 +10473,12 @@ function Library:AddFeatureSettings(Toggle, Info)
         X = math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8))
         Y = math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8))
         Panel.Position = UDim2.fromOffset(X, Y)
+        PositionPanel()
         Panel.Visible = true
         ActiveFeatureSettings = Settings
         Settings.Watch = RunService.Heartbeat:Connect(function()
-            if not Library.Toggled or not Toggle.Value or not OwnerVisible() then Settings:Close() end
+            if not Library.Toggled or not Toggle.Value or not OwnerVisible() then Settings:Close()
+            elseif Docked then Settings:Resize() PositionPanel() end
         end)
     end
     function Settings:Destroy()
@@ -10384,20 +10487,33 @@ function Library:AddFeatureSettings(Toggle, Info)
         Settings.Destroyed = true
         local Index = table.find(Library.DraggableElements, Panel)
         if Index then table.remove(Library.DraggableElements, Index) end
-        for _, Element in Settings.Elements do if Element.Destroy then Element:Destroy() end end
+        if Toggle.Display == DisplayOwner then Toggle.Display = OriginalDisplay end
+        if Toggle.SettingsButton == SettingsButton then Toggle.SettingsButton = nil end
+        SettingsTooltip:Destroy()
+        SettingsButton:Destroy()
+        local function DestroyElements(Elements)
+            for I = #Elements, 1, -1 do local Element = Elements[I] if Element.Destroy then Element:Destroy() end end
+        end
+        DestroyElements(Settings.Elements)
+        for _, Page in ipairs(Settings.Pages) do Page.Destroyed = true DestroyElements(Page.Elements) end
         Panel:Destroy()
     end
     Library:OnUnload(function() Settings:Destroy() end)
     Library:GiveSignal(List:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Settings:Resize() end))
     local DismissedOnOwnerPress = false
+    local DismissedOnSettingsPress = false
     Library:GiveSignal(Toggle.Holder.MouseButton2Click:Connect(function()
         if DismissedOnOwnerPress then DismissedOnOwnerPress = false return end
         Settings:Open()
     end))
     Library:GiveSignal(CloseButton.MouseButton1Click:Connect(function() Settings:Close() end))
+    Library:GiveSignal(SettingsButton.MouseButton1Click:Connect(function()
+        if DismissedOnSettingsPress then DismissedOnSettingsPress = false return end
+        Settings:Open()
+    end))
     Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input)
         local RightClick = Input.UserInputType == Enum.UserInputType.MouseButton2
-        if RightClick then DismissedOnOwnerPress = false end
+        if RightClick then DismissedOnOwnerPress = false else DismissedOnSettingsPress = false end
         if ActiveFeatureSettings ~= Settings then return end
         if Input.KeyCode == Enum.KeyCode.Escape then
             Settings:Close()
@@ -10407,10 +10523,23 @@ function Library:AddFeatureSettings(Toggle, Info)
             local Point = Position and Vector2.new(Position.X, Position.Y) or UserInputService:GetMouseLocation()
             if Settings:ContainsPoint(Point) then return end
             DismissedOnOwnerPress = RightClick and Library:MouseIsOverFrame(Toggle.Holder, Point)
+            DismissedOnSettingsPress = not RightClick and Library:MouseIsOverFrame(SettingsButton, Point)
             Settings:Close()
         end
     end))
     return Settings
+end
+
+-- Keep the color swatch and rainbow switch on one row; serialized values stay unchanged.
+function Library:CompactColorRainbow(Label, Toggle)
+    if not Label or not Label.TextLabel or not Label.TextLabel.Parent or not Toggle or not Toggle.Holder then return end
+    Toggle.Holder.Parent = Label.TextLabel
+    Toggle.Holder.Name = "InlineRainbow"
+    Toggle.Holder.Size = UDim2.fromOffset(94, 18)
+    if Toggle.TextLabel then Toggle.TextLabel.Text = "Rainbow" Toggle.TextLabel.TextSize = 11 end
+    local Tooltip = Library:AddTooltip(Toggle.Text, nil, Toggle.Holder)
+    Library:OnUnload(function() Tooltip:Destroy() end)
+    if Toggle.Parent then Toggle.Parent:Resize() end
 end
 
 function Library:SetFont(FontFace)
@@ -12025,7 +12154,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         function Tab:RefreshSides()
-            local Offset = WarningBoxHolder.Visible and WarningBox.Size.Y.Offset + 8 or 0
+            local Offset = (WarningBoxHolder.Visible and WarningBox.Size.Y.Offset + 8 or 0) + (Tab.NavigationOffset or 0)
             for _, Side in Tab.Sides do
                 Side.Position = UDim2.new(Side.Position.X.Scale, 0, 0, Offset)
                 Side.Size = UDim2.new(0.5, -3, 1, -Offset)
@@ -14205,6 +14334,7 @@ function Library:CreateWindow(WindowInfo)
     end))
 
     Window.MainFrame = MainFrame
+    Window.SearchBox = SearchBox
     Window.IconHolder = WindowIcon
     Library.Window = Window
 
