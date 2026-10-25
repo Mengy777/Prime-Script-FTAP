@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.8.2"
+local VERSION="1.9.0"
 local vortexLaunching=false
 local sessionStarted=os.clock()
 local sourceCache={}
@@ -591,13 +591,26 @@ local function buildVisualSystems()
         local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
         return register(key,widget,initial,callback)
     end
+    -- Existing rainbow implementations keep their own controls and efficient render paths.
+    local legacyRainbowColors={lineColor=true,characterColor=true,hatColor=true}
+    local rainbowColors={}
+    local colorOwners={lightTint="lightEnabled",skyCloudColor="skyClouds",particleColor="particleEnabled",
+        waterColor="waterEnabled",crossColor="crossEnabled",bhColor="bhTintEnabled"}
     local colorWarningShown=false
-    local function color(g,key,text,initial,callback)
+    local function color(g,key,text,initial,callback,rainbowApply)
         put(key,initial)
         local label,picker,activeSetter
         local pickerReady=false
         local fallbackActive=false
-        local onChanged=changed(key,callback)
+        local rainbowState
+        local handleChanged=changed(key,callback)
+        local function onChanged(value)
+            if rainbowState and not suppressed and not building then
+                rainbowState.manual=value
+                if controls[rainbowState.key] then setters[rainbowState.key](false,false) end
+            end
+            handleChanged(value)
+        end
         local function useFallback(reason)
             pickerReady=false
             if not fallbackActive then
@@ -636,6 +649,10 @@ local function buildVisualSystems()
             activeSetter=useFallback(created and "missing or invalid ColorPicker registration" or result)
         end
         local function set(value,apply)
+            if rainbowState and not rainbowState.animating then
+                rainbowState.manual=value
+                if controls[rainbowState.key] then setters[rainbowState.key](false,false) end
+            end
             local previousSuppressed=suppressed
             local ok,err=pcall(activeSetter,value,apply)
             suppressed=previousSuppressed
@@ -646,6 +663,25 @@ local function buildVisualSystems()
             end
         end
         setters[key]=set
+        -- ESP fill already has Rainbow fill; all other color fields get a dedicated switch.
+        if not legacyRainbowColors[key] and not key:match("^esp.+Fill$") then
+            local owner=colorOwners[key]
+            for _,category in ipairs({"Players","Server","Sticky","Blackholes"}) do
+                if key:sub(1,#category+3)=="esp"..category then
+                    owner=({Players="espPlayers",Server="espServer",Sticky="espSticky",Blackholes="espBlackholes"})[category]
+                    break
+                end
+            end
+            local rainbowKey=key.."Rainbow"
+            local labelText="Rainbow: "..text
+            ru[labelText]="Радуга: "..(ru[text] or text)
+            rainbowState={key=rainbowKey,manual=initial,owner=owner,set=set,apply=rainbowApply or callback}
+            rainbowColors[key]=rainbowState
+            toggle(g,rainbowKey,labelText,false,function(on)
+                if on then rainbowState.manual=controls[key]
+                else set(rainbowState.manual,true) end
+            end)
+        end
         return set
     end
     local function action(g,text,fn)
@@ -757,7 +793,9 @@ local function buildVisualSystems()
         sliderControl(g,"lightExposure","Exposure",-3,3,0,0.05,update)
         sliderControl(g,"lightSaturation","Saturation",-1,1,0.15,0.05,update)
         sliderControl(g,"lightContrast","Contrast",-1,1,0.05,0.05,update)
-        color(g,"lightTint","Tint",Color3.new(1,1,1),update)
+        color(g,"lightTint","Tint",Color3.new(1,1,1),update,function(value)
+            if effects.Color then effects.Color.TintColor=value end
+        end)
         local h=g
         sliderControl(h,"lightBloom","Bloom",0,3,0.25,0.05,update)
         sliderControl(h,"lightRays","Sun rays",0,1,0.03,0.01,update)
@@ -823,7 +861,9 @@ local function buildVisualSystems()
         local function update() if controls.skyClouds then updateClouds(true) end end
         sliderControl(h,"skyCloudDensity","Density",0,1,0.5,0.05,update)
         sliderControl(h,"skyCloudCover","Cover",0,1,0.5,0.05,update)
-        color(h,"skyCloudColor","Color",Color3.new(1,1,1),update)
+        color(h,"skyCloudColor","Color",Color3.new(1,1,1),update,function(value)
+            if cloud and cloud.Parent then patch("clouds",cloud,"Color",value) end
+        end)
         onCustomSkyApplied=function(data)
             setters.skySun(math.clamp(tonumber(data.SunAngularSize) or 21,0,60),false)
             setters.skySunVisible(false,true)
@@ -863,7 +903,9 @@ local function buildVisualSystems()
         local function update() if controls.particleEnabled then updateParticles(true) end end
         choice(g,"particleTexture","Texture",{"Circles","Snowflakes","Prime","Custom"},"Circles",update)
         field(g,"particleImage","Custom image","242109931",update)
-        color(g,"particleColor","Color",purple,update)
+        color(g,"particleColor","Color",purple,update,function(value)
+            if emitter then emitter.Color=ColorSequence.new(value) end
+        end)
         local h=g
         sliderControl(h,"particleCount","Count per second",10,5000,150,10,update)
         sliderControl(h,"particleLimit","Performance cap",100,5000,1000,100,update)
@@ -1023,7 +1065,9 @@ local function buildVisualSystems()
         end)
         local function update() if controls.waterEnabled then waterSettings() end end
         g=featureSettings("waterEnabled")
-        color(g,"waterColor","Color",Color3.fromRGB(35,135,190),update)
+        color(g,"waterColor","Color",Color3.fromRGB(35,135,190),update,function(value)
+            patch("water",Terrain,"WaterColor",value)
+        end)
         sliderControl(g,"waterWaves","Wave size",0,1,0.15,0.05,update)
         sliderControl(g,"waterSpeed","Wave speed",0,100,10,1,update)
         sliderControl(g,"waterAlpha","Transparency",0,1,0.4,0.05,update)
@@ -1516,13 +1560,13 @@ local function buildVisualSystems()
         h=featureSettings("crossEnabled")
         local function update() if controls.crossEnabled then crosshair(true) end end
         field(h,"crossImage","Image","9943168532",update)
-        color(h,"crossColor","Color",white,update)
+        color(h,"crossColor","Color",white,update,function(value) crossImage.ImageColor3=value end)
         sliderControl(h,"crossSize","Size",8,128,28,1,update)
         local b=group("Tweaks","Blackholes",1)
         toggle(b,"bhImageEnabled","Custom image",false,blackholeLoop)
         field(featureSettings("bhImageEnabled"),"bhImage","Image","9920612764",function() unpatch("blackhole") blackholeLoop() end)
         toggle(b,"bhTintEnabled","Custom color",false,blackholeLoop)
-        color(featureSettings("bhTintEnabled"),"bhColor","Color",white,function() unpatch("blackhole") blackholeLoop() end)
+        color(featureSettings("bhTintEnabled"),"bhColor","Color",white,function() unpatch("blackhole") blackholeLoop() end,updateBlackholes)
         toggle(b,"bhStay","Keep visual blackholes",false,blackholeLoop)
     end
     -- AUDIO: category mutes and custom blackhole audio.
@@ -1802,6 +1846,26 @@ local function buildVisualSystems()
         end)
     end
 
+    local rainbowElapsed=0
+    job("Rainbow colors",Run.Heartbeat,function(dt)
+        rainbowElapsed=rainbowElapsed+dt
+        if rainbowElapsed<1/30 then return end
+        rainbowElapsed=rainbowElapsed%(1/30)
+        local tint
+        for _,state in pairs(rainbowColors) do
+            if controls[state.key] and (not state.owner or controls[state.owner]) then
+                tint=tint or Color3.fromHSV((os.clock()*0.12)%1,1,1)
+                state.animating=true
+                local ok,message=pcall(function() state.set(tint,false) state.apply(tint) end)
+                state.animating=false
+                if not ok then
+                    setters[state.key](false,true)
+                    warn("Prime Visuals rainbow / "..state.key..": "..tostring(message))
+                    notify(uiLanguage=="ru" and "Радужный цвет отключён после ошибки." or "Rainbow color stopped after an error.")
+                end
+            end
+        end
+    end)
     building=false
     -- Bind localization to the actual library UI; no duplicate custom control layer.
     for _,object in ipairs(Library.ScreenGui:GetDescendants()) do bindLocalization(object) end
