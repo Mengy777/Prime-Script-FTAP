@@ -1,5 +1,6 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.8.0"
+local VERSION="1.8.1"
+local vortexLaunching=false
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -49,6 +50,7 @@ local ru={
     ["Settings"]="Настройки",
     ["Reset all settings"]="Сбросить все настройки",
     ["Unload script"]="Полностью закрыть",
+    ["Open Prime Vortex"]="Открыть Prime Vortex",
     ["View"]="Обзор",
     ["Graphics"]="Графика",
     ["Interface"]="Интерфейс",
@@ -1588,6 +1590,35 @@ local function buildVisualSystems()
             if resetting then return end
             resetting=true
             gui:Destroy()
+        end)
+        action(g,"Open Prime Vortex",function()
+            if vortexLaunching or resetting then return end
+            vortexLaunching=true
+            local wasOpen=Library.Toggled
+            local ok,message=pcall(function()
+                local env=(getgenv and getgenv()) or shared
+                local current=env.PrimeVortexUI
+                Library:Toggle(false)
+                if type(current)=="table" and not current.Unloaded
+                    and type(current.Library)=="table" and not current.Library.Unloaded then
+                    current.Library:Toggle(true)
+                    return
+                end
+                local source=game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/heads/main/PrimeVortex.lua")
+                if not alive then return end
+                local chunk,compileError=loadstring(source,"PrimeVisuals/PrimeVortex")
+                assert(chunk,compileError)
+                chunk()
+            end)
+            vortexLaunching=false
+            if not ok then
+                warn("Prime Visuals: Prime Vortex launch failed: "..tostring(message))
+                if alive then
+                    Library:Toggle(wasOpen)
+                    notify(uiLanguage=="ru" and "Не удалось открыть Prime Vortex. Попробуй ещё раз."
+                        or "Could not open Prime Vortex. Please try again.")
+                end
+            end
         end)
     end
 
