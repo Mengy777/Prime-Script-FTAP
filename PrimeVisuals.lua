@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.8.1"
+local VERSION="1.8.2"
 local vortexLaunching=false
 local sessionStarted=os.clock()
 local sourceCache={}
@@ -12,7 +12,7 @@ local function loadUIModule(name)
     assert(chunk,message)
     return chunk(loadUIModule)
 end
-local function startVisuals(skipIntro)
+local function startVisuals()
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -438,7 +438,28 @@ local function buildVisualSystems()
     local alive=true
     local setters={}
     local controls={}
-    local function notify(text) Library:Notify(tostring(text),5) end
+    -- Install teardown before the first UI/effect is built, including partial startup failures.
+    local clearLineSignals,restoreWater,mannequins
+    local mutedSounds={}
+    cleanupExtra=function()
+        if not alive then return end
+        alive=false
+        local function attempt(label,fn)
+            local ok,message=pcall(fn)
+            if not ok then warn("Prime Visuals cleanup / "..label..": "..tostring(message)) end
+        end
+        for _,c in pairs(jobs) do attempt("job",function() c:Disconnect() end) end jobs={}
+        if clearLineSignals then attempt("line",clearLineSignals) end
+        for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
+        if restoreWater then attempt("water",restoreWater) end
+        for o,properties in pairs(patches) do
+            for property,entry in pairs(properties) do attempt("property",function() o[property]=entry.original end) end
+        end
+        patches={}
+        for o in pairs(owned) do attempt("instance",function() o:Destroy() end) end owned={}
+    end
+    local function notify(text) if alive and not Library.Unloaded then Library:Notify(tostring(text),5) end end
     local function job(name,signal,fn)
         if jobs[name] then jobs[name]:Disconnect() jobs[name]=nil end
         if signal and fn then jobs[name]=signal:Connect(function(...)
@@ -906,7 +927,7 @@ local function buildVisualSystems()
         Terrain:PasteRegion(entry.snapshot,entry.corner,true)
         entry.snapshot:Destroy()
     end
-    local function restoreWater()
+    restoreWater=function()
         waterGeneration=waterGeneration+1
         waterQueue={} waterQueueHead=1 waterWorker=false waterParts={}
         job("New water")
@@ -1103,7 +1124,6 @@ local function buildVisualSystems()
         sliderControl(h,"hatAlpha","Transparency",0,1,0.2,0.05,function() end)
     end
     -- Lazy-loaded local actors and physics, isolated from FTAP's server grab events.
-    local mannequins
     do
         local g=group("Character","Mannequins",1)
         toggle(g,"mannequinEnabled","Local mannequins",false,function(on)
@@ -1339,7 +1359,7 @@ local function buildVisualSystems()
         Dots="rbxassetid://9169659357",Bubbles="rbxassetid://1249690853",Spring="rbxassetid://18837732116",Gamepass="rbxassetid://8933355899",Default="rbxassetid://8933346550"}
     local lineBeams={}
     local lineSignals={}
-    local function clearLineSignals()
+    clearLineSignals=function()
         for _,signals in pairs(lineSignals) do for _,connection in ipairs(signals) do connection:Disconnect() end end
         lineSignals={}
     end
@@ -1519,7 +1539,6 @@ local function buildVisualSystems()
         Rhythm=function(o) return string.lower(o.Name):match("^sound[1-8]$")~=nil end,
         Instruments=function(o) return o.Parent and o.Parent.Name=="MusicPart" end
     }
-    local mutedSounds={}
     local function muteSound(o)
         if not o:IsA("Sound") then return end
         local should=false
@@ -1584,7 +1603,7 @@ local function buildVisualSystems()
             resetting=true
             -- Reuse full teardown, then rebuild clean controls and effect state.
             gui:Destroy()
-            task.defer(function() startVisuals(true) end)
+            task.defer(function() startVisuals() end)
         end)
         action(g,"Unload script",function()
             if resetting then return end
@@ -1803,19 +1822,7 @@ local function buildVisualSystems()
             if controls.waterEnabled and controls.waterSolid then updateSwimming() end
         end)
     end)
-    cleanupExtra=function()
-        alive=false
-        for _,c in pairs(jobs) do c:Disconnect() end jobs={}
-        clearLineSignals()
-        for _,c in pairs(mutedSounds) do c:Disconnect() end mutedSounds={}
-        if mannequins then mannequins:Destroy() end
-        restoreWater()
-        for o,properties in pairs(patches) do
-            for property,entry in pairs(properties) do pcall(function() o[property]=entry.original end) end
-        end
-        patches={}
-        for o in pairs(owned) do pcall(function() o:Destroy() end) end owned={}
-    end
+
 end
 local function shutdown()
     if closing then return end
@@ -1833,40 +1840,12 @@ local function shutdown()
 end
 gui.Destroying:Connect(shutdown)
 Library:OnUnload(function() if not closing and gui.Parent then gui:Destroy() end end)
-local startupLoading
-local startupStarted=os.clock()
-local startupDuration=math.random(3000,5000)/1000
-if not skipIntro then
-    startupLoading=Library:CreateLoading({
-        Title="Prime Visuals",Icon="diamond",IconSize=UDim2.fromOffset(26,26),LoadingIcon="loader-circle",
-        CurrentStep=0,TotalSteps=100,WindowWidth=420,ContentWidth=420,WindowHeight=240,
-        ShowSidebar=false,AutoResizeHeight=false,AlwaysOnTop=true
-    })
-    startupLoading:SetMessage("Preparing Prime Visuals")
-    startupLoading:SetDescription("by @876osamuha  ·  v"..VERSION)
-end
 local prepared,prepareError=xpcall(buildVisualSystems,debug.traceback)
 if not prepared then
     gui:Destroy()
     error(prepareError,0)
 end
-if startupLoading then
-    task.spawn(function()
-        local lastStep=-1
-        while not closing and gui.Parent and not startupLoading.Destroyed do
-            local progress=math.clamp((os.clock()-startupStarted)/startupDuration,0,1)
-            local step=math.floor(progress*progress*(3-2*progress)*100)
-            if step~=lastStep then startupLoading:SetCurrentStep(step) lastStep=step end
-            if progress>=1 then
-                startupLoading:SetMessage("Ready")
-                startupLoading:Destroy()
-                menuOpen=true
-                return
-            end
-            task.wait(0.04)
-        end
-    end)
-else
+if not closing and gui.Parent then
     Library:Toggle(true)
     menuOpen=true
 end
