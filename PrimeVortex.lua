@@ -1,6 +1,6 @@
--- Prime Vortex 0.1.0 | UI shell only. No gameplay hooks or features.
-local VERSION="0.1.0"
-local UI_TAG="vortex-v0.1.0"
+-- Prime Vortex 0.2.0 | UI shell only. No gameplay hooks or features.
+local VERSION="0.2.0"
+local UI_TAG="vortex-v0.2.0"
 local BASE="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/lib/"
 local env=(getgenv and getgenv()) or shared
 local previous=env.PrimeVortexUI
@@ -35,6 +35,7 @@ local function connect(signal,fn) local c=signal:Connect(fn) table.insert(connec
 local function cleanup()
     if controller.Unloaded then return end
     controller.Unloaded=true
+    if controller.Artwork then controller.Artwork:Destroy() end
     for _,c in ipairs(connections) do c:Disconnect() end connections={}
     if env.PrimeVortexUI==controller then env.PrimeVortexUI=nil end
 end
@@ -69,14 +70,18 @@ local ok,err=xpcall(function()
         Size=UDim2.new(1,-16,1,-12),Position=UDim2.fromOffset(8,6),ClipsDescendants=true},tab.Container)
     make("Frame",{BackgroundColor3=red,BackgroundTransparency=0.3,BorderSizePixel=0,
         Size=UDim2.new(1,0,0,1)},canvas)
-    local seal=make("ImageLabel",{Name="VortexFlame",BackgroundTransparency=1,
-        AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.43),Size=UDim2.fromOffset(88,88),
-        ImageColor3=red,ImageTransparency=0.1},canvas)
-    local icon=Library:GetIcon("flame")
-    if icon then Library:ApplyLucideIcon(seal,icon) seal.ImageColor3=red end
+    local artwork=loadModule("AnimatedEmblem")({Parent=canvas,Header=window.IconHolder,
+        Name="VortexDemon",Style="demon",Accent=red,HueOffset=0.98,
+        Position=UDim2.fromScale(0.5,0.42),Size=UDim2.new(0.74,0,0.6,0),
+        URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/"..UI_TAG.."/assets/vortex-demon-v1.png",
+        CacheName="demon-422b782bef8e.png",Bytes=1421042,
+        IsAlive=function() return not controller.Unloaded end,
+        IsVisible=function() return Library.Toggled end,
+    })
+    controller.Artwork=artwork
     make("TextLabel",{Name="VortexWordmark",BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0),
-        Position=UDim2.new(0.5,0,0.43,62),Size=UDim2.new(1,-48,0,36),Text="VORTEX",
-        Font=Enum.Font.Code,TextSize=28,TextColor3=Color3.fromRGB(230,205,209)},canvas)
+        Position=UDim2.new(0.5,0,1,14),Size=UDim2.new(1,140,0,36),Text="PRIME VORTEX",
+        Font=Enum.Font.Code,TextSize=26,TextColor3=Color3.fromRGB(230,205,209)},artwork.Root)
     local close=make("TextButton",{Name="VortexClose",BackgroundTransparency=1,
         Position=UDim2.new(1,-32,0,8),Size=UDim2.fromOffset(24,24),Text="×",Font=Enum.Font.Code,
         TextSize=23,TextColor3=Color3.fromRGB(148,75,84),AutoButtonColor=false},canvas)
@@ -107,11 +112,12 @@ local ok,err=xpcall(function()
     local phase,elapsed=0,0
     connect(Run.RenderStepped,function(dt)
         if controller.Unloaded or not Library.Toggled then return end
+        artwork:Step(dt)
         elapsed=elapsed+dt if elapsed<1/24 then return end
         phase=phase+math.min(elapsed,0.15) elapsed=0
         local pulse=(math.sin(phase*1.4)+1)/2
         local tint=Color3.fromRGB(224+math.floor(pulse*26),25+math.floor(pulse*35),40-math.floor(pulse*20))
-        edge.Color=tint glow.Color=tint glow.Transparency=0.87+pulse*0.05 seal.ImageColor3=tint
+        edge.Color=tint glow.Color=tint glow.Transparency=0.87+pulse*0.05
         for i,ember in ipairs(embers) do
             local life=(phase*0.055+i/10)%1
             ember.Position=UDim2.fromScale((i*0.137+math.sin(phase*0.3+i)*0.018)%1,1-life*0.72)

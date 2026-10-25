@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.0.0"
+local VERSION="2.1.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -319,7 +319,6 @@ local nativeWindow=Library:CreateWindow({
     Animations={ToggleWindow=false,TabSwitch=true,Dropdown=true,Groupbox=true,KeyPicker=true},
     TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
 })
-Library:GiveSignal(loadUIModule("PrimeIcon")(nativeWindow.IconHolder,nativeWindow.MainFrame,RunService))
 local gui=make("ScreenGui",{Name="PrimeVisuals",ResetOnSpawn=false,Enabled=false},playerGui)
 local menuOpen=false
 local closing=false
@@ -585,11 +584,6 @@ local function buildVisualSystems()
     for _,category in ipairs(categories) do
         local tab=nativeWindow:AddTab({Name=category[1],Icon=category[2],Tooltip=category[1]})
         categoryTabs[category[1]]=tab
-        local originalShow=tab.Show
-        function tab:Show(...)
-            originalShow(self,...)
-            profileChanged()
-        end
         for _,name in ipairs(category[3]) do tabs[name]=tab end
     end
     profileChanged=function(key)
@@ -1777,6 +1771,11 @@ local function buildVisualSystems()
                 local env=(getgenv and getgenv()) or shared
                 local current=env.PrimeVortexUI
                 Library:Toggle(false)
+                -- Replace the original flame-only shell instead of reopening its stale preview.
+                if type(current)=="table" and current.Version=="0.1.0" and type(current.Unload)=="function" then
+                    current:Unload()
+                    current=nil
+                end
                 if type(current)=="table" and not current.Unloaded
                     and type(current.Library)=="table" and not current.Library.Unloaded then
                     current.Library:Toggle(true)
@@ -1811,6 +1810,19 @@ local function buildVisualSystems()
         local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=16})
         local identity=profile:AddLabel({Text="",DoesWrap=true})
         local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
+        local hero=homeTab:AddRightGroupbox("Prime Visuals","sparkles")
+        local emblemRow=hero:AddImage("homeEmblem",{Image="diamond",Height=204,Transparency=1,
+            BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
+        local artwork=loadUIModule("AnimatedEmblem")({Parent=emblemRow.Holder,Header=nativeWindow.IconHolder,
+            Name="VisualsPhoenix",Style="phoenix",Accent=purple,HueOffset=0.72,
+            URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
+            CacheFolder="PrimeVisuals/Assets",Folders={"PrimeVisuals","PrimeVisuals/Assets"},
+            CacheName="phoenix-d8d557849ed3.png",Bytes=2068952,
+            IsAlive=function() return alive end,IsVisible=function() return Library.Toggled end,
+            HeroVisible=function() return Library.ActiveTab==homeTab end,
+        })
+        own(artwork.Root)
+        job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end)
         local statistics=homeTab:AddRightGroupbox("Session statistics","chart-no-axes-combined")
         local function richEscape(value)
             return tostring(value):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;"):gsub('"',"&quot;")
@@ -2088,7 +2100,6 @@ local function buildVisualSystems()
                 if position then panels[key]=positionData(position) end
             end
             local tabName="Home"
-            for name,tab in pairs(categoryTabs) do if tab==Library.ActiveTab then tabName=name break end end
             return {values=values,applied=applied,sky=sky,customSky=customSkyLoaded,fovApplied=fovChanged,
                 ui={position=positionData(nativeWindow.MainFrame.Position),tab=tabName,panels=panels}}
         end
@@ -2332,7 +2343,7 @@ local function buildVisualSystems()
                 for key,position in pairs(profile.ui.panels or {}) do
                     if featurePanels[key] then featurePanels[key].LastPosition=readPosition(position) end
                 end
-                if categoryTabs[profile.ui.tab] then categoryTabs[profile.ui.tab]:Show() end
+                -- Startup always remains on Home, including autosave, slots and undo.
             end
             appliedSettings=profile.applied
             restoringProfile=false
@@ -2342,7 +2353,7 @@ local function buildVisualSystems()
             if type(profileOverride)=="table" then payload=profileOverride
             else payload,readError=profileStore:ReadAuto() end
         end
-        -- The initial default Home show happens before this block. Configs can restore another tab.
+        -- Home stays the launch page; profiles restore settings and panel positions.
         building=false
         if payload then
             local ok,message=pcall(applyProfile,payload)

@@ -29,12 +29,13 @@ for iteration in range(8):
  lu.execute("TEST_OPTIONS.profileImportFile:SetValue('random.json'); TEST_ACTIONS['Import into selected slot'](); TEST_ACTIONS['Load slot']()")
  actual=json.loads(d.files[f'PrimeVisuals/Configs/{user}/autosave.json'])['payload']
  for key,value in payload['values'].items(): assert actual['values'][key]==value,(iteration,key,value,actual['values'][key])
- assert actual['ui']==payload['ui'],(actual['ui'],payload['ui'])
+ expected_ui=dict(payload['ui'],tab='Home')
+ assert actual['ui']==expected_ui,(actual['ui'],expected_ui)
  lu.execute("TEST_ACTIONS['Unload script']()")
  lu,_,_,_=session(d,user)
  persisted=json.loads(d.files[f'PrimeVisuals/Configs/{user}/autosave.json'])['payload']
  assert persisted['values']==actual['values'] and persisted['ui']==actual['ui']
-print('PASS 8 seeded randomized complete profiles, 1,424 varied setting values; imports, offline-player selections, UI positions/tab/panel and cold restart')
+print('PASS 8 seeded randomized complete profiles, 1,424 varied setting values; imports, offline-player selections, UI positions/panels, Home startup and cold restart')
 # Native main-script reload: repeat in the same simulated game and count effect resources.
 e=Disk();lu,s,_,_=session(e)
 lu.execute("TEST_OPTIONS.cameraFOV:SetValue(94); TEST_OPTIONS.lightEnabled:SetValue(true); TEST_OPTIONS.particleEnabled:SetValue(true); TEST_OPTIONS.crossEnabled:SetValue(true); TEST_OPTIONS.skyAsset:SetValue('570559352'); TEST_ACTIONS.Load(); TEST_DRAIN()")

@@ -1,0 +1,17 @@
+# Prime Visuals / Prime Vortex — generated emblem assets
+
+Created with the built-in `image_gen` tool, not the fallback CLI. Original generated PNGs were copied into the repository without resizing or repainting. Both final assets are 1254 × 1254 RGBA PNGs. Their animation is implemented in `lib/AnimatedEmblem.lua`: moving colored sheen, restrained aura and a native fallback. Asset bytes are cached locally once per content-hashed filename.
+
+- `assets/visuals-phoenix-v1.png` — Prime Visuals Home and header.
+- `assets/vortex-demon-v1.png` — Prime Vortex main preview and header.
+
+The originals remain under the Codex generated-images directory. Runtime uses the repository copies from immutable release tags. If local-image/file APIs are unavailable, a custom native line-art fallback remains usable; the PNG rendering itself still needs live executor verification.
+
+## Prime Vortex final generation prompt
+
+Use case: stylized-concept. Asset type: final transparent emblem illustration for Prime Vortex, a black-and-crimson Roblox script menu. Draw a single original premium horned devil mask, front-facing, symmetric silhouette with two long swept-back sharply curved horns, chiseled cheek plates, narrow luminous eyes, a compact pointed chin. Sleek sinister demonic style, obsidian metal / dark graphite facets, precise silver-white edge highlights with subtle crimson inner glow, masterful polished dark fantasy 3D illustration. Clear readable silhouette at 160–220px display size, meticulously crisp antialiased edges, high-resolution square composition. Make illuminated eye slits and small etched seams nearly white so runtime colored light can tint them. Face interior remains dark and dimensional. No text, no letters, no scenery, no rectangular plate, no enclosing circle, no watermark, no background glow baked beyond silhouette, no gore. Actual transparent background, emblem occupies 85% of the square with safe margins around the horn tips. Intended animation is a subtle multicolor sheen layered by the app, so do not bake in a busy rainbow.
+
+## Prime Visuals final generation prompt
+
+Use case: stylized-concept. Asset type: final transparent high-resolution emblem illustration for Prime Visuals, a premium purple-accented visual customization menu. A single original celestial crystalline phoenix, front-facing and symmetrical, elegant majestic head and graceful swept-up wings forming a compact diamond-like silhouette, a luminous faceted prism at the chest, sharp beautiful layered crystal feathers, delicate star-like highlights. Bright polished iridescent crystal, opal and silver-white surfaces with rich violet, cyan, electric blue and warm magenta/gold refracted edges; luminous rainbow highlights without losing clear feather shapes. Masterful refined 3D fantasy emblem, vivid and striking yet clean and readable as a 180–240px UI hero. No letters, no monogram P, no text, no watermark, no enclosing frame, no rectangular panel, no full scene. Actual transparent background and clear safe margins around wings. Retain substantial silvery-white luminous facets so runtime UI can animate a colored sheen over the illustration. High-resolution square composition, meticulously crisp clean antialiased feather tips; no diffuse opaque background or broad baked glow.
+
