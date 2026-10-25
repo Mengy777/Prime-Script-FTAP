@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.7.1"
+local VERSION="1.7.2"
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
