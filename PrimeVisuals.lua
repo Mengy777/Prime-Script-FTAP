@@ -1,6 +1,7 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="1.9.0"
+local VERSION="2.0.0"
 local vortexLaunching=false
+local lastProfileBeforeLoad
 local sessionStarted=os.clock()
 local sourceCache={}
 local function loadUIModule(name)
@@ -12,7 +13,7 @@ local function loadUIModule(name)
     assert(chunk,message)
     return chunk(loadUIModule)
 end
-local function startVisuals()
+local function startVisuals(profileOverride)
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -25,6 +26,9 @@ for _,name in ipairs({"PrimeVisuals","MengysVisual","FOVPanel"}) do
 end
 local connections={}
 local cleanupExtra=function() end
+local profileChanged=function() end
+local flushProfile=function() end
+local discardAutosave=false
 local function listen(signal,fn)
     local c=signal:Connect(fn)
     table.insert(connections,c)
@@ -34,6 +38,41 @@ end
 local uiLanguage="en"
 local refreshHome=function() end
 local ru={
+    ["Enter a name of 1–160 bytes"]="Укажи короткое непустое название конфига.",
+    ["This slot is empty or unreadable"]="Слот пуст или файл повреждён.",
+    ["Unsupported config format"]="Этот формат конфигурации не поддерживается.",
+    ["Config file is too large"]="Файл конфигурации больше 512 КиБ.",
+    ["Invalid profile settings"]="В файле некорректные настройки.",
+    ["Slider outside supported range"]="Значение параметра вне допустимого диапазона.",
+    ["Unknown dropdown value"]="В конфиге есть недопустимый вариант настройки.",
+    ["Use a JSON filename inside PrimeVisuals/Imports"]="Укажи только имя JSON-файла из PrimeVisuals/Imports.",
+    ["Config write verification failed"]="Не удалось проверить запись конфигурации.",
+    ["A write to this config is already in progress; try again"]="Конфиг ещё записывается. Повтори попытку.",
+    ["Invalid color channel"]="В конфиге некорректный цвет.",
+    ["Invalid toggle"]="В конфиге некорректное состояние переключателя.",
+    ["Invalid sky texture"]="В конфиге некорректная текстура неба.",
+    ["Window position outside supported range"]="В конфиге недопустимое положение меню.",
+    ["Invalid profile flag"]="В конфиге некорректный служебный параметр.",
+
+    ["Empty slot"]="Пустой слот",
+    ["Undo last config load"]="Отменить загрузку конфига",
+    ["Configurations"]="Конфиги",
+    ["Slot"]="Слот",
+    ["Config name"]="Название конфига",
+    ["Save to slot"]="Сохранить в слот",
+    ["Load slot"]="Загрузить слот",
+    ["Delete slot"]="Удалить слот",
+    ["Import / export"]="Импорт / экспорт",
+    ["Copy folder path"]="Скопировать путь к папке",
+    ["Export selected slot"]="Экспорт выбранного слота",
+    ["Import filename"]="Имя файла для импорта",
+    ["Import into selected slot"]="Импорт в выбранный слот",
+    ["Put shared JSON files in PrimeVisuals/Imports"]="Файлы друга положи в PrimeVisuals/Imports",
+    ["Autosave: ready"]="Автосохранение: готово",
+    ["Autosave: saved"]="Автосохранение: сохранено",
+    ["Autosave: error"]="Автосохранение: ошибка",
+    ["Autosave: unavailable"]="Автосохранение: недоступно",
+
     ["Home"]="Главная",
     ["Profile"]="Профиль",
     ["About Prime Visuals"]="О Prime Visuals",
@@ -287,8 +326,13 @@ local closing=false
 local initialFOV=Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView or 70
 local selected=math.clamp(math.round(initialFOV),30,120)
 local fovChanged=false
+local originalCameraFOVs=setmetatable({},{__mode="k"})
 local function applyFOV()
-    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=selected end
+    local camera=Workspace.CurrentCamera
+    if fovChanged and camera then
+        if originalCameraFOVs[camera]==nil then originalCameraFOVs[camera]=camera.FieldOfView end
+        camera.FieldOfView=selected
+    end
 end
 listen(Workspace:GetPropertyChangedSignal("CurrentCamera"),applyFOV)
 local skyInput={Text=""}
@@ -348,6 +392,7 @@ local function restoreSky()
     end
     customSkyLoaded=false
     onSkyRestored()
+    profileChanged()
 end
 local function assetUrl(text)
     text=text:match("^%s*(.-)%s*$")
@@ -427,6 +472,7 @@ local function applyCustomSky()
         end)
         if not ok then skyFeedback("Could not apply skybox. Try another asset.",true) warn("Prime Visuals Sky: " .. tostring(err)) return end
         skyFeedback("Skybox loaded / six separate textures.",false)
+        profileChanged()
     end)
 end
 local function buildVisualSystems()
@@ -438,6 +484,14 @@ local function buildVisualSystems()
     local alive=true
     local setters={}
     local controls={}
+    local settingSpecs,settingOrder,appliedSettings={},{},{}
+    local restoringProfile=false
+    local transientColorUpdate=false
+    local profileStore,captureProfile,validateProfile
+    local profileDirty,profileSaveScheduled=false,false
+    local profileGeneration=0
+    local featurePanels={}
+    local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
     local clearLineSignals,restoreWater,mannequins
     local mutedSounds={}
@@ -531,18 +585,57 @@ local function buildVisualSystems()
     for _,category in ipairs(categories) do
         local tab=nativeWindow:AddTab({Name=category[1],Icon=category[2],Tooltip=category[1]})
         categoryTabs[category[1]]=tab
+        local originalShow=tab.Show
+        function tab:Show(...)
+            originalShow(self,...)
+            profileChanged()
+        end
         for _,name in ipairs(category[3]) do tabs[name]=tab end
     end
+    profileChanged=function(key)
+        if not alive or building or restoringProfile or transientColorUpdate then return end
+        if discardAutosave and not key then return end
+        if key then appliedSettings[key]=true discardAutosave=false end
+        profileDirty=true
+        profileGeneration=profileGeneration+1
+        if not profileSaveScheduled then
+            profileSaveScheduled=true
+            task.delay(0.4,function()
+                profileSaveScheduled=false
+                if alive then flushProfile() end
+            end)
+        end
+    end
     local function put(key,value) controls[key]=value end
-    local function register(key,widget,initial,callback,isColor)
+    local function register(key,widget,initial,callback,isColor,spec)
+        if not settingSpecs[key] then
+            table.insert(settingOrder,key)
+            settingSpecs[key]=spec or {Kind=isColor and "ColorPicker" or widget.Type}
+            settingSpecs[key].Default=initial
+        end
         put(key,initial) widgets[key]=widget
         local function set(value,apply)
+            local previous=controls[key]
             local wasSuppressed=suppressed
             suppressed=true
-            if isColor then widget:SetValueRGB(value) else widget:SetValue(value) end
+            local updated,message=pcall(function()
+                if isColor then widget:SetValueRGB(value) else widget:SetValue(value) end
+            end)
             suppressed=wasSuppressed
+            if not updated then error(message,0) end
             put(key,widget.Value)
-            if apply then safe(callback,widget.Value) end
+            local applied=not apply or safe(callback,widget.Value)
+            if not applied then
+                suppressed=true
+                pcall(function()
+                    if isColor then widget:SetValueRGB(previous) else widget:SetValue(previous) end
+                end)
+                suppressed=wasSuppressed
+                put(key,previous)
+                pcall(callback,previous)
+            end
+            profileChanged(key)
+            return applied
         end
         setters[key]=set
         return set
@@ -553,15 +646,14 @@ local function buildVisualSystems()
             local previous=controls[key]
             put(key,value)
             if not safe(callback,value) then
-                local widget=widgets[key]
-                if widget then
-                    suppressed=true
-                    if widget.Type=="ColorPicker" then widget:SetValueRGB(previous) else widget:SetValue(previous) end
-                    suppressed=false
-                end
+                local wasSuppressed=suppressed
+                suppressed=true
+                if setters[key] then pcall(setters[key],previous,false) end
+                suppressed=wasSuppressed
                 put(key,previous)
                 pcall(callback,previous)
             end
+            profileChanged(key)
         end
     end
     local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
@@ -573,23 +665,25 @@ local function buildVisualSystems()
     end
     local function toggle(g,key,text,initial,callback)
         local widget=g:AddToggle(key,{Text=text,Default=initial,Callback=changed(key,callback)})
-        return register(key,widget,initial,callback)
+        return register(key,widget,initial,callback,false,{Kind="Toggle"})
     end
     local function featureSettings(key)
-        return Library:AddFeatureSettings(widgets[key])
+        local panel=Library:AddFeatureSettings(widgets[key])
+        featurePanels[key]=panel
+        return panel
     end
     local function sliderControl(g,key,text,low,high,initial,step,callback)
         local rounding=step>=1 and 0 or step>=0.1 and 1 or step>=0.01 and 2 or 3
         local widget=g:AddSlider(key,{Text=text,Min=low,Max=high,Default=initial,Rounding=rounding,AllowRightClickInput=true,Callback=changed(key,callback)})
-        return register(key,widget,initial,callback)
+        return register(key,widget,initial,callback,false,{Kind="Slider",Min=low,Max=high})
     end
     local function field(g,key,text,initial,callback,live)
         local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=not live,Callback=changed(key,callback)})
-        return register(key,widget,initial,callback)
+        return register(key,widget,tostring(initial or ""),callback,false,{Kind="Input"})
     end
     local function choice(g,key,text,values,initial,callback)
         local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
-        return register(key,widget,initial,callback)
+        return register(key,widget,initial,callback,false,{Kind="Dropdown",Values=values})
     end
     -- Existing rainbow implementations keep their own controls and efficient render paths.
     local legacyRainbowColors={lineColor=true,characterColor=true,hatColor=true}
@@ -697,6 +791,7 @@ local function buildVisualSystems()
     toggle(skyGroup,"skyHaze","Remove haze",false,clearHaze)
     action(skyGroup,"Reset sky",function()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
+        for _,key in ipairs({"skySunVisible","skySun","skyClouds"}) do appliedSettings[key]=nil end
     end)
     -- CAMERA
     local function updateThirdPerson(on)
@@ -828,6 +923,7 @@ local function buildVisualSystems()
             local value=sourceSky and sourceSky.SunAngularSize or 21
             setters.skySun(value,false)
             setters.skySunVisible(originalSunVisible,true)
+            for _,key in ipairs({"skyTime","skySun","skySunVisible"}) do appliedSettings[key]=nil end
         end)
         local h=group("Sky","Clouds",2)
         local cloud
@@ -1206,7 +1302,7 @@ local function buildVisualSystems()
         return p and p.UserId and string.format("rbxthumb://type=AvatarHeadShot&id=%s&w=48&h=48",tostring(p.UserId)) or ""
     end
     local function playerSelected(p)
-        return p~=player and (controls.espAllPlayers~=false or (controls.espSelectedPlayers or {})[p.Name]==true)
+        return p~=player and (controls.espAllPlayers~=false or rememberedPlayers[p.Name]==true)
     end
     local function playerNames(excluded)
         local names={}
@@ -1330,13 +1426,24 @@ local function buildVisualSystems()
     for _,p in ipairs(Players:GetPlayers()) do watchPlayer(p) end
     listen(Players.PlayerAdded,function(p)
         watchPlayer(p)
-        if playerSelector then playerSelector:SetValues(playerNames()) end
+        if playerSelector then
+            local saved={} for name,value in pairs(rememberedPlayers) do saved[name]=value end
+            playerSelector:SetValues(playerNames())
+            rememberedPlayers=saved
+            local visible={} for name,value in pairs(saved) do visible[name]=value end
+            setters.espSelectedPlayers(visible,false)
+            if controls.espPlayers then refreshESP() end
+        end
     end)
     listen(Players.PlayerRemoving,function(p)
         for target,entry in pairs(espEntries) do
             if entry.owner==p then removeESP(target) end
         end
-        if playerSelector then playerSelector:SetValues(playerNames(p)) end
+        if playerSelector then
+            local saved={} for name,value in pairs(rememberedPlayers) do saved[name]=value end
+            playerSelector:SetValues(playerNames(p))
+            rememberedPlayers=saved
+        end
     end)
     do
         local g=group("ESP","Visibility",1)
@@ -1347,14 +1454,20 @@ local function buildVisualSystems()
             local g=featureSettings(masterKeys[category])
             if category=="Players" then
                 toggle(g,"espAllPlayers","All players",true,refreshESP)
+                local function rememberPlayerSelection(values)
+                    for _,p in ipairs(Players:GetPlayers()) do
+                        if p~=player then rememberedPlayers[p.Name]=values[p.Name] and true or nil end
+                    end
+                    refreshESP()
+                end
                 playerSelector=g:AddDropdown("espSelectedPlayers",{
                     Text="Selected players",Values=playerNames(),Multi=true,AllowNull=true,
                     ValueImages=playerImages,
                     FormatListValue=function(name) return playerLabels[name] or name end,
                     FormatDisplayValue=function(name) return playerLabels[name] or name end,
-                    Callback=changed("espSelectedPlayers",refreshESP),
+                    Callback=changed("espSelectedPlayers",rememberPlayerSelection),
                 })
-                register("espSelectedPlayers",playerSelector,{},refreshESP)
+                register("espSelectedPlayers",playerSelector,{},rememberPlayerSelection,false,{Kind="Dropdown",Multi=true})
             end
             if category=="Server" then toggle(g,"espServerSmooth","Smooth movement",true,function(v) cfg.smooth=v end) end
             toggle(g,"esp"..category.."Highlight","Highlight",true,function(v) cfg.highlight=v end)
@@ -1645,9 +1758,11 @@ local function buildVisualSystems()
         action(g,"Reset all settings",function()
             if resetting then return end
             resetting=true
-            -- Reuse full teardown, then rebuild clean controls and effect state.
+            -- Reset the autosave as well; named slots remain intact.
+            lastProfileBeforeLoad=nil
+            discardAutosave=true
             gui:Destroy()
-            task.defer(function() startVisuals() end)
+            task.defer(function() startVisuals(false) end)
         end)
         action(g,"Unload script",function()
             if resetting then return end
@@ -1856,8 +1971,10 @@ local function buildVisualSystems()
             if controls[state.key] and (not state.owner or controls[state.owner]) then
                 tint=tint or Color3.fromHSV((os.clock()*0.12)%1,1,1)
                 state.animating=true
+                transientColorUpdate=true
                 local ok,message=pcall(function() state.set(tint,false) state.apply(tint) end)
                 state.animating=false
+                transientColorUpdate=false
                 if not ok then
                     setters[state.key](false,true)
                     warn("Prime Visuals rainbow / "..state.key..": "..tostring(message))
@@ -1871,6 +1988,385 @@ local function buildVisualSystems()
     for _,object in ipairs(Library.ScreenGui:GetDescendants()) do bindLocalization(object) end
     listen(Library.ScreenGui.DescendantAdded,bindLocalization)
     categoryTabs.Home:Show()
+-- PROFILE_BLOCK_START
+    do
+        local function finite(value) return type(value)=="number" and value==value and math.abs(value)<math.huge end
+        local function encode(value,spec)
+            if spec.Kind=="ColorPicker" then return {kind="color",r=value.R,g=value.G,b=value.B} end
+            if spec.Multi then
+                local names={} for name,on in pairs(value) do if on then table.insert(names,name) end end
+                table.sort(names)
+                return {kind="players",names=names}
+            end
+            return value
+        end
+        local function decode(value,spec)
+            if spec.Kind=="ColorPicker" then
+                assert(type(value)=="table" and value.kind=="color","Invalid color")
+                for _,key in ipairs({"r","g","b"}) do assert(finite(value[key]) and value[key]>=0 and value[key]<=1,"Invalid color channel") end
+                return Color3.new(value.r,value.g,value.b)
+            elseif spec.Multi then
+                assert(type(value)=="table" and value.kind=="players" and type(value.names)=="table","Invalid player selection")
+                for index in pairs(value.names) do
+                    assert(finite(index) and index>=1 and index%1==0 and index<=#value.names,"Invalid player list index")
+                end
+                local names={}
+                for _,name in ipairs(value.names) do
+                    assert(type(name)=="string" and #name<=20 and name:match("^[%w_]+$"),"Invalid player name") names[name]=true
+                end
+                return names
+            elseif spec.Kind=="Toggle" then assert(type(value)=="boolean","Invalid toggle")
+            elseif spec.Kind=="Slider" then assert(finite(value) and value>=spec.Min and value<=spec.Max,"Slider outside supported range")
+            elseif spec.Kind=="Input" then assert(type(value)=="string" and #value<=8192,"Invalid text")
+            elseif spec.Kind=="Dropdown" then assert(type(value)=="string" and table.find(spec.Values,value),"Unknown dropdown value")
+            else error("Unsupported setting type: "..tostring(spec.Kind)) end
+            return value
+        end
+        local function positionData(position)
+            return {xs=position.X.Scale,x=position.X.Offset,ys=position.Y.Scale,y=position.Y.Offset}
+        end
+        local function readPosition(value)
+            assert(type(value)=="table","Invalid window position")
+            for _,key in ipairs({"xs","x","ys","y"}) do assert(finite(value[key]),"Invalid window coordinate") end
+            assert(math.abs(value.xs)<=2 and math.abs(value.ys)<=2 and math.abs(value.x)<=20000 and math.abs(value.y)<=20000,"Window position outside supported range")
+            return UDim2.new(value.xs,value.x,value.ys,value.y)
+        end
+        validateProfile=function(payload)
+            assert(type(payload)=="table" and type(payload.values)=="table" and type(payload.applied)=="table","Invalid profile settings")
+            for _,flag in ipairs({"customSky","fovApplied"}) do
+                assert(payload[flag]==nil or type(payload[flag])=="boolean","Invalid profile flag")
+            end
+            local normalized={values={},applied={},sky=payload.sky,customSky=payload.customSky==true,fovApplied=payload.fovApplied==true,ui=payload.ui}
+            for key,value in pairs(payload.values) do
+                if settingSpecs[key] then normalized.values[key]=decode(value,settingSpecs[key]) end
+            end
+            for key,value in pairs(payload.applied) do
+                if settingSpecs[key] then assert(type(value)=="boolean","Invalid applied setting") normalized.applied[key]=value end
+            end
+            if payload.sky~=nil then
+                assert(type(payload.sky)=="table","Invalid sky data")
+                for _,key in ipairs(skyProperties) do assert(type(payload.sky[key])=="string" and #payload.sky[key]<=256,"Invalid sky texture") end
+                for _,key in ipairs(importedProperties) do
+                    local value=payload.sky[key]
+                    if value~=nil then
+                        if key=="CelestialBodiesShown" then assert(type(value)=="boolean","Invalid sun state")
+                        elseif key=="SunTextureId" or key=="MoonTextureId" then assert(type(value)=="string" and #value<=256,"Invalid celestial texture")
+                        else assert(finite(value) and value>=0 and value<=(key=="StarCount" and 100000 or 60),"Invalid sky parameter") end
+                    end
+                end
+            end
+            if payload.ui~=nil then
+                assert(type(payload.ui)=="table","Invalid UI state")
+                if payload.ui.position then readPosition(payload.ui.position) end
+                assert(payload.ui.tab==nil or type(payload.ui.tab)=="string","Invalid selected tab")
+                if payload.ui.panels then
+                    assert(type(payload.ui.panels)=="table","Invalid panel positions")
+                    for _,position in pairs(payload.ui.panels) do readPosition(position) end
+                end
+            end
+            return normalized
+        end
+        captureProfile=function()
+            local values,applied,panels={},{},{}
+            for _,key in ipairs(settingOrder) do
+                local value=controls[key]
+                local rainbow=rainbowColors[key]
+                if rainbow and controls[rainbow.key] then value=rainbow.manual end
+                if key=="espSelectedPlayers" then value=rememberedPlayers end
+                values[key]=encode(value,settingSpecs[key])
+                if appliedSettings[key] then applied[key]=true end
+            end
+            local sky
+            if activeSky and (customSkyLoaded or appliedSettings.skySun or appliedSettings.skySunVisible) then
+                sky={}
+                for _,keys in ipairs({skyProperties,importedProperties}) do
+                    for _,key in ipairs(keys) do sky[key]=activeSky[key] end
+                end
+            end
+            for key,panel in pairs(featurePanels) do
+                local position=(panel.Holder and panel.Holder.Visible and panel.Holder.Position) or panel.LastPosition
+                if position then panels[key]=positionData(position) end
+            end
+            local tabName="Home"
+            for name,tab in pairs(categoryTabs) do if tab==Library.ActiveTab then tabName=name break end end
+            return {values=values,applied=applied,sky=sky,customSky=customSkyLoaded,fovApplied=fovChanged,
+                ui={position=positionData(nativeWindow.MainFrame.Position),tab=tabName,panels=panels}}
+        end
+        profileStore=loadUIModule("ConfigStore")({HttpService=game:GetService("HttpService"),UserId=player.UserId,Version=VERSION,
+            Validate=function(payload) validateProfile(payload) end})
+        local configs=group("Settings","Configurations",2)
+        local status=configs:AddLabel("Autosave: ready")
+        local selectedSlot=1
+        local labels={}
+        local slotWidget,nameWidget,previewLabel
+        local overwriteConfirmation
+        local function sameData(a,b)
+            if type(a)~=type(b) then return false end
+            if type(a)~="table" then return a==b end
+            for key,value in pairs(a) do if not sameData(value,b[key]) then return false end end
+            for key in pairs(b) do if a[key]==nil then return false end end
+            return true
+        end
+        local function refreshPreview()
+            if not previewLabel then return end
+            local payload,name=profileStore:ReadSlot(selectedSlot)
+            if not payload then previewLabel:SetText("Empty slot") return end
+            local current=captureProfile()
+            local differences=0
+            for key in pairs(settingSpecs) do
+                if not sameData(payload.values[key],current.values[key]) then differences=differences+1 end
+            end
+            if not sameData(payload.sky,current.sky) then differences=differences+1 end
+            previewLabel:SetText(tostring(name).." · "..tostring(differences)..(uiLanguage=="ru" and " отличий" or " changes"))
+        end
+        local function report(message)
+            local text=tostring(message):gsub("^.-:%d+:%s*","")
+            if uiLanguage=="ru" then
+                for _,key in ipairs({"Enter a name of 1–160 bytes","This slot is empty or unreadable","Unsupported config format","Config file is too large","Invalid profile settings","Slider outside supported range","Unknown dropdown value","Use a JSON filename inside PrimeVisuals/Imports","Config write verification failed","A write to this config is already in progress; try again","Invalid color channel","Invalid toggle","Invalid sky texture","Window position outside supported range","Invalid profile flag"}) do
+                    if text:find(key,1,true) then text=ru[key] break end
+                end
+            end
+            notify((uiLanguage=="ru" and "Конфиги: " or "Configs: ")..text)
+        end
+        local function refreshSlots()
+            local names=profileStore:SlotNames()
+            for i=1,5 do labels[i]=tostring(i).." — "..(names[i]~="" and names[i] or "—") end
+            if slotWidget then slotWidget:SetValues(labels) slotWidget:SetValue(labels[selectedSlot]) end
+            if nameWidget then nameWidget:SetValue(names[selectedSlot] or "") end
+            overwriteConfirmation=nil
+            refreshPreview()
+        end
+        refreshSlots()
+        slotWidget=configs:AddDropdown("profileSlot",{Text="Slot",Values=labels,Default=1,AllowNull=false,
+            Callback=function(value)
+                if type(value)~="string" then return end
+                selectedSlot=tonumber(value:match("^(%d+)")) or 1
+                if nameWidget then nameWidget:SetValue(profileStore:SlotNames()[selectedSlot] or "") end
+                overwriteConfirmation=nil
+                refreshPreview()
+            end})
+        nameWidget=configs:AddInput("profileName",{Text="Config name",Default=profileStore:SlotNames()[1] or "",Finished=false,Callback=function() end})
+        previewLabel=configs:AddLabel({Text="Empty slot",DoesWrap=true})
+        refreshPreview()
+        local function confirmSlotWrite(operation)
+            local name=profileStore:SlotNames()[selectedSlot]
+            if name=="" then overwriteConfirmation=nil return true end
+            if overwriteConfirmation and overwriteConfirmation.slot==selectedSlot
+                and overwriteConfirmation.operation==operation and overwriteConfirmation.name==name
+                and os.clock()<=overwriteConfirmation.expires then
+                overwriteConfirmation=nil return true
+            end
+            overwriteConfirmation={slot=selectedSlot,operation=operation,name=name,expires=os.clock()+6}
+            local verb=operation=="delete" and (uiLanguage=="ru" and "удалить" or "delete")
+                or (uiLanguage=="ru" and "перезаписать" or "overwrite")
+            report(uiLanguage=="ru" and ("Нажми кнопку ещё раз в течение 6 секунд, чтобы "..verb.." «"..name.."».")
+                or ("Click the same button again within 6 seconds to "..verb.." '"..name.."'."))
+            return false
+        end
+        local function requireFiles()
+            if profileStore.Available then return true end
+            report(uiLanguage=="ru" and "Executor не предоставляет доступ к локальным файлам." or "Executor does not provide local file access.")
+            return false
+        end
+        action(configs,"Save to slot",function()
+            if not requireFiles() then return end
+            if not confirmSlotWrite("save") then return end
+            local ok,message=profileStore:SaveSlot(selectedSlot,nameWidget.Value,captureProfile())
+            if not ok then report(message) return end
+            refreshSlots() report(uiLanguage=="ru" and "Конфиг сохранён." or "Config saved.")
+        end)
+        action(configs,"Load slot",function()
+            if not requireFiles() then return end
+            local payload,message=profileStore:ReadSlot(selectedSlot)
+            if not payload then report(message) return end
+            local valid,validationError=pcall(validateProfile,payload)
+            if not valid then report(validationError) return end
+            lastProfileBeforeLoad=captureProfile()
+            discardAutosave=true
+            gui:Destroy()
+            task.defer(function() startVisuals(payload) end)
+        end)
+        action(configs,"Undo last config load",function()
+            if not lastProfileBeforeLoad then
+                report(uiLanguage=="ru" and "В этой сессии ещё нечего отменять." or "No config load to undo in this session.")
+                return
+            end
+            local previous=lastProfileBeforeLoad
+            validateProfile(previous)
+            lastProfileBeforeLoad=nil
+            discardAutosave=true
+            gui:Destroy()
+            task.defer(function() startVisuals(previous) end)
+        end)
+        action(configs,"Delete slot",function()
+            if not requireFiles() then return end
+            if not confirmSlotWrite("delete") then return end
+            local ok,message=profileStore:DeleteSlot(selectedSlot)
+            if not ok then report(message) return end
+            refreshSlots() report(uiLanguage=="ru" and "Слот очищен." or "Slot cleared.")
+        end)
+        local transfer=group("Settings","Import / export",2)
+        transfer:AddLabel({Text=profileStore.Root,DoesWrap=true})
+        action(transfer,"Copy folder path",function()
+            if type(setclipboard)=="function" then setclipboard(profileStore.Root)
+            else report(profileStore.Root) end
+        end)
+        action(transfer,"Export selected slot",function()
+            if not requireFiles() then return end
+            local path,message=profileStore:Export(selectedSlot)
+            if not path then report(message) return end
+            if type(setclipboard)=="function" then pcall(setclipboard,path) end
+            report(path)
+        end)
+        transfer:AddLabel({Text="Put shared JSON files in PrimeVisuals/Imports",DoesWrap=true})
+        local importFile=transfer:AddInput("profileImportFile",{Text="Import filename",Default="friend.json",Finished=false,Callback=function() end})
+        action(transfer,"Import into selected slot",function()
+            if not requireFiles() then return end
+            if not confirmSlotWrite("import") then return end
+            local ok,message=profileStore:Import(selectedSlot,importFile.Value)
+            if not ok then report(message) return end
+            refreshSlots() report(uiLanguage=="ru" and "Конфиг импортирован. Нажми «Загрузить слот»." or "Config imported. Select Load slot to apply it.")
+        end)
+        local warned=false
+        local savingProfile=false
+        local saveRetryDelay=1
+        local finalQueuedProfile
+        flushProfile=function(force)
+            if not profileStore.Available or restoringProfile or building or discardAutosave or (not profileDirty and not force) then return end
+            if savingProfile then
+                if force then finalQueuedProfile={data=captureProfile(),generation=profileGeneration} end
+                return
+            end
+            savingProfile=true
+            local payload,generation=captureProfile(),profileGeneration
+            local ok,message
+            repeat
+                ok,message=profileStore:WriteAuto(payload)
+                profileDirty=not ok or profileGeneration~=generation
+                if finalQueuedProfile then
+                    payload,generation=finalQueuedProfile.data,finalQueuedProfile.generation
+                    finalQueuedProfile=nil
+                else break end
+            until false
+            savingProfile=false
+            if alive and not Library.Unloaded then
+                if ok then warned=false saveRetryDelay=1 status:SetText("Autosave: saved") refreshPreview()
+                else
+                    status:SetText("Autosave: error")
+                    if not warned then warned=true report(message) end
+                    if not profileSaveScheduled then
+                        profileSaveScheduled=true
+                        local retryAfter=saveRetryDelay
+                        saveRetryDelay=math.min(saveRetryDelay*2,30)
+                        task.delay(retryAfter,function()
+                            profileSaveScheduled=false
+                            if alive and profileDirty then flushProfile() end
+                        end)
+                    end
+                end
+                -- An edit during a yielding file write must not be cleared with the older snapshot.
+                if ok and profileDirty and not profileSaveScheduled then profileChanged() end
+            elseif not ok then warn("Prime Visuals final save: "..tostring(message)) end
+        end
+        if not profileStore.Available then status:SetText("Autosave: unavailable") end
+        local function applyProfile(payload)
+            local profile=validateProfile(payload)
+            -- Untouched/reset defaults follow the new session's actual game state.
+            if not profile.fovApplied then profile.values.cameraFOV=settingSpecs.cameraFOV.Default end
+            if not profile.applied.skyTime then profile.values.skyTime=settingSpecs.skyTime.Default end
+            if not profile.sky then
+                for _,key in ipairs({"skySunVisible","skySun"}) do
+                    if not profile.applied[key] then profile.values[key]=settingSpecs[key].Default end
+                end
+            end
+            restoringProfile=true
+            -- Restore resolved sky before applying saved sun/cloud choices, without a network fetch.
+            if profile.sky then
+                local sky=ensureSky()
+                for _,keys in ipairs({skyProperties,importedProperties}) do
+                    for _,key in ipairs(keys) do if profile.sky[key]~=nil then sky[key]=profile.sky[key] end end
+                end
+                customSkyLoaded=profile.customSky
+                if customSkyLoaded then onCustomSkyApplied(profile.sky) end
+            end
+            -- Stage all non-toggle values before enabling effects. Never re-run action buttons.
+            for _,key in ipairs(settingOrder) do
+                local value=profile.values[key]
+                if value~=nil then
+                    if settingSpecs[key].Kind=="Toggle" then setters[key](false,false)
+                    else setters[key](value,false) end
+                end
+            end
+            rememberedPlayers=profile.values.espSelectedPlayers or {}
+            for _,key in ipairs(settingOrder) do
+                local value=profile.values[key]
+                if value~=nil and settingSpecs[key].Kind~="Toggle" and key~="espSelectedPlayers"
+                    and (profile.applied[key] or key=="uiLanguage" or (key=="cameraFOV" and profile.fovApplied)) then
+                    if key~="cameraFOV" or profile.fovApplied then setters[key](value,true) end
+                end
+            end
+            for _,key in ipairs(settingOrder) do
+                local value=profile.values[key]
+                if value~=nil and settingSpecs[key].Kind=="Toggle" then
+                    local spec=settingSpecs[key]
+                    local apply=value or profile.applied[key] or value~=spec.Default
+                    -- An untouched default sun must not create a custom sky on a clean game.
+                    if key=="skySunVisible" then apply=profile.sky~=nil or profile.applied[key] end
+                    setters[key](value,apply)
+                end
+            end
+            if profile.ui then
+                if profile.ui.position then
+                    local main=nativeWindow.MainFrame
+                    local position=readPosition(profile.ui.position)
+                    local camera=Workspace.CurrentCamera
+                    local reachable=true
+                    if camera and main.AbsoluteSize and main.AnchorPoint then
+                        local viewport=camera.ViewportSize
+                        local x=viewport.X*position.X.Scale+position.X.Offset-main.AbsoluteSize.X*main.AnchorPoint.X
+                        local y=viewport.Y*position.Y.Scale+position.Y.Offset-main.AbsoluteSize.Y*main.AnchorPoint.Y
+                        reachable=x+main.AbsoluteSize.X>=40 and x<=viewport.X-40 and y>=0 and y<=viewport.Y-30
+                    end
+                    if reachable then main.Position=position end
+                end
+                for key,position in pairs(profile.ui.panels or {}) do
+                    if featurePanels[key] then featurePanels[key].LastPosition=readPosition(position) end
+                end
+                if categoryTabs[profile.ui.tab] then categoryTabs[profile.ui.tab]:Show() end
+            end
+            appliedSettings=profile.applied
+            restoringProfile=false
+        end
+        local payload,readError
+        if profileOverride~=false then
+            if type(profileOverride)=="table" then payload=profileOverride
+            else payload,readError=profileStore:ReadAuto() end
+        end
+        -- The initial default Home show happens before this block. Configs can restore another tab.
+        building=false
+        if payload then
+            local ok,message=pcall(applyProfile,payload)
+            restoringProfile=false
+            if not ok then
+                -- Preserve the stored file for recovery; do not overwrite rejected data on startup.
+                profileDirty=false
+                discardAutosave=true
+                status:SetText("Autosave: error")
+                report(message)
+            else profileDirty=true end
+        elseif readError then
+            discardAutosave=true status:SetText("Autosave: error") report(readError)
+        elseif profileStore.Available then profileDirty=true end
+        if profileDirty then flushProfile() end
+        listen(nativeWindow.MainFrame:GetPropertyChangedSignal("Position"),function() profileChanged() end)
+        for _,panel in pairs(featurePanels) do
+            if panel.Holder then listen(panel.Holder:GetPropertyChangedSignal("Position"),function() profileChanged() end) end
+        end
+        -- Saving on game shutdown is best-effort; normal changes are already written after 0.4s.
+        listen(Players.PlayerRemoving,function(leaving) if leaving==player then flushProfile(true) end end)
+    end
+-- PROFILE_BLOCK_END
+
     -- Lightweight lifecycle handling. No scans run every frame.
     job("Crosshair visibility",Run.RenderStepped,function()
         menuOpen=Library.Toggled
@@ -1891,6 +2387,7 @@ end
 local function shutdown()
     if closing then return end
     closing=true
+    if not discardAutosave then flushProfile(true) end
     cleanupExtra()
     restoreSky()
     pcall(function() RunService:UnbindFromRenderStep(Library.ShowCursorBinding) end)
@@ -1900,7 +2397,9 @@ local function shutdown()
     end
     for _,connection in ipairs(connections) do connection:Disconnect() end
     UIS.MouseBehavior,UIS.MouseIconEnabled=savedBehavior,savedIcon
-    if fovChanged and Workspace.CurrentCamera then Workspace.CurrentCamera.FieldOfView=initialFOV end
+    for camera,value in pairs(originalCameraFOVs) do
+        pcall(function() camera.FieldOfView=value end)
+    end
 end
 gui.Destroying:Connect(shutdown)
 Library:OnUnload(function() if not closing and gui.Parent then gui:Destroy() end end)
