@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.5"
+local VERSION="2.1.6"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -731,7 +731,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -742,6 +742,7 @@ local function buildVisualSystems()
         end
         for _,c in pairs(jobs) do attempt("job",function() c:Disconnect() end) end jobs={}
         if clearLineSignals then attempt("line",clearLineSignals) end
+        if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
         if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
@@ -1116,6 +1117,45 @@ local function buildVisualSystems()
         for _,key in ipairs({"skySunVisible","skySun","skyClouds"}) do appliedSettings[key]=nil end
     end)
     -- CAMERA
+    -- First-person transparency can survive Roblox's switch to Classic camera.
+    -- Correct only the local multiplier, after the camera; preserve actual Transparency and effect layers.
+    local thirdParts,thirdCharacter={},nil
+    local thirdVisibilityBound=false
+    local function thirdPart(part)
+        if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then thirdParts[part]=true end
+    end
+    local function thirdVisibility()
+        if not alive or not controls.camThird then return end
+        local character=player.Character
+        if thirdCharacter~=character then
+            job("Third-person parts") unpatch("thirdBody") thirdParts={} thirdCharacter=character
+            if character then
+                for _,part in ipairs(character:GetDescendants()) do thirdPart(part) end
+                job("Third-person parts",character.DescendantAdded,thirdPart)
+            end
+        end
+        for part in pairs(thirdParts) do
+            if not part.Parent or not character or not part:IsDescendantOf(character) then
+                thirdParts[part]=nil unpatch("thirdBody",part)
+            else patch("thirdBody",part,"LocalTransparencyModifier",0) end
+        end
+    end
+    clearThirdVisibility=function()
+        job("Third-person parts") job("Third-person visibility")
+        if thirdVisibilityBound then Run:UnbindFromRenderStep("PrimeVisualsThirdBody") thirdVisibilityBound=false end
+        unpatch("thirdBody") thirdParts={} thirdCharacter=nil
+    end
+    local function startThirdVisibility()
+        unpatch("body") -- The first-person body alpha must not compete with third-person visibility.
+        thirdVisibility()
+        if thirdVisibilityBound then return end
+        if type(Run.BindToRenderStep)=="function" then
+            Run:BindToRenderStep("PrimeVisualsThirdBody",Enum.RenderPriority.Camera.Value+2,function()
+                if alive and controls.camThird then thirdVisibility() end
+            end)
+            thirdVisibilityBound=true
+        else job("Third-person visibility",Run.RenderStepped,thirdVisibility) end
+    end
     local function updateThirdPerson(on)
         if on then
             local distance=controls.camDistance or 12
@@ -1126,7 +1166,8 @@ local function buildVisualSystems()
             end
             patch("third",player,"CameraMinZoomDistance",distance)
             patch("third",player,"CameraMaxZoomDistance",distance)
-        else unpatch("third") end
+            startThirdVisibility()
+        else clearThirdVisibility() unpatch("third") end
     end
     maintenance.Camera=function()
         if fovChanged then applyFOV() end
@@ -1172,6 +1213,7 @@ local function buildVisualSystems()
             job("First person body")
             if not on then unpatch("body") return end
             job("First person body",Run.RenderStepped,function()
+                if controls.camThird then return end
                 local character=player.Character
                 if not character then return end
                 for _,part in ipairs(character:GetChildren()) do
