@@ -33,10 +33,29 @@ TEST_SERVICES.RunService.RenderStepped:Fire(.016)
 TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
 assert(char:FindFirstChild('Torso').LocalTransparencyModifier==0,'first-person body alpha competed with third person')
 TEST_OPTIONS.camDistance:SetValue(30)
-assert(ME.CameraMinZoomDistance==30 and ME.CameraMaxZoomDistance==30)
+assert(ME.CameraMinZoomDistance==.5 and ME.CameraMaxZoomDistance==80)
 local later=Instance.new('MeshPart')later.Name='LateAccessory' later.LocalTransparencyModifier=1 later.Transparency=.4 later.Parent=char
 char.DescendantAdded:Fire(later)TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
 assert(later.LocalTransparencyModifier==0 and later.Transparency==.4)
+local camera=workspace.CurrentCamera
+camera.CFrame={Position=Vector3.new(0,0,0)}camera.Focus={Position=Vector3.new(0,0,.5)}
+TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+assert(char:FindFirstChild('Head').LocalTransparencyModifier==1,'head must be hidden when wheel zoom reaches first person')
+assert(char:FindFirstChild('Torso').LocalTransparencyModifier==.3,'first-person body stopped working at close zoom')
+camera.Focus={Position=Vector3.new(0,0,12)}
+TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+assert(char:FindFirstChild('Head').LocalTransparencyModifier==0,'skin did not return when zooming back out')
+local clamps=0
+local me=TEST_SERVICES.Players.LocalPlayer
+local observer=me:GetPropertyChangedSignal('CameraMinZoomDistance'):Connect(function()
+ if me.CameraMinZoomDistance==25 then clamps=clamps+1 end
+end)
+TEST_OPTIONS.camDistance:SetValue(25)
+assert(clamps==1 and me.CameraMinZoomDistance==.5 and me.CameraMaxZoomDistance==80)
+for i=1,5 do TEST_SERVICES.RunService.Heartbeat:Fire(1.1)end
+assert(clamps==1,'maintenance snapped the user zoom back to slider distance')
+observer:Disconnect()
 for i=1,12 do
  local previous=ME.Character ME.Character=CHARACTER('Respawn'..i) previous:Destroy()
  TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()

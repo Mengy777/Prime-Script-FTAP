@@ -114,7 +114,7 @@ for cycle=1,12 do
  TEST_SERVICES.Lighting:FindFirstChild('PrimeVisualsSky'):Destroy()
  workspace.Terrain:FindFirstChildOfClass('Clouds'):Destroy()
  TEST_CLOCK=TEST_CLOCK+1.1;TEST_SERVICES.RunService.Heartbeat:Fire(1.1)
- assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==93 and TEST_SERVICES.Players.LocalPlayer.CameraMaxZoomDistance==23)
+ assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==93 and TEST_SERVICES.Players.LocalPlayer.CameraMaxZoomDistance==80)
  assert(workspace:FindFirstChild('PV_ESP'):FindFirstChildOfClass('Highlight'))
  assert(TEST_SERVICES.Lighting:FindFirstChild('PV_Color').Enabled)
  assert(workspace:FindFirstChild('PV_Particles'):FindFirstChildOfClass('ParticleEmitter').Enabled)

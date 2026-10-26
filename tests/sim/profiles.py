@@ -41,7 +41,7 @@ assert actual['values']==expected['values'],[(k,expected['values'][k],v)for k,v 
 assert actual['sky']==expected['sky'] and actual['customSky'] and actual['fovApplied']
 lua.execute(r'''
 assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==93)
-assert(TEST_SERVICES.Players.LocalPlayer.CameraMaxZoomDistance==34)
+assert(TEST_SERVICES.Players.LocalPlayer.CameraMaxZoomDistance==80)
 assert(TEST_SERVICES.Lighting:FindFirstChild('PrimeVisualsSky').SkyboxBk=='rbxassetid://570557514')
 assert(TEST_SERVICES.Lighting:FindFirstChild('PrimeVisualsSky').SunAngularSize==33)
 assert(TEST_SERVICES.Workspace.Terrain:FindFirstChildOfClass('Clouds').Enabled)

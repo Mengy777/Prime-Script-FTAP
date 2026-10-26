@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.9"
+local VERSION="2.2.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1122,6 +1122,12 @@ local function buildVisualSystems()
     -- Correct only the local multiplier, after the camera; preserve actual Transparency and effect layers.
     local thirdParts,thirdCharacter={},nil
     local thirdVisibilityBound=false
+    local thirdZoomActive=false
+    local function thirdIsClose()
+        local camera=Workspace.CurrentCamera
+        return camera and camera.Focus and camera.CFrame
+            and (camera.Focus.Position-camera.CFrame.Position).Magnitude<1
+    end
     local thirdPan,thirdPanOriginal,thirdPanOwned,thirdPanBound,thirdPanAttempted
     local function releaseThirdPan()
         if thirdPanOwned then
@@ -1166,6 +1172,7 @@ local function buildVisualSystems()
     end
     local function thirdVisibility()
         if not alive or not controls.camThird then return end
+        if thirdIsClose() then unpatch("thirdBody") return end
         local character=player.Character
         if thirdCharacter~=character then
             job("Third-person parts") unpatch("thirdBody") thirdParts={} thirdCharacter=character
@@ -1181,6 +1188,7 @@ local function buildVisualSystems()
         end
     end
     clearThirdVisibility=function()
+        thirdZoomActive=false
         if thirdPanBound then
             Run:UnbindFromRenderStep("PrimeVisualsThirdPan")
             Run:UnbindFromRenderStep("PrimeVisualsThirdPanMouse") thirdPanBound=false
@@ -1201,16 +1209,19 @@ local function buildVisualSystems()
             thirdVisibilityBound=true
         else job("Third-person visibility",Run.RenderStepped,thirdVisibility) end
     end
-    local function updateThirdPerson(on)
+    local function updateThirdPerson(on,snapDistance)
         if on then
             local distance=controls.camDistance or 12
             patch("third",player,"CameraMode",Enum.CameraMode.Classic)
-            -- Keep both zoom limits at the selected distance so moving either way applies immediately.
-            if player.CameraMaxZoomDistance<distance then
+            if snapDistance or not thirdZoomActive then
+                -- Clamp once to the requested slider distance, then reopen native wheel zoom.
+                if player.CameraMaxZoomDistance<distance then patch("third",player,"CameraMaxZoomDistance",distance) end
+                patch("third",player,"CameraMinZoomDistance",distance)
                 patch("third",player,"CameraMaxZoomDistance",distance)
             end
-            patch("third",player,"CameraMinZoomDistance",distance)
-            patch("third",player,"CameraMaxZoomDistance",distance)
+            patch("third",player,"CameraMinZoomDistance",0.5)
+            patch("third",player,"CameraMaxZoomDistance",80)
+            thirdZoomActive=true
             startThirdVisibility()
             startThirdPan()
         else clearThirdVisibility() unpatch("third") end
@@ -1222,7 +1233,7 @@ local function buildVisualSystems()
     do
         local g=group("Camera","View",2)
         toggle(g,"camThird","Third person [3]",false,updateThirdPerson)
-        sliderControl(featureSettings("camThird"),"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true) end end)
+        sliderControl(featureSettings("camThird"),"camDistance","Distance",2,80,12,1,function() if controls.camThird then updateThirdPerson(true,true) end end)
         toggle(g,"camNoclip","Camera noclip",false,function(on)
             job("Camera noclip")
             if not on then return end
@@ -1259,7 +1270,7 @@ local function buildVisualSystems()
             job("First person body")
             if not on then unpatch("body") return end
             job("First person body",Run.RenderStepped,function()
-                if controls.camThird then return end
+                if controls.camThird and not thirdIsClose() then return end
                 local character=player.Character
                 if not character then return end
                 for _,part in ipairs(character:GetChildren()) do
