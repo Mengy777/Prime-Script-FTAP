@@ -26,7 +26,7 @@ return function(c)
         Tweaks={["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
             Blackholes={"Blackholes","Blackholes",1},["Animated blackholes"]={"Blackholes","Blackhole animation",2}},
         Audio={["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
-        Settings={Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
+        Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
     }
     local categoryFor={Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="FTAP",Settings="Settings"}
     local states={}

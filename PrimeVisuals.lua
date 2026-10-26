@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.1.7"
+local VERSION="2.1.8"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -731,7 +731,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -744,6 +744,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if antiKick then attempt("anti-kick",function() antiKick:Destroy() end) end
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
         if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
         if navigation then attempt("navigation",function() navigation:Destroy() end) end
@@ -2377,6 +2378,16 @@ local function buildVisualSystems()
                 end
             end
         end)
+    end
+
+    do
+        local g=group("Settings","Protection",2)
+        local protectionStatus=g:AddLabel("Anti-Kick: waiting")
+        antiKick=loadUIModule("AntiKick")({Player=player,Workspace=Workspace,Run=Run,
+            Storage=game:GetService("ReplicatedStorage"),Status=function(text) protectionStatus:SetText("Anti-Kick: "..text) end})
+        toggle(g,"antiKickEnabled","Anti-Kick",true,function(on) antiKick:SetEnabled(on) end)
+        g:AddLabel("Self-attached toy protection; cannot cancel server kicks or bans.",true)
+        antiKick:SetEnabled(true)
     end
 
     -- Source-reviewed pack uses the same control registry, profiles, panels and cleanup.
