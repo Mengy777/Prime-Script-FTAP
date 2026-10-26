@@ -93,6 +93,13 @@ return function(c)
             end
         end)
     end
+    local function hideToy()
+        -- Client-only rendering change: do not change assembly, welds, mass or touch behavior.
+        for _,part in ipairs(toy:GetDescendants()) do
+            if part:IsA("BasePart") then part.LocalTransparencyModifier=1
+            elseif part:IsA("Decal") or part:IsA("Texture") then part.Transparency=1 end
+        end
+    end
     local function step()
         if dead or not enabled then return end
         local now=os.clock()
@@ -127,9 +134,9 @@ return function(c)
                 for _,part in ipairs(toy:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.CanCollide=false part.CanQuery=false
-                        if part:IsA("MeshPart") or part.Name=="Part" then part.Transparency=.9 end
                     end
                 end
+                hideToy()
                 local event=remote("PlayerEvents","StickyPartEvent")
                 if not event then retry(now,"Unavailable: attachment remote missing") return end
                 event:FireServer(sticky,hitbox,CFrame.new(0,-.3,0)*CFrame.Angles(math.pi/2,0,0))
@@ -142,7 +149,9 @@ return function(c)
         elseif phase=="attach" then
             if weld.Part1==hitbox then phase="active" status("Attached")
             elseif now>=deadline then retry(now,"Waiting: attachment not confirmed") end
-        elseif phase=="active" and weld.Part1~=hitbox then retry(now,"Restoring protection") end
+        elseif phase=="active" then
+            if weld.Part1~=hitbox then retry(now,"Restoring protection") else hideToy() end
+        end
     end
     local elapsed=0
     local connection=run.Heartbeat:Connect(function(dt)

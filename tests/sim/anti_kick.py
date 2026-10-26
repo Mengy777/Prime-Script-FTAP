@@ -44,7 +44,15 @@ local function build()
 end
 protector:SetEnabled(true)build()assert(spawned==1 and attached==1)
 for i=1,100 do tick()end assert(spawned==1,'duplicate spawn while attached')
-local toy=toys:GetChildren()[1]toy:Destroy()
+local toy=toys:GetChildren()[1]
+local sticky=toy:FindFirstChild('StickyPart')
+assert(sticky.LocalTransparencyModifier==1 and sticky:FindFirstChild('StickyWeld').Part1==hitbox)
+local late=make('MeshPart','LateMesh',toy)late.Transparency=.25
+local decal=make('Decal','LateDecal',late)decal.Transparency=0
+tick()assert(late.LocalTransparencyModifier==1 and late.Transparency==.25 and decal.Transparency==1)
+sticky.LocalTransparencyModifier=0 tick()assert(sticky.LocalTransparencyModifier==1)
+assert(sticky:FindFirstChild('StickyWeld').Part1==hitbox,'hiding detached protection')
+toy:Destroy()
 for i=1,20 do tick()end TEST_DRAIN()
 for i=1,5 do tick()end assert(status=='Attached')
 protector:SetEnabled(false)assert(status=='Off'and #toys:GetChildren()==0)
