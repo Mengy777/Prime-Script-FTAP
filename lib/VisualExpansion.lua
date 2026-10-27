@@ -751,11 +751,85 @@ return function(c)
         c.Action(g,"Apply selected skybox",function() c.ApplySky(c.Data.Skies[v.collectionSky]) end)
     end
     -- Camera features use native transforms/input. Mouse sensitivity is never changed.
-    local smoothPosition,smoothCamera
-    local free={active=false,cameras={},humanoids={}}
+    local free={active=false,cameras={},humanoids={},parts={},menus={}}
+    local hud,hudSpeed,hudHint,hudControls
+    local function translated(text) return c.Translate and c.Translate(text) or text end
+    local function updateHUD(speed,paused)
+        if not hud or not hud.Parent or not screen or screen.Parent~=c.PlayerGui then
+            disconnect(free.hudIcon) free.hudIcon=nil destroy(hud)
+            hud=create("Frame",{Name="PV_FreecamHUD",AnchorPoint=Vector2.new(1,.5),Position=UDim2.new(1,-18,.55,0),
+                Size=UDim2.fromOffset(222,98),BackgroundColor3=Color3.fromRGB(10,10,14),BackgroundTransparency=.08,BorderSizePixel=0},screenRoot())
+            make("UICorner",{CornerRadius=UDim.new(0,5)},hud)
+            make("UIStroke",{Color=Color3.fromRGB(160,106,255),Thickness=1,Transparency=.3},hud)
+            local icon=make("ImageLabel",{Name="Brand",BackgroundTransparency=1,Position=UDim2.fromOffset(10,8),Size=UDim2.fromOffset(24,24),Image="",Visible=true,ZIndex=2},hud)
+            if c.FreecamIcon then
+                local ok,connection=pcall(c.FreecamIcon,icon,hud)
+                if ok and connection then free.hudIcon=connection links[connection]=true end
+            end
+            make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(42,8),Size=UDim2.fromOffset(170,20),
+                Text="Prime Visuals",TextColor3=Color3.fromRGB(235,232,245),Font=Enum.Font.BuilderSansBold,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left},hud)
+            hudSpeed=make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(12,33),Size=UDim2.fromOffset(200,22),
+                TextColor3=Color3.fromRGB(185,145,255),Font=Enum.Font.BuilderSansBold,TextSize=15,TextXAlignment=Enum.TextXAlignment.Left},hud)
+            hudHint=make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(12,59),Size=UDim2.fromOffset(200,16),
+                TextColor3=Color3.fromRGB(190,185,205),Font=Enum.Font.BuilderSans,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left},hud)
+            hudControls=make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(12,77),Size=UDim2.fromOffset(200,15),
+                TextColor3=Color3.fromRGB(145,140,160),Font=Enum.Font.BuilderSans,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left},hud)
+        end
+        hud.Visible=not paused
+        hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
+        hudHint.Text=translated("Wheel: speed 10–600") hudControls.Text=translated("WASD · Space ↑ · Q ↓")
+    end
+    local function visibleFreeBody()
+        local char=me.Character
+        if free.character~=char then
+            job("Freecam parts") unpatch("freeBody") free.parts={} free.character=char
+            local function add(part) if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then free.parts[part]=true end end
+            if char then
+                for _,part in ipairs(char:GetDescendants()) do add(part) end
+                job("Freecam parts",char.DescendantAdded,add)
+            end
+        end
+        for part in pairs(free.parts) do
+            if not part.Parent or not char or not part:IsDescendantOf(char) then free.parts[part]=nil unpatch("freeBody",part)
+            else patch("freeBody",part,"LocalTransparencyModifier",0) end
+        end
+    end
+    -- Space ascent avoids E (FTAP toy-menu shortcut). Menu guards also cover activation itself.
+    -- Also suppress recognized toy-menu containers for game listeners that ignore processed input.
+    local toyMenus={toymenu=true,toysmenu=true,toymenugui=true,toysmenugui=true,spawntoymenu=true,
+        spawnmenu=true,toyselection=true,toyselect=true,toyspawner=true,toyinventory=true,spawntoygui=true,spawnmenugui=true}
+    local function hideToyMenu(object)
+        if c.IsOwnUI and c.IsOwnUI(object) then return end
+        if screen and (object==screen or object:IsDescendantOf(screen)) then return end
+        local name=object.Name:lower():gsub("[%s_%-]","")
+        local isScreen=object:IsA("ScreenGui")
+        local isPanel=object:IsA("Frame") or object:IsA("ScrollingFrame")
+        local known=toyMenus[name] or (name:find("toy",1,true) and (name:find("menu",1,true) or name:find("spawn",1,true)))
+        local property=isScreen and "Enabled" or object:IsA("GuiObject") and "Visible"
+        if not property then return end
+        -- Snapshot closed game panels before switching CameraType. This catches
+        -- unnamed game menus opened by the camera-mode change itself, not just E.
+        local size=isPanel and object.AbsoluteSize
+        local closed=object[property]==false and (isScreen or (size and size.X>=180 and size.Y>=100))
+        if known or closed then
+            if not free.menus[object] then
+                free.menus[object]={connection=connect(object:GetPropertyChangedSignal(property),function()
+                    if free.active and object[property] then patch("freeToyMenu",object,property,false) end
+                end)}
+            end
+            patch("freeToyMenu",object,property,false)
+        end
+    end
+    local function suppressToyMenus()
+        for _,object in ipairs(c.PlayerGui:GetDescendants()) do hideToyMenu(object) end
+    end
     local function endFree()
         if not free.active then return end
-        free.active=false job("Freecam input")
+        free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
+        job("Freecam focus lost") job("Freecam focus gained")
+        unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
+        for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
+        if hud then hud.Visible=false end
         pcall(function() game:GetService("ContextActionService"):UnbindAction("PrimeVisualsFreecam") end)
         unpatch("freeCamera")
         I.MouseBehavior=free.mouseBehavior I.MouseIconEnabled=free.mouseIcon
@@ -771,19 +845,23 @@ return function(c)
         if not v.freeCameraEnabled then endFree() return end
         if free.active then return end
         local camera=W.CurrentCamera if not camera then return end
-        free.active=true free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
+        free.active=true free.focused=true free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
         free.position=camera.CFrame.Position free.velocity=Vector3.zero free.look=Vector2.new(0,0)
         free.pitch,free.yaw=camera.CFrame:ToEulerAnglesYXZ()
+        unpatch("body") visibleFreeBody() suppressToyMenus()
+        job("Freecam toy UI",c.PlayerGui.DescendantAdded,hideToyMenu)
         game:GetService("ContextActionService"):BindActionAtPriority("PrimeVisualsFreecam",function()
-            if c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+            if I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space)
+        job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
+        job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
         job("Freecam input",I.InputChanged,function(input)
-            if c.MenuOpen() or I:GetFocusedTextBox() then return end
-            if input.UserInputType==Enum.UserInputType.MouseMovement and I:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            if not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end
+            if input.UserInputType==Enum.UserInputType.MouseMovement then
                 free.look=free.look+Vector2.new(input.Delta.X,input.Delta.Y)
             elseif input.UserInputType==Enum.UserInputType.MouseWheel then
-                c.Setters.freeCameraSpeed(math.clamp(v.freeCameraSpeed*(input.Position.Z>0 and 1.25 or 0.8),10,400),false)
+                c.Setters.freeCameraSpeed(math.clamp(v.freeCameraSpeed*(input.Position.Z>0 and 1.25 or 0.8),10,600),false)
             end
         end)
     end
@@ -803,22 +881,27 @@ return function(c)
                 free.humanoids[h]=true
             end
             for old in pairs(free.humanoids) do if old~=h then unpatch("freeCamera",old) free.humanoids[old]=nil end end
-            local paused=c.MenuOpen() or I:GetFocusedTextBox()~=nil
+            visibleFreeBody()
+            local paused=not free.focused or c.MenuOpen() or I:GetFocusedTextBox()~=nil
             if not paused then
-                I.MouseBehavior=I:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and Enum.MouseBehavior.LockCurrentPosition or Enum.MouseBehavior.Default
-                free.yaw=free.yaw-free.look.X*0.0045 free.pitch=math.clamp(free.pitch-free.look.Y*0.0045,-1.4,1.4)
-            end
+                I.MouseBehavior=Enum.MouseBehavior.LockCenter
+                free.yaw=free.yaw-free.look.X*0.0045 free.pitch=math.clamp(free.pitch-free.look.Y*0.0045,-1.55,1.55)
+            else I.MouseBehavior=Enum.MouseBehavior.Default end
             free.look=Vector2.new(0,0)
             local rotation=CFrame.fromEulerAnglesYXZ(free.pitch,free.yaw,0) local velocity=Vector3.zero
+            local speed=v.freeCameraSpeed
             if not paused then
                 local function key(k) return I:IsKeyDown(Enum.KeyCode[k]) and 1 or 0 end
-                local direction=Vector3.new(key("D")-key("A"),key("E")+key("Space")-key("Q"),key("S")-key("W"))
-                local speed=v.freeCameraSpeed*(key("LeftShift")==1 and 4 or key("LeftControl")==1 and 0.25 or 1)
-                if direction.Magnitude>0 then velocity=rotation:VectorToWorldSpace(direction.Unit)*speed end
+                local horizontal=rotation:VectorToWorldSpace(Vector3.new(key("D")-key("A"),0,key("S")-key("W")))
+                local direction=horizontal+Vector3.new(0,key("Space")-key("Q"),0)
+                speed=math.clamp(v.freeCameraSpeed*(key("LeftShift")==1 and 4 or key("LeftControl")==1 and .25 or 1),10,600)
+                if direction.Magnitude>0 then velocity=direction.Unit*speed end
             end
+            if paused then free.velocity=Vector3.zero end
+            updateHUD(speed,paused)
             free.velocity=free.velocity:Lerp(velocity,1-math.exp(-12*math.min(dt,0.1))) free.position=free.position+free.velocity*math.min(dt,0.1)
             camera.CameraType=Enum.CameraType.Scriptable camera.CFrame=CFrame.new(free.position)*rotation camera.Focus=camera.CFrame*CFrame.new(0,0,-16)
-            smoothPosition=nil return
+            return
         end
         if free.active then endFree() end
         if v.spectateEnabled then
@@ -828,26 +911,19 @@ return function(c)
                 camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=subject
             else stopSpectate() end
         elseif next(spectated) then stopSpectate() end
-        if v.smoothCameraEnabled and camera.CameraType~=Enum.CameraType.Scriptable then
-            local cf=camera.CFrame
-            if smoothCamera~=camera or not smoothPosition then smoothPosition=cf.Position smoothCamera=camera end
-            local alpha=1-math.pow(math.clamp(v.smoothCameraAmount,0.1,0.9),dt*60)
-            smoothPosition=smoothPosition:Lerp(cf.Position,alpha) camera.CFrame=CFrame.new(smoothPosition)*(cf-cf.Position)
-        else smoothPosition=nil end
+
     end
     do
         local g=group("Camera","Cinematic camera",2)
-        toggle(g,"smoothCameraEnabled","Smooth camera",false,function() smoothPosition=nil end)
-        slider(panel("smoothCameraEnabled"),"smoothCameraAmount","Smoothness",0.1,0.9,0.5,0.01,function() end)
         toggle(g,"freeCameraEnabled","Free camera",false,function(on)
             if on then if v.spectateEnabled then c.Setters.spectateEnabled(false,true) end startFree() else endFree() end
         end)
-        slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,400,80,1,function() end)
-        panel("freeCameraEnabled"):AddLabel("WASD / Q E В· RMB look В· Shift / Ctrl В· wheel speed")
+        slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
+        panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end
         end)
-        field(panel("spectateEnabled"),"spectateTarget","Player username","",function() stopSpectate() end)
+        c.PlayerPicker(panel("spectateEnabled"),"spectateTarget","Player","",function() stopSpectate() end)
     end
     -- Single bounded render/maintenance loop; no per-player coroutine or permanent scans.
     local function run(name,fn,...)
@@ -896,11 +972,11 @@ return function(c)
             end
         end
     end)
-    -- Render after Roblox camera so smoothing doesn't run before the camera controller.
+    -- Camera-only transform runs after the native controller; no second mouse-rotation path.
     local bound=false
     if R.BindToRenderStep then
         R:BindToRenderStep("PrimeVisualsCinematicCamera",Enum.RenderPriority.Camera.Value+1,function(dt)
-            if not dead and (v.freeCameraEnabled or v.spectateEnabled or v.smoothCameraEnabled or free.active or next(spectated)) then
+            if not dead and (v.freeCameraEnabled or v.spectateEnabled or free.active or next(spectated)) then
                 local ok,message=pcall(updateCamera,dt) if not ok then c.WarnOnce("Cinematic camera",message) end
             end
         end) bound=true
@@ -912,7 +988,7 @@ return function(c)
         if bound then R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end
         for con in pairs(links) do con:Disconnect() end links={}
         for o in pairs(objects) do pcall(function() o:Destroy() end) end objects={}
-        for _,name in ipairs({"visualPreset","fullbright","revealInvisible","deathDust","freeCamera","oceanAppearance","oceanColor","bodyAppearance","bodyAccessories","bodyFace","blackholeSprite"}) do unpatch(name) end
+        for _,name in ipairs({"visualPreset","fullbright","revealInvisible","deathDust","freeCamera","freeBody","freeToyMenu","oceanAppearance","oceanColor","bodyAppearance","bodyAccessories","bodyFace","blackholeSprite"}) do unpatch(name) end
     end
     return {Destroy=function() teardown() end}
 end

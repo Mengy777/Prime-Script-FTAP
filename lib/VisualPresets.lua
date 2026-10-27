@@ -105,6 +105,15 @@ local skies = {
 					SkyboxUp = "rbxasset://textures/sky/sky512_up.tex",
 				},
 			}
+
+-- Additional six-face sets: author-published VISUALBOSS/readme.md; see docs/View-2.2.1.md.
+skies["Blue Horizon"]={SkyboxBk="rbxassetid://135483466",SkyboxDn="rbxassetid://135483484",SkyboxFt="rbxassetid://135483461",SkyboxLf="rbxassetid://135483495",SkyboxRt="rbxassetid://135483499",SkyboxUp="rbxassetid://135483475"}
+skies["Purple Nebula"]={SkyboxBk="rbxassetid://159454299",SkyboxDn="rbxassetid://159454296",SkyboxFt="rbxassetid://159454293",SkyboxLf="rbxassetid://159454286",SkyboxRt="rbxassetid://159454300",SkyboxUp="rbxassetid://159454288"}
+skies["Vaporwave"]={SkyboxBk="rbxassetid://8631780182",SkyboxDn="rbxassetid://8631784904",SkyboxFt="rbxassetid://8631769834",SkyboxLf="rbxassetid://8631777199",SkyboxRt="rbxassetid://8631735555",SkyboxUp="rbxassetid://8631782345"}
+skies["Pink Morning"]={SkyboxBk="rbxassetid://12635309703",SkyboxDn="rbxassetid://12635311686",SkyboxFt="rbxassetid://12635312870",SkyboxLf="rbxassetid://12635313718",SkyboxRt="rbxassetid://12635315817",SkyboxUp="rbxassetid://12635316856"}
+skies["Lavender Gradient"]={SkyboxBk="rbxassetid://8107841671",SkyboxDn="rbxassetid://6444884785",SkyboxFt="rbxassetid://8107841671",SkyboxLf="rbxassetid://8107841671",SkyboxRt="rbxassetid://8107841671",SkyboxUp="rbxassetid://8107849791"}
+skies["Rose Gradient"]={SkyboxBk="rbxassetid://11427769401",SkyboxDn="rbxassetid://11427770685",SkyboxFt="rbxassetid://11427769401",SkyboxLf="rbxassetid://11427769401",SkyboxRt="rbxassetid://11427769401",SkyboxUp="rbxassetid://11427771954"}
+skies["Golden Hour"]={SkyboxBk="rbxassetid://323494035",SkyboxDn="rbxassetid://323494368",SkyboxFt="rbxassetid://323494130",SkyboxLf="rbxassetid://323494252",SkyboxRt="rbxassetid://323494067",SkyboxUp="rbxassetid://323493360"}
 local animations={
     ["Emote / Head Throw"]={Id=35154961,Speed=1,Repeats=nil},
     ["Emote / Floating Head"]={Id=121572214,Speed=1,Repeats=nil},

@@ -64,6 +64,7 @@ camera.CameraSubject=ME.Character:FindFirstChildOfClass('Humanoid')
 local input=TEST_SERVICES.UserInputService
 KEYS={};input.IsKeyDown=function(_,key)return KEYS[key.Name] or false end
 RMB=false input.IsMouseButtonPressed=function()return RMB end
+input.WindowFocused=Instance.new('Folder').Changed
 TEST_SERVICES.ContextActionService={BindActionAtPriority=function(self,name,fn)self.bound=fn end,UnbindAction=function(self)self.bound=nil end}
 function TICK(dt)
  TEST_CLOCK=TEST_CLOCK+dt
@@ -191,12 +192,51 @@ print('PASS source object matching/icon deduplication, invisibility restore, ani
 lua.execute(r"""
 local w=ME.Character:FindFirstChildOfClass('Humanoid')local originalSubject=workspace.CurrentCamera.CameraSubject
 local camera=workspace.CurrentCamera local originalCF=camera.CFrame
+local gameUI=Instance.new('ScreenGui')gameUI.Name='GameHUD'gameUI.Enabled=true gameUI.Parent=ME:FindFirstChild('PlayerGui')
+local menu=Instance.new('Frame')menu.Name='UnlabelledSelectionPanel'menu.Size=UDim2.fromOffset(400,300)menu.Visible=false menu.Parent=gameUI
+for _,part in ipairs(ME.Character:GetDescendants())do if part:IsA('BasePart')then part.LocalTransparencyModifier=1 end end
+local oldType=camera.CameraType
+local cameraHook=camera:GetPropertyChangedSignal('CameraType'):Connect(function() if camera.CameraType==Enum.CameraType.Scriptable then menu.Visible=true end end)
 TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.1)assert(w.WalkSpeed==0 and camera.CameraType==Enum.CameraType.Scriptable)
+assert(not menu.Visible,'game menu opened on freecam activation without any E press')
+for _,part in ipairs(ME.Character:GetDescendants())do if part:IsA('BasePart')and part.Name~='HumanoidRootPart'then assert(part.LocalTransparencyModifier==0)end end
+assert(not TEST_OPTIONS.smoothCameraEnabled and not TEST_OPTIONS.smoothCameraAmount)
+local hud=FIND('PV_FreecamHUD',ME:FindFirstChild('PlayerGui'))assert(hud and hud.Visible)
+local beforeYaw=camera.CFrame.yaw or 0
+RMB=false TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Delta=Vector2.new(30,12)})TICK(.05)
+assert(camera.CFrame.yaw~=beforeYaw,'freecam still requires RMB')
+for i=1,40 do TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseWheel,Position=Vector3.new(0,0,1)})end
+assert(TEST_OPTIONS.freeCameraSpeed.Value==600)
+for i=1,40 do TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseWheel,Position=Vector3.new(0,0,-1)})end
+assert(TEST_OPTIONS.freeCameraSpeed.Value==10)
+TEST_OPTIONS.freeCameraSpeed:SetValue(80)
+TEST_LIBRARY.Toggled=true TICK(.1)assert(not hud.Visible)
+TEST_LIBRARY.Toggled=false TICK(.1)assert(hud.Visible)
+TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()TICK(.1)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
+TEST_SERVICES.UserInputService.WindowFocused:Fire()TICK(.1)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
+menu.Visible=true assert(not menu.Visible,'game menu reopened during flight')
+
 local position=ME.Character:FindFirstChild('HumanoidRootPart').Position
 KEYS.W=true for i=1,20 do TICK(.05)end KEYS.W=false
 assert(camera.CFrame.Position.Z<originalCF.Position.Z and ME.Character:FindFirstChild('HumanoidRootPart').Position==position)
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
+assert(not hud.Visible and not menu.Visible)
+menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')
+cameraHook:Disconnect()gameUI:Destroy()
 assert(w.WalkSpeed==16 and w.JumpPower==50 and w.JumpHeight==7 and w.AutoRotate and camera.CameraType==Enum.CameraType.Custom)
+local visitor=Instance.new('Player')visitor.Name='Visitor'visitor.DisplayName='Guest'visitor.UserId=88 visitor.Parent=TEST_SERVICES.Players
+local previousGet=TEST_SERVICES.Players.GetPlayers
+TEST_SERVICES.Players.GetPlayers=function()return {ME,ENEMY,visitor}end
+TEST_SERVICES.Players.PlayerAdded:Fire(visitor)
+assert(TEST_OPTIONS.spectateTarget.Info.ValueImages.Visitor:find('id=88',1,true))
+assert(TEST_OPTIONS.spectateTarget.Info.FormatListValue('Visitor')=='Guest (@Visitor)')
+TEST_SERVICES.Players.PlayerRemoving:Fire(visitor)
+TEST_SERVICES.Players.GetPlayers=previousGet
+assert(not TEST_OPTIONS.spectateTarget.Info.ValueImages.Visitor)
+assert(TEST_OPTIONS.spectateTarget.Info.ValueImages.Enemy:find('id=77',1,true))
+assert(TEST_OPTIONS.spectateTarget.Info.FormatListValue('Enemy')=='Opponent (@Enemy)')
 TEST_OPTIONS.spectateTarget:SetValue('Enemy')TEST_OPTIONS.spectateEnabled:SetValue(true)TICK(.1)
 assert(camera.CameraSubject==ENEMY.Character:FindFirstChildOfClass('Humanoid'))
 TEST_OPTIONS.spectateEnabled:SetValue(false)assert(camera.CameraSubject==w)
@@ -252,3 +292,15 @@ TEST_ACTIONS['Unload script']()
 assert(not FIND('PV_VisualExpansion'))
 """)
 print('PASS actual autosave/re-execution of enabled expansion features, 12 repeated character replacements and final restore/unload')
+
+# Exact catalog size/complete faces; gradients intentionally share horizontal faces.
+from support import ROOT
+data=lua.execute((ROOT/'lib/VisualPresets.lua').read_text(encoding='utf-8'))
+skies=data['Skies'];assert len(list(skies.keys()))==20
+fingerprints=set()
+for name in skies.keys():
+ faces=tuple(skies[name]['Skybox'+key] for key in ['Bk','Dn','Ft','Lf','Rt','Up'])
+ assert all(isinstance(face,str) and face.startswith(('rbxassetid://','rbxasset://','http://')) for face in faces),name
+ fingerprints.add(faces)
+assert len(fingerprints)==20,'catalog contains duplicate six-face sets'
+print('PASS 20 distinct complete skybox sets; texture availability still requires live Roblox')

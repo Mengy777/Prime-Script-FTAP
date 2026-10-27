@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.2.0"
+local VERSION="2.2.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -137,7 +137,7 @@ local ru={
     ["Anti-kick items"]="Анти-кик предметы",
     ["Combat items"]="Боевые предметы",
     ["Enable this effect to edit its settings"]="Включи функцию, чтобы открыть её настройки",
-    ["Follow your character from a distance. Rotate with RMB; change distance in settings."]="Камера следует за персонажем. ПКМ — поворот; дистанция меняется в настройках.",
+    ["Rotate with the mouse; use the wheel to zoom into first person or back out."]="Поворот мышью без ПКМ; колёсико приближает до первого лица и отдаляет обратно.",
     ["Let the camera pass through walls."]="Камера проходит сквозь стены.",
     ["Remove the game's ragdoll blur."]="Убирает игровое размытие при рагдолле.",
     ["Show your own body while playing in first person."]="Показывает своё тело при игре от первого лица.",
@@ -145,9 +145,8 @@ local ru={
     ["Draw an outline around your own character."]="Подсвечивает контур собственного персонажа.",
     ["Choose Pale Frost, Dreamy Night or Tokyowami in settings."]="Выбери Pale Frost, Dreamy Night или Tokyowami в настройках.",
     ["Adjust brightness, colors, bloom and blur yourself."]="Настрой яркость, цвет, свечение и размытие вручную.",
-    ["Move only the camera. Your character stays in place. RMB looks around; WASD moves."]="Персонаж остаётся на месте, летает только камера. ПКМ — обзор, WASD — движение.",
-    ["Watch another player's camera subject. Enter their username in settings."]="Наблюдение за другим игроком. Укажи его юзернейм в настройках.",
-    ["Smooth camera movement without slowing down mouse rotation."]="Сглаживает перемещение камеры, сохраняя обычный поворот мышью.",
+    ["Move only the camera: WASD, Space up, Q down. Mouse looks around; wheel changes speed."]="Летает только камера: WASD, Пробел — вверх, Q — вниз. Обзор мышью, колёсико — скорость.",
+    ["Choose a player from the server list and follow their camera subject."]="Выбери игрока из списка сервера и наблюдай за ним.",
     ["An estimated delayed position from your own movement history and ping; not server telemetry."]="Оценка позиции по собственной истории движения с задержкой по пингу.",
     ["Draw a line to a player. Enter their username in settings."]="Рисует линию к игроку. Укажи его юзернейм в настройках.",
     ["Leave a colored trail behind your character."]="Оставляет цветной след за персонажем.",
@@ -188,7 +187,7 @@ local ru={
     ["Pickaxe"]="Кирка",
     ["Banana"]="Банан",
     ["Snowball"]="Снежок",
-    ["WASD / Q E · RMB look · Shift / Ctrl · wheel speed"]="WASD / Q E · ПКМ: обзор · Shift / Ctrl · колесо: скорость",
+    ["WASD · Space / Q · mouse look · wheel 10–600"]="WASD · Пробел / Q · обзор мышью · колесо 10–600",
     ["Head color"]="Голова: цвет",
     ["Head transparency"]="Голова: прозрачность",
     ["Torso color"]="Тело: цвет",
@@ -243,9 +242,11 @@ local ru={
     ["Skybox collection"]="Коллекция неба",
     ["Apply selected skybox"]="Применить выбранное небо",
     ["Cinematic camera"]="Кинематографичная камера",
-    ["Smooth camera"]="Плавная камера",
-    ["Smoothness"]="Плавность",
     ["Free camera"]="Свободная камера",
+    ["Player"]="Игрок",
+    ["FREECAM"]="СВОБОДНАЯ КАМЕРА",
+    ["Wheel: speed 10–600"]="Колёсико: скорость 10–600",
+    ["WASD · Space ↑ · Q ↓"]="WASD · Пробел ↑ · Q ↓",
     ["Spectate player"]="Наблюдать за игроком",
     ["Show health"]="Показывать здоровье",
     ["Show distance"]="Показывать дистанцию",
@@ -924,13 +925,12 @@ local function buildVisualSystems()
         animationEnabled="Animations",revealInvisible="Reveal hidden players",antiKickESP="Anti-kick items",combatESP="Combat items",
     }
     local featureTips={
-        camThird="Follow your character from a distance. Rotate with RMB; change distance in settings.",
+        camThird="Rotate with the mouse; use the wheel to zoom into first person or back out.",
         camNoclip="Let the camera pass through walls.",camBlur="Remove the game's ragdoll blur.",camBody="Show your own body while playing in first person.",
         characterEnabled="Apply a ForceField material to your character and selected objects.",selfESP="Draw an outline around your own character.",
         visualPresetEnabled="Choose Pale Frost, Dreamy Night or Tokyowami in settings.",lightEnabled="Adjust brightness, colors, bloom and blur yourself.",
-        freeCameraEnabled="Move only the camera. Your character stays in place. RMB looks around; WASD moves.",
-        spectateEnabled="Watch another player's camera subject. Enter their username in settings.",
-        smoothCameraEnabled="Smooth camera movement without slowing down mouse rotation.",
+        freeCameraEnabled="Move only the camera: WASD, Space up, Q down. Mouse looks around; wheel changes speed.",
+        spectateEnabled="Choose a player from the server list and follow their camera subject.",
         serverGhostEnabled="An estimated delayed position from your own movement history and ping; not server telemetry.",
         traceEnabled="Draw a line to a player. Enter their username in settings.",
         bodyTrailEnabled="Leave a colored trail behind your character.",jumpCircleEnabled="Show an expanding ring on the ground when you jump.",
@@ -1243,6 +1243,7 @@ local function buildVisualSystems()
             local pitch=math.asin(math.clamp(look.Y,-1,1))
             local yaw=math.atan2(-look.X,-look.Z)
             job("Camera noclip",Run.RenderStepped,function(dt)
+                if controls.freeCameraEnabled or controls.spectateEnabled then return end
                 camera=Workspace.CurrentCamera
                 hrp=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
                 if not camera or not hrp then return end
@@ -1270,7 +1271,7 @@ local function buildVisualSystems()
             job("First person body")
             if not on then unpatch("body") return end
             job("First person body",Run.RenderStepped,function()
-                if controls.camThird and not thirdIsClose() then return end
+                if controls.freeCameraEnabled or (controls.camThird and not thirdIsClose()) then return end
                 local character=player.Character
                 if not character then return end
                 for _,part in ipairs(character:GetChildren()) do
@@ -2401,6 +2402,46 @@ local function buildVisualSystems()
         antiKick:SetEnabled(true)
     end
 
+    local function addPlayerPicker(g,key,text,initial,callback)
+        local labels,images={},{}
+        local widget
+        local function values(excluded)
+            local names={""}
+            for name in pairs(labels) do labels[name]=nil images[name]=nil end
+            for _,p in ipairs(Players:GetPlayers()) do
+                if p~=player and p~=excluded then
+                    names[#names+1]=p.Name labels[p.Name]=playerLabel(p) images[p.Name]=playerHeadshot(p)
+                end
+            end
+            table.sort(names)
+            local current=widget and widget.Value or initial
+            if current and current~="" and not table.find(names,current) then
+                names[#names+1]=current labels[current]=current.." (offline)"
+            end
+            return names
+        end
+        widget=g:AddDropdown(key,{Text=text,Values=values(),Default=initial,AllowNull=true,ValueImages=images,
+            FormatListValue=function(name) return name=="" and (uiLanguage=="ru" and "Не выбран" or "None") or labels[name] or name end,
+            FormatDisplayValue=function(name) return name=="" and (uiLanguage=="ru" and "Не выбран" or "None") or labels[name] or name end,
+            Callback=changed(key,function(value) callback(value or "") end)})
+        -- Keep the existing text profile key so old/offline usernames still load correctly.
+        local nativeSet=widget.SetValue
+        function widget:SetValue(value)
+            value=type(value)=="string" and value or ""
+            if not table.find(self.Values,value) then self.Values[#self.Values+1]=value end
+            nativeSet(self,value)
+        end
+        local function refresh(excluded)
+            local current=controls[key] or ""
+            local previous=suppressed suppressed=true
+            widget:SetValues(values(excluded)) widget:SetValue(current)
+            suppressed=previous
+        end
+        listen(Players.PlayerAdded,function() refresh() end)
+        listen(Players.PlayerRemoving,function(p) refresh(p) end)
+        return register(key,widget,initial,callback,false,{Kind="Input"})
+    end
+
     -- Source-reviewed pack uses the same control registry, profiles, panels and cleanup.
     do
         local lastWarning={}
@@ -2409,6 +2450,10 @@ local function buildVisualSystems()
             Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
+            PlayerPicker=addPlayerPicker,
+            IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,
+            Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,
+            FreecamIcon=function(holder,frame) return loadUIModule("PrimeIcon")(holder,frame,Run) end,
             TrackCleanup=function(fn) visualExpansion={Destroy=fn} end,
             MenuOpen=function() return Library.Toggled end,
             WarnOnce=function(name,message)
@@ -2497,7 +2542,7 @@ local function buildVisualSystems()
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
             "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
-            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","smoothCameraEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled","animationEnabled",
+            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled","animationEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local lastLanguage

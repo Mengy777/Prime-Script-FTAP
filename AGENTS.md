@@ -6,10 +6,10 @@ Updated 2026-10-27. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published Prime Visuals: **2.2.0**, tag `v2.2.0`, commit `63a409f`. Next normal runtime version: **2.2.1**.
+- Published runtime target: **2.2.1**, tag `v2.2.1`. Next normal runtime version: **2.2.2**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
-- This checkpoint is documentation only. No runtime VERSION bump, changelog release or tag is needed for an AGENTS.md edit.
+- Documentation-only edits need no runtime version/tag; functional releases do.
 
 ## User preferences / workflow
 
@@ -82,7 +82,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - 2.1.6 fixes local avatar invisibility: track BaseParts in body/head/accessories; maintain LocalTransparencyModifier after camera update; handle late parts/respawn. Exclude HumanoidRootPart, preserve true Transparency and intentional effect layers.
 - 2.2.0 opens native wheel zoom **0.5–80**, allowing first person and back out. Distance slider clamps once to the chosen distance, then frees the range. Maintenance must not snap back every second.
 - When camera-to-Focus distance is below 1, suspend forced third-person visibility so the head/accessories do not block first person; first-person body setting may operate. Restore visibility on zoom out. Restore original camera mode/zoom limits on disable/unload.
-- Freecam moves only camera, not character. Freecam/Spectate disable one another. Smooth camera has adjustable positional smoothing.
+- Freecam moves only camera, not character. Freecam/Spectate disable one another. Smooth camera was removed in 2.2.1. Freecam now uses mouse look without RMB, Space/Q and speed 10–600 with a compact branded HUD; Spectate uses the ESP-style player picker. See docs/View-2.2.1.md for the game-menu suppression scope.
 
 ### Other delicate systems
 
@@ -96,7 +96,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 ### Anti-Kick 2.1.8 / 2.1.9
 
-- Default-on `antiKickEnabled` is persisted; currently **303 settings** overall.
+- Default-on `antiKickEnabled` is persisted; currently **301 settings** overall (Smooth camera removed in 2.2.1).
 - Own NinjaShuriken attaches to own HumanoidRootPart.RagdollTouchedHitbox. Require PartOwner and StickyWeld.Part1 confirmation, own-toy cleanup, retry backoff, death recovery and foreign-plot pause.
 - 2.1.9 hides all its BaseParts with LocalTransparencyModifier=1 and Decal/Texture with transparency; retain physical attachment. Do not delete the object just to hide it.
 - Attached means confirmed weld, not universal immunity. No Kick hook, anti-cheat concealment or ban reversal. Dispatched InvokeServer cannot be cancelled client-side.
@@ -113,8 +113,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 ## Verification status / resume point
 
 - User historically approved Home and original View/Graphics/Character/ESP/FTAP/Settings, plus the major config workflow. This does not imply all later imported functions are tested.
-- User explicitly confirmed full third-person operation after 2.1.7. No explicit live confirmation yet for wheel zoom 2.2.0, invisible Anti-Kick 2.1.9 or protection effectiveness.
-- Newly imported Smooth camera / Freecam / Spectate and other expansion features need individual live verification. Do not label them approved because simulations passed.
+- User confirmed full third-person operation and 2.2.0 wheel zoom. Invisible Anti-Kick and protection effectiveness have no explicit live confirmation.
+- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved; 2.2.1 Freecam rework, new Spectate picker and seven additional skies require live verification. See docs/View-2.2.1.md.
 - Resume with the user's concrete request; do not automatically start a redesign, Vortex gameplay or another game's implementation from this memory.
 
 ## Testing / release checklist
