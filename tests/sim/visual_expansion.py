@@ -217,12 +217,26 @@ assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
 TEST_SERVICES.UserInputService.WindowFocused:Fire()TICK(.1)
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
 menu.Visible=true assert(not menu.Visible,'game menu reopened during flight')
+local frozen=camera.CFrame.Position
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F3},false)TICK(.1)
+assert(hud.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
+menu.Visible=true assert(menu.Visible,'manual toy menu blocked in interaction mode')
+assert(TEST_SERVICES.ContextActionService.bound()==Enum.ContextActionResult.Pass)
+KEYS.W=true TICK(.1)KEYS.W=false
+assert((camera.CFrame.Position-frozen).Magnitude<.001,'camera moved while interacting')
+local beforeSpeed=TEST_OPTIONS.freeCameraSpeed.Value
+TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseWheel,Position=Vector3.new(0,0,1)})
+assert(TEST_OPTIONS.freeCameraSpeed.Value==beforeSpeed,'menu scrolling changed freecam speed')
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F3},false)TICK(.1)
+assert(not menu.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
+menu.Visible=true assert(not menu.Visible,'flight did not suppress menu after interaction mode')
+
 
 local position=ME.Character:FindFirstChild('HumanoidRootPart').Position
 KEYS.W=true for i=1,20 do TICK(.05)end KEYS.W=false
 assert(camera.CFrame.Position.Z<originalCF.Position.Z and ME.Character:FindFirstChild('HumanoidRootPart').Position==position)
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
-assert(not hud.Visible and not menu.Visible)
+assert(not hud.Visible)
 menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')
 cameraHook:Disconnect()gameUI:Destroy()
 assert(w.WalkSpeed==16 and w.JumpPower==50 and w.JumpHeight==7 and w.AutoRotate and camera.CameraType==Enum.CameraType.Custom)

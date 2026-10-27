@@ -777,7 +777,8 @@ return function(c)
         end
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
-        hudHint.Text=translated("Wheel: speed 10–600") hudControls.Text=translated("WASD · Space ↑ · Q ↓")
+        hudHint.Text=translated(free.interacting and "E: toy menu" or "Wheel: speed 10–600")
+        hudControls.Text=translated(free.interacting and "F3: return to flight" or "F3: objects / cursor")
     end
     local function visibleFreeBody()
         local char=me.Character
@@ -799,6 +800,7 @@ return function(c)
     local toyMenus={toymenu=true,toysmenu=true,toymenugui=true,toysmenugui=true,spawntoymenu=true,
         spawnmenu=true,toyselection=true,toyselect=true,toyspawner=true,toyinventory=true,spawntoygui=true,spawnmenugui=true}
     local function hideToyMenu(object)
+        if free.interacting then return end
         if c.IsOwnUI and c.IsOwnUI(object) then return end
         if screen and (object==screen or object:IsDescendantOf(screen)) then return end
         local name=object.Name:lower():gsub("[%s_%-]","")
@@ -813,8 +815,8 @@ return function(c)
         local closed=object[property]==false and (isScreen or (size and size.X>=180 and size.Y>=100))
         if known or closed then
             if not free.menus[object] then
-                free.menus[object]={connection=connect(object:GetPropertyChangedSignal(property),function()
-                    if free.active and object[property] then patch("freeToyMenu",object,property,false) end
+                free.menus[object]={property=property,connection=connect(object:GetPropertyChangedSignal(property),function()
+                    if free.active and not free.interacting and object[property] then patch("freeToyMenu",object,property,false) end
                 end)}
             end
             patch("freeToyMenu",object,property,false)
@@ -823,10 +825,23 @@ return function(c)
     local function suppressToyMenus()
         for _,object in ipairs(c.PlayerGui:GetDescendants()) do hideToyMenu(object) end
     end
+    local function toggleFreeInteraction()
+        if not free.active then return end
+        free.interacting=not free.interacting free.look=Vector2.new(0,0) free.velocity=Vector3.zero
+        if free.interacting then
+            unpatch("freeToyMenu") I.MouseBehavior=Enum.MouseBehavior.Default
+        else
+            for object,entry in pairs(free.menus) do
+                if object.Parent then patch("freeToyMenu",object,entry.property,false) end
+            end
+            suppressToyMenus()
+        end
+    end
     local function endFree()
         if not free.active then return end
         free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
-        job("Freecam focus lost") job("Freecam focus gained")
+        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
+        free.interacting=false
         unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
         if hud then hud.Visible=false end
@@ -845,19 +860,22 @@ return function(c)
         if not v.freeCameraEnabled then endFree() return end
         if free.active then return end
         local camera=W.CurrentCamera if not camera then return end
-        free.active=true free.focused=true free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
+        free.active=true free.focused=true free.interacting=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
         free.position=camera.CFrame.Position free.velocity=Vector3.zero free.look=Vector2.new(0,0)
         free.pitch,free.yaw=camera.CFrame:ToEulerAnglesYXZ()
         unpatch("body") visibleFreeBody() suppressToyMenus()
         job("Freecam toy UI",c.PlayerGui.DescendantAdded,hideToyMenu)
         game:GetService("ContextActionService"):BindActionAtPriority("PrimeVisualsFreecam",function()
-            if I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+            if free.interacting or c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space)
+        job("Freecam interaction",I.InputBegan,function(input,processed)
+            if not processed and input.KeyCode==Enum.KeyCode.F3 and not I:GetFocusedTextBox() then toggleFreeInteraction() end
+        end)
         job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
         job("Freecam input",I.InputChanged,function(input)
-            if not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end
+            if free.interacting or not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end
             if input.UserInputType==Enum.UserInputType.MouseMovement then
                 free.look=free.look+Vector2.new(input.Delta.X,input.Delta.Y)
             elseif input.UserInputType==Enum.UserInputType.MouseWheel then
@@ -882,7 +900,8 @@ return function(c)
             end
             for old in pairs(free.humanoids) do if old~=h then unpatch("freeCamera",old) free.humanoids[old]=nil end end
             visibleFreeBody()
-            local paused=not free.focused or c.MenuOpen() or I:GetFocusedTextBox()~=nil
+            local menuPaused=not free.focused or c.MenuOpen() or I:GetFocusedTextBox()~=nil
+            local paused=free.interacting or menuPaused
             if not paused then
                 I.MouseBehavior=Enum.MouseBehavior.LockCenter
                 free.yaw=free.yaw-free.look.X*0.0045 free.pitch=math.clamp(free.pitch-free.look.Y*0.0045,-1.55,1.55)
@@ -898,7 +917,7 @@ return function(c)
                 if direction.Magnitude>0 then velocity=direction.Unit*speed end
             end
             if paused then free.velocity=Vector3.zero end
-            updateHUD(speed,paused)
+            updateHUD(speed,menuPaused)
             free.velocity=free.velocity:Lerp(velocity,1-math.exp(-12*math.min(dt,0.1))) free.position=free.position+free.velocity*math.min(dt,0.1)
             camera.CameraType=Enum.CameraType.Scriptable camera.CFrame=CFrame.new(free.position)*rotation camera.Focus=camera.CFrame*CFrame.new(0,0,-16)
             return
@@ -920,6 +939,7 @@ return function(c)
         end)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
         panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
+        c.Action(panel("freeCameraEnabled"),"Objects / flight [F3]",toggleFreeInteraction)
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end
         end)
