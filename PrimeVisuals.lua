@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.2.2"
+local VERSION="2.2.3"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -247,8 +247,8 @@ local ru={
     ["FREECAM"]="СВОБОДНАЯ КАМЕРА",
     ["Wheel: speed 10–600"]="Колёсико: скорость 10–600",
     ["E: toy menu"]="E: меню предметов",
-    ["F3: return to flight"]="F3: вернуться к полёту",
-    ["F3: objects / cursor"]="F3: предметы / курсор",
+    ["F3: flight · F4: exit"]="F3: полёт · F4: выход",
+    ["F3: objects · F4: exit"]="F3: предметы · F4: выход",
     ["Objects / flight [F3]"]="Предметы / полёт [F3]",
     ["WASD · Space ↑ · Q ↓"]="WASD · Пробел ↑ · Q ↓",
     ["Spectate player"]="Наблюдать за игроком",

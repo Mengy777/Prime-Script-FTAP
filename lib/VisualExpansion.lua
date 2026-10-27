@@ -756,7 +756,7 @@ return function(c)
     local function translated(text) return c.Translate and c.Translate(text) or text end
     local function updateHUD(speed,paused)
         if not hud or not hud.Parent or not screen or screen.Parent~=c.PlayerGui then
-            disconnect(free.hudIcon) free.hudIcon=nil destroy(hud)
+            disconnect(free.hudIcon) disconnect(free.hudClose) free.hudIcon=nil free.hudClose=nil destroy(hud)
             hud=create("Frame",{Name="PV_FreecamHUD",AnchorPoint=Vector2.new(1,.5),Position=UDim2.new(1,-18,.55,0),
                 Size=UDim2.fromOffset(222,98),BackgroundColor3=Color3.fromRGB(10,10,14),BackgroundTransparency=.08,BorderSizePixel=0},screenRoot())
             make("UICorner",{CornerRadius=UDim.new(0,5)},hud)
@@ -768,6 +768,12 @@ return function(c)
             end
             make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(42,8),Size=UDim2.fromOffset(170,20),
                 Text="Prime Visuals",TextColor3=Color3.fromRGB(235,232,245),Font=Enum.Font.BuilderSansBold,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left},hud)
+            local close=make("TextButton",{Name="CloseFreecam",Text="×",AutoButtonColor=true,BackgroundTransparency=1,
+                Position=UDim2.new(1,-28,0,7),Size=UDim2.fromOffset(20,22),Font=Enum.Font.BuilderSansBold,
+                TextSize=18,TextColor3=Color3.fromRGB(185,145,255)},hud)
+            free.hudClose=connect(close.MouseButton1Click,function()
+                if free.active then c.Setters.freeCameraEnabled(false,true) end
+            end)
             hudSpeed=make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(12,33),Size=UDim2.fromOffset(200,22),
                 TextColor3=Color3.fromRGB(185,145,255),Font=Enum.Font.BuilderSansBold,TextSize=15,TextXAlignment=Enum.TextXAlignment.Left},hud)
             hudHint=make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(12,59),Size=UDim2.fromOffset(200,16),
@@ -778,7 +784,7 @@ return function(c)
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
         hudHint.Text=translated(free.interacting and "E: toy menu" or "Wheel: speed 10–600")
-        hudControls.Text=translated(free.interacting and "F3: return to flight" or "F3: objects / cursor")
+        hudControls.Text=translated(free.interacting and "F3: flight · F4: exit" or "F3: objects · F4: exit")
     end
     local function visibleFreeBody()
         local char=me.Character
@@ -870,7 +876,9 @@ return function(c)
             return Enum.ContextActionResult.Sink
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space)
         job("Freecam interaction",I.InputBegan,function(input,processed)
-            if not processed and input.KeyCode==Enum.KeyCode.F3 and not I:GetFocusedTextBox() then toggleFreeInteraction() end
+            if processed or I:GetFocusedTextBox() then return end
+            if input.KeyCode==Enum.KeyCode.F4 then c.Setters.freeCameraEnabled(false,true)
+            elseif input.KeyCode==Enum.KeyCode.F3 then toggleFreeInteraction() end
         end)
         job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
@@ -879,7 +887,11 @@ return function(c)
             if input.UserInputType==Enum.UserInputType.MouseMovement then
                 free.look=free.look+Vector2.new(input.Delta.X,input.Delta.Y)
             elseif input.UserInputType==Enum.UserInputType.MouseWheel then
-                c.Setters.freeCameraSpeed(math.clamp(v.freeCameraSpeed*(input.Position.Z>0 and 1.25 or 0.8),10,600),false)
+                local delta=math.clamp(input.Position.Z,-10,10)
+                if delta~=0 then
+                    local speed=math.clamp(v.freeCameraSpeed*1.25^delta,10,600)
+                    if speed~=v.freeCameraSpeed then c.Setters.freeCameraSpeed(speed,false) end
+                end
             end
         end)
     end

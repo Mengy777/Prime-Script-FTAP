@@ -17,3 +17,7 @@ No replication changes or server-visibility claims were added. Further work on o
 ## Verification
 
 Actual VisualExpansion code runs in a simulated environment. Coverage: manual game panel opening allowed in interaction mode, camera remains still with movement keys, wheel does not change speed, F3 restores flight/cursor locking/panel suppression, and ordinary disable/unload remains functional. These tests do not prove actual Roblox menu hierarchy or server interaction behavior.
+
+## 2.2.3 controls polish
+
+F4 and the HUD close button disable Freecam through the same setting callback as its normal toggle. F3 frees the cursor to reach the button. HUD handlers are released on reconstruction. Wheel delta zero does nothing; multi-step scroll scales the speed accordingly within the existing 10–600 range and does not emit duplicate setting updates at the limits. Added simulated checks cover repeated F4 exits and the close button, verifying restored movement/camera and removed movement bindings. This update does not implement the separate distant-interaction proposal.
