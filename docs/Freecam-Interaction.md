@@ -21,3 +21,11 @@ Actual VisualExpansion code runs in a simulated environment. Coverage: manual ga
 ## 2.2.3 controls polish
 
 F4 and the HUD close button disable Freecam through the same setting callback as its normal toggle. F3 frees the cursor to reach the button. HUD handlers are released on reconstruction. Wheel delta zero does nothing; multi-step scroll scales the speed accordingly within the existing 10–600 range and does not emit duplicate setting updates at the limits. Added simulated checks cover repeated F4 exits and the close button, verifying restored movement/camera and removed movement bindings. This update does not implement the separate distant-interaction proposal.
+
+## 2.2.4 — experimental approach, client-only
+
+F5 or its settings action saves the current avatar root CFrame and moves that same avatar to anchored ground/Terrain found up to 80 studs below the camera (ray starts 8 studs above it). Surface normal must point upward; seated, ragdolled, anchored and dead characters are rejected. Destination must be finite and within 5000 studs. The avatar is visible to other players; this does not implement replication concealment or modify native server checks.
+
+The camera is held in interaction mode so the user can attempt the game's normal mouse action. On a normal LMB begin/end pair the same character returns after 0.2 seconds and flight resumes. F5/F3/F4/disable/unload also cancel/return as appropriate. Return never targets a replacement or dead character, zeroes physical velocity rather than applying stale momentum, and an old delayed release cannot affect a newer trip. No automatic retry or positive server-success claim is made.
+
+Native server acceptance and actual grab behavior cannot be proven by mocked physics. The test can fail in live FTAP even if local movement is visible. It is intentionally an action, not an automatically enabled/restored profile flag. Prior 2.2.2/2.2.3 behavior remains unchanged until the user starts this action.

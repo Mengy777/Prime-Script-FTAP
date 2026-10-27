@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.2.3"
+local VERSION="2.2.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -247,6 +247,17 @@ local ru={
     ["FREECAM"]="СВОБОДНАЯ КАМЕРА",
     ["Wheel: speed 10–600"]="Колёсико: скорость 10–600",
     ["E: toy menu"]="E: меню предметов",
+    ["Test: approach / return [F5]"]="Тест: подойти / вернуть [F5]",
+    ["Moves your visible character; this is an experiment."]="Перемещает видимого персонажа. Эксперимент.",
+    ["Release LMB: return · F5: cancel"]="Отпусти ЛКМ: назад · F5: отмена",
+    ["Character is not ready"]="Персонаж ещё не готов",
+    ["Leave the seat before this test"]="Перед тестом выйди из сиденья",
+    ["Wait until the character stands up"]="Подожди, пока персонаж встанет",
+    ["Camera is not ready"]="Камера ещё не готова",
+    ["Lower Freecam above solid ground first"]="Сначала опусти камеру над твёрдой поверхностью",
+    ["Choose solid ground, not a moving prop"]="Выбери твёрдую поверхность, не подвижный предмет",
+    ["Invalid test position"]="Некорректная точка перемещения",
+    ["Test position is too far away"]="Точка теста слишком далеко",
     ["F3: flight · F4: exit"]="F3: полёт · F4: выход",
     ["F3: objects · F4: exit"]="F3: предметы · F4: выход",
     ["Objects / flight [F3]"]="Предметы / полёт [F3]",
@@ -2455,6 +2466,7 @@ local function buildVisualSystems()
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
             PlayerPicker=addPlayerPicker,
+            Notify=notify,
             IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,
             Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,
             FreecamIcon=function(holder,frame) return loadUIModule("PrimeIcon")(holder,frame,Run) end,

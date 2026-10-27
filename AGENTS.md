@@ -6,7 +6,7 @@ Updated 2026-10-27. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.2.3**, tag `v2.2.3`. Next normal runtime version: **2.2.4**. Consult Git for the release commit.
+- Published runtime target: **2.2.4**, tag `v2.2.4`. Next normal runtime version: **2.2.5**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -85,6 +85,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - Freecam moves only camera, not character. Freecam/Spectate disable one another. Smooth camera was removed in 2.2.1. Freecam now uses mouse look without RMB, Space/Q and speed 10–600 with a compact branded HUD; Spectate uses the ESP-style player picker. See docs/View-2.2.1.md for the game-menu suppression scope.
 - 2.2.2 adds F3 temporary interaction mode: freezes camera movement, frees cursor and allows native game menus/keys; another F3 resumes flight. This does not change server action range or teleport the character. Read docs/Freecam-Interaction.md before extending interaction.
 - 2.2.3 adds F4 and HUD close button for standard Freecam exit. Preserve movement/camera/input restoration and disconnect old HUD handlers on recreation; wheel delta 0 is ignored and multi-step input is respected.
+- 2.2.4 adds an explicitly experimental F5 action: real, visible own-character movement to solid ground under Freecam, ordinary native interaction, then return on mouse release/cancel/exit. It is not globally invisible or a confirmed distant-grab/server-check solution. Preserve same-character guards and stale-callback protection; docs/Freecam-Interaction.md describes its scope.
 
 ### Other delicate systems
 

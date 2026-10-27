@@ -240,6 +240,45 @@ menu.Visible=true assert(not menu.Visible,'flight did not suppress menu after in
 local position=ME.Character:FindFirstChild('HumanoidRootPart').Position
 KEYS.W=true for i=1,20 do TICK(.05)end KEYS.W=false
 assert(camera.CFrame.Position.Z<originalCF.Position.Z and ME.Character:FindFirstChild('HumanoidRootPart').Position==position)
+local avatarRoot=ME.Character:FindFirstChild('HumanoidRootPart')
+local avatarStart=avatarRoot.CFrame
+local previousRay=workspace.Raycast
+local ground=Instance.new('Part')ground.Name='ExperimentalGround'ground.Anchored=true ground.Parent=workspace
+workspace.Raycast=function(_,origin,direction,params)
+ return {Instance=ground,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}
+end
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)TICK(.05)
+assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'test did not move the avatar near the camera')
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default,'test did not free the cursor')
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
+TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
+TEST_DRAIN()TICK(.05)
+assert(avatarRoot.CFrame==avatarStart,'release did not restore avatar position')
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'release did not resume flight')
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+assert(avatarRoot.CFrame==avatarStart,'F5 cancel did not restore position')
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
+TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+local secondTrip=avatarRoot.CFrame
+TEST_DRAIN()
+assert(avatarRoot.CFrame==secondTrip,'stale release returned a newer test trip')
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+assert(avatarRoot.CFrame==avatarStart)
+workspace.Raycast=function()return nil end
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+assert(avatarRoot.CFrame==avatarStart,'missing floor moved the character')
+workspace.Raycast=function(_,origin)return {Instance=ground,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
+w.Sit=true TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)w.Sit=false
+assert(avatarRoot.CFrame==avatarStart,'seated character was moved')
+TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+TEST_OPTIONS.freeCameraEnabled:SetValue(false)
+assert(avatarRoot.CFrame==avatarStart,'Freecam disable did not restore test position')
+TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
+workspace.Raycast=previousRay ground:Destroy()
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
 assert(not hud.Visible)
 menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')

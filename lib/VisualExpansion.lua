@@ -783,7 +783,7 @@ return function(c)
         end
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
-        hudHint.Text=translated(free.interacting and "E: toy menu" or "Wheel: speed 10–600")
+        hudHint.Text=translated(free.approach and "Release LMB: return · F5: cancel" or (free.interacting and "E: toy menu" or "Wheel: speed 10–600"))
         hudControls.Text=translated(free.interacting and "F3: flight · F4: exit" or "F3: objects · F4: exit")
     end
     local function visibleFreeBody()
@@ -831,7 +831,9 @@ return function(c)
     local function suppressToyMenus()
         for _,object in ipairs(c.PlayerGui:GetDescendants()) do hideToyMenu(object) end
     end
+    local returnApproach
     local function toggleFreeInteraction()
+        if free.approach and free.interacting then returnApproach(false) end
         if not free.active then return end
         free.interacting=not free.interacting free.look=Vector2.new(0,0) free.velocity=Vector3.zero
         if free.interacting then
@@ -843,10 +845,60 @@ return function(c)
             suppressToyMenus()
         end
     end
+    returnApproach=function(resumeFlight)
+        local saved=free.approach
+        if not saved then return end
+        free.approach=nil
+        local h=humanoid(me)
+        if me.Character==saved.character and root(me)==saved.root and saved.root.Parent and not saved.root.Anchored and h and h.Health>0 and not h.SeatPart then
+            saved.root.CFrame=saved.cframe
+            saved.root.AssemblyLinearVelocity=Vector3.zero saved.root.AssemblyAngularVelocity=Vector3.zero
+        end
+        if resumeFlight and free.active and free.interacting then toggleFreeInteraction() end
+    end
+    local function toggleApproach()
+        if not free.active then return end
+        if free.approach then returnApproach(true) return end
+        local character=me.Character local r=root(me) local h=humanoid(me)
+        assert(character and r and h and h.Health>0,translated("Character is not ready"))
+        assert(not r.Anchored and not h.SeatPart and not h.Sit,translated("Leave the seat before this test"))
+        local ragdoll=h:FindFirstChild("Ragdolled") or character:FindFirstChild("Ragdolled")
+        assert(not ragdoll or not ragdoll.Value,translated("Wait until the character stands up"))
+        local camera=W.CurrentCamera assert(camera,translated("Camera is not ready"))
+        local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
+        params.FilterDescendantsInstances=world and {character,world} or {character}
+        local floor=W:Raycast(camera.CFrame.Position+Vector3.new(0,8,0),Vector3.new(0,-88,0),params)
+        assert(floor and floor.Instance and floor.Normal and floor.Normal.Y>=.5,
+            translated("Lower Freecam above solid ground first"))
+        assert(floor.Instance:IsA("Terrain") or (floor.Instance:IsA("BasePart") and floor.Instance.Anchored),
+            translated("Choose solid ground, not a moving prop"))
+        local height=math.max(3,(h.HipHeight or 0)+(r.Size and r.Size.Y or 2)/2+1)
+        local position=floor.Position+Vector3.new(0,height,0)
+        for _,n in ipairs({position.X,position.Y,position.Z}) do
+            assert(n==n and math.abs(n)<1000000,translated("Invalid test position"))
+        end
+        assert((position-r.Position).Magnitude<=5000,translated("Test position is too far away"))
+        local rotation=r.CFrame-r.CFrame.Position
+        free.approach={character=character,root=r,cframe=r.CFrame,pressed=false}
+        local ok,message=pcall(function()
+            r.CFrame=CFrame.new(position)*rotation
+            r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
+            if not free.interacting then toggleFreeInteraction() end
+        end)
+        if not ok then returnApproach(false) error(message,0) end
+    end
+    local function tryApproach()
+        local ok,message=pcall(toggleApproach)
+        if not ok then
+            c.WarnOnce("Experimental approach",message)
+            if c.Notify then c.Notify(tostring(message):gsub("^.-:%d+: ","")) end
+        end
+    end
     local function endFree()
         if not free.active then return end
+        returnApproach(false)
         free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
-        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
+        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction") job("Freecam release")
         free.interacting=false
         unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
@@ -877,8 +929,19 @@ return function(c)
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space)
         job("Freecam interaction",I.InputBegan,function(input,processed)
             if processed or I:GetFocusedTextBox() then return end
-            if input.KeyCode==Enum.KeyCode.F4 then c.Setters.freeCameraEnabled(false,true)
+            if free.approach and input.UserInputType==Enum.UserInputType.MouseButton1 and not c.MenuOpen() then free.approach.pressed=true end
+            if input.KeyCode==Enum.KeyCode.F5 then tryApproach()
+            elseif input.KeyCode==Enum.KeyCode.F4 then c.Setters.freeCameraEnabled(false,true)
             elseif input.KeyCode==Enum.KeyCode.F3 then toggleFreeInteraction() end
+        end)
+        job("Freecam release",I.InputEnded,function(input)
+            local saved=free.approach
+            if saved and saved.pressed and input.UserInputType==Enum.UserInputType.MouseButton1 then
+                saved.pressed=false
+                task.delay(.2,function()
+                    if not dead and free.active and free.approach==saved then returnApproach(true) end
+                end)
+            end
         end)
         job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
@@ -906,6 +969,7 @@ return function(c)
             startFree() if not free.active then return end
             if not free.cameras[camera] then free.cameras[camera]={type=camera.CameraType,subject=camera.CameraSubject,cf=camera.CFrame,focus=camera.Focus} end
             local h=humanoid(me)
+            if free.approach and (me.Character~=free.approach.character or not h or h.Health<=0) then returnApproach(true) end
             if h then
                 patch("freeCamera",h,"WalkSpeed",0) patch("freeCamera",h,"JumpPower",0) patch("freeCamera",h,"JumpHeight",0) patch("freeCamera",h,"AutoRotate",false)
                 free.humanoids[h]=true
@@ -952,6 +1016,8 @@ return function(c)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
         panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
         c.Action(panel("freeCameraEnabled"),"Objects / flight [F3]",toggleFreeInteraction)
+        c.Action(panel("freeCameraEnabled"),"Test: approach / return [F5]",tryApproach)
+        panel("freeCameraEnabled"):AddLabel("Moves your visible character; this is an experiment.")
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end
         end)
