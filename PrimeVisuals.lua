@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.0"
+local VERSION="2.3.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -748,7 +748,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -1128,7 +1128,10 @@ local function buildVisualSystems()
     local skyGroup=group("Sky","Skybox",1)
     field(skyGroup,"skyAsset","Skybox ID or link","",function(value) skyInput.Text=value end,true)
     action(skyGroup,"Load",applyCustomSky)
-    toggle(skyGroup,"skyHaze","Remove haze",false,clearHaze)
+    toggle(skyGroup,"skyHaze","Remove haze",false,function(on)
+        clearHaze(on)
+        if lightingEditor and controls.lightEnabled then lightingEditor.Apply(true) end
+    end)
     action(skyGroup,"Reset sky",function()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
         for _,key in ipairs({"skySunVisible","skySun","skyClouds"}) do appliedSettings[key]=nil end
@@ -1300,57 +1303,33 @@ local function buildVisualSystems()
             if not processed and not UIS:GetFocusedTextBox() and event.KeyCode==Enum.KeyCode.Three then setters.camThird(not controls.camThird,true) end
         end)
     end
-    -- LIGHTING: independently adjustable post-processing, without replacing game effects.
-    local effects={}
-    local function effect(name,class)
-        if effects[name] and effects[name].Parent~=Lighting then dispose(effects[name]) effects[name]=nil end
-        if not effects[name] then effects[name]=own(make(class,{Name="PV_"..name,Enabled=false},Lighting)) end
-        return effects[name]
+    local function applySkyData(data)
+        if data.AssetId then applyCustomSky(tostring(data.AssetId)) return end
+        skyLoadGeneration=skyLoadGeneration+1 skyLoadBusy=false
+        local sky=ensureSky() skyRecoveryData=nil
+        for property,value in pairs(data) do sky[property]=value end
+        customSkyLoaded=true onCustomSkyApplied(data) rememberSky() profileChanged()
     end
-    local function shaders(on)
-        if not on then
-            unpatch("shader")
-            for _,name in ipairs({"Color","Bloom","Rays","SoftBlur"}) do if effects[name] then effects[name].Enabled=false end end
-            return
-        end
-        patch("shader",Lighting,"Brightness",controls.lightBrightness or 2)
-        patch("shader",Lighting,"ExposureCompensation",controls.lightExposure or 0)
-        local c=effect("Color","ColorCorrectionEffect")
-        c.Enabled=true c.Saturation=controls.lightSaturation or 0.15 c.Contrast=controls.lightContrast or 0.05 c.TintColor=controls.lightTint or Color3.new(1,1,1)
-        local bloom=effect("Bloom","BloomEffect")
-        bloom.Enabled=true bloom.Intensity=controls.lightBloom or 0.25 bloom.Size=24 bloom.Threshold=1
-        local rays=effect("Rays","SunRaysEffect") rays.Enabled=true rays.Intensity=controls.lightRays or 0.03
-        local blur=effect("SoftBlur","BlurEffect") blur.Enabled=(controls.lightBlur or 0)>0 blur.Size=controls.lightBlur or 0
-    end
-    do
-        local g=group("Lighting","Color and light",1)
-        toggle(g,"lightEnabled","Shaders",false,shaders)
-        g=featureSettings("lightEnabled")
-        local function update() if controls.lightEnabled then shaders(true) end end
-        sliderControl(g,"lightBrightness","Brightness",0,5,2,0.05,update)
-        sliderControl(g,"lightExposure","Exposure",-3,3,0,0.05,update)
-        sliderControl(g,"lightSaturation","Saturation",-1,1,0.15,0.05,update)
-        sliderControl(g,"lightContrast","Contrast",-1,1,0.05,0.05,update)
-        color(g,"lightTint","Tint",Color3.new(1,1,1),update,function(value)
-            if effects.Color then effects.Color.TintColor=value end
-        end)
-        local h=g
-        sliderControl(h,"lightBloom","Bloom",0,3,0.25,0.05,update)
-        sliderControl(h,"lightRays","Sun rays",0,1,0.03,0.01,update)
-        sliderControl(h,"lightBlur","Blur",0,24,0,0.5,update)
-        action(h,"Reset filters",function()
-            setters.lightEnabled(false,true)
-            for key,v in pairs({lightBrightness=2,lightExposure=0,lightSaturation=0.15,lightContrast=0.05,lightBloom=0.25,lightRays=0.03,lightBlur=0}) do setters[key](v,false) end
-            setters.lightTint(Color3.new(1,1,1),false)
-        end)
-    end
+    lightingEditor=loadUIModule("LightingEditor")({
+        Lighting=Lighting,Controls=controls,Setters=setters,ColorOwners=colorOwners,Translations=ru,
+        Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Panel=featureSettings,Action=action,
+        Patch=patch,Unpatch=unpatch,
+        HazeActive=function() return hazeEnabled end,
+        EnforceHaze=function() if hazeEnabled then Lighting.FogStart=1000000 Lighting.FogEnd=1000000 end end,
+        Dispose=function(object)
+            for i=#hiddenAtmospheres,1,-1 do if hiddenAtmospheres[i]==object then table.remove(hiddenAtmospheres,i) end end
+            dispose(object)
+        end,
+        Create=function(class,props,parent) return own(make(class,props,parent)) end,
+        ApplySky=applySkyData,
+    })
     maintenance.Sky=function()
         if activeSky and skyRecoveryData and not (controls.visualPresetEnabled and controls.visualPreset=="Tokyowami") then
             local sky=ensureSky()
             for key,value in pairs(skyRecoveryData) do if sky[key]~=value then sky[key]=value end end
         end
     end
-    maintenance.Shaders=function() if controls.lightEnabled and not (controls.visualPresetEnabled and controls.visualPreset=="Pale Frost") then shaders(true) end end
+    maintenance.Shaders=function() if controls.lightEnabled and not (controls.visualPresetEnabled and controls.visualPreset=="Pale Frost") then lightingEditor.Apply(true) end end
     -- Sky additions. Time and sun return here as compact optional controls.
     do
         local g=group("Sky","Sun",1)
@@ -2479,13 +2458,8 @@ local function buildVisualSystems()
                 end
             end,
             GetSky=ensureSky,
-            ApplySky=function(data)
-                if data.AssetId then applyCustomSky(tostring(data.AssetId)) return end
-                skyLoadGeneration=skyLoadGeneration+1 skyLoadBusy=false
-                local sky=ensureSky() skyRecoveryData=nil
-                for property,value in pairs(data) do sky[property]=value end
-                customSkyLoaded=true onCustomSkyApplied(data) rememberSky() profileChanged()
-            end,
+            ApplySky=applySkyData,
+            EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })
     end
 

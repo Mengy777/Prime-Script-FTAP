@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.3.0**, tag `v2.3.0`. Next normal runtime version: **2.3.1**. Consult Git for the release commit.
+- Published runtime target: **2.3.1**, tag `v2.3.1`. Next normal runtime version: **2.3.2**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -99,7 +99,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 ### Anti-Kick 2.1.8 / 2.1.9
 
-- Default-on `antiKickEnabled` is persisted; currently **301 settings** overall (Smooth camera removed in 2.2.1).
+- Default-on `antiKickEnabled` is persisted; currently **339 settings** overall (Smooth camera removed in 2.2.1).
 - Own NinjaShuriken attaches to own HumanoidRootPart.RagdollTouchedHitbox. Require PartOwner and StickyWeld.Part1 confirmation, own-toy cleanup, retry backoff, death recovery and foreign-plot pause.
 - 2.1.9 hides all its BaseParts with LocalTransparencyModifier=1 and Decal/Texture with transparency; retain physical attachment. Do not delete the object just to hide it.
 - Attached means confirmed weld, not universal immunity. No Kick hook, anti-cheat concealment or ban reversal. Dispatched InvokeServer cannot be cancelled client-side.
@@ -168,7 +168,7 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 ## Mandatory acceptance ledger
 
 - Maintain docs/Testing-Checklist.md for every new/improved runtime feature and its parameters, stable IDs, version, user acceptance or pending/bug/rework/retest/removed status. Add new rows on release and record concrete user feedback after tests. Do not infer acceptance from silence or from simulations. Keep previous approval when changed behavior needs retesting.
-- docs/Settings-Inventory.md is a generated 301-key snapshot at 2.2.9, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
+- docs/Settings-Inventory.md is a generated 339-key snapshot at 2.3.1, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
 - Current next pending items: Graphics new presets/Fullbright/snow/ocean appearance. Camera and the sky collection have separate user approvals; other Sky controls retain only their own historical acceptance. Older approvals do not close newly added knobs, animations or ESP systems.
 
 ## Sky collection checkpoint — 2.3.0
@@ -188,3 +188,14 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 
 - Latest user acceptance 2026-10-28: Graphics Lighting GFX-01…GFX-05 all approved. Pale Frost/Dreamy Night/Tokyowami strongly liked; Fullbright works alone and with presets, no residual blur/broken colors in combinations. Next untested: Weather snowfall GFX-06/GFX-07, then ocean appearance GFX-08/GFX-09.
 - User interest/backlog: more high-quality lighting presets and manual advanced controls to create similarly rich looks. Code comparison confirms presets expose more underlying atmosphere/fog/ambient/shadow/Bloom/DOF properties than current Shaders UI. This conversation records the wish and explanation; no runtime implementation was performed. Preserve approved presets exactly when expanding controls; group advanced settings compactly, support configs/reset/unload, avoid duplicate indistinguishable scenes.
+
+## Lighting editor — 2.3.1
+
+- User requested editing an existing preset and more advanced parameters under manual lighting. Implemented lib/LightingEditor.lua; shared registry now 339 keys (+38). Add module to compiler inventory/test fixture when porting. New tests: tests/sim/lighting_editor.py; updated native-click/navigation/startup tests remain relevant.
+- Original three preset definitions remain unchanged in VisualExpansion. Edit selected preset imports a COPY via the main LightingEditor context, disables source preset and Fullbright, stages manual values/rainbows, enables manual light and opens its panel. It does not mutate source tables. Bloom size is clamped to the engine range; missing properties use underlying game/default values.
+- Manual panel has Basic/Light/Air/Effects/Focus pages. Advanced environment, Atmosphere and DOF flags default off; legacy manual keys/default behavior remain. Replace game effects suppresses native Lighting PostEffects, preserving state. Native sun-ray spread default is read from an unparented temporary instance.
+- Environment/air/game-filter overrides use shaderEnvironment/shaderAir/shaderReplace layers; base brightness/exposure retain shader. Owned Atmosphere is destroyed on disable because it has no Enabled property. Cleanup restores layers and owns all new instances. Existing once-per-second Shaders maintenance repairs enabled effects.
+- Copying Tokyowami resolves its static sky into the normal custom sky system and copies sun size/visibility. Manual lighting off/Reset filters do not reset that independent sky: use Reset sky. All color fields support existing owner-aware rainbow controls. Auto/slots/import/export store all values; there is no separate lighting-only preset bank, use existing five full-config slots.
+- Prior approval of original presets remains; new manual editor and compatibility require live retest via LIT-01…LIT-13. Next pending: this editor, then Weather snow and ocean appearance. No changes to accepted Freecam.
+
+- Editor respects Remove haze: suppress manual Air while haze flag is active, retain extended fog, immediately resume on haze-off. Disposal removes owned atmospheres from hiddenAtmospheres first. Keep this coordination to avoid recreating hidden atmosphere or reparenting destroyed instances. Covered by lighting_editor.py; needs user interaction check LIT-13.

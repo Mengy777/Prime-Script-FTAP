@@ -1,6 +1,6 @@
-# Инвентарь настроек Prime Visuals 2.3.0
+# Инвентарь настроек Prime Visuals 2.3.1
 
-Снимок 2026-10-28. Все 301 сохраняемая настройка извлечены из реального реестра через запуск основного файла в симуляции. Это контроль полноты, а не подтверждение работы в Roblox. Автоматическое сохранение было виртуальным; личные конфиги не читались. Статусы живой проверки ведутся в [Testing-Checklist.md](Testing-Checklist.md).
+Снимок 2026-10-28: все **339 сохраняемых настроек** извлечены из настоящего реестра основного файла в симуляции. Это контроль полноты, не подтверждение работы в Roblox. Личные конфиги не читались. Статусы проверки: [Testing-Checklist.md](Testing-Checklist.md). В 2.3.1 добавлено 38 ключей редактора освещения; старые ключи сохранены.
 
 | Ключ | Подпись контрола |
 | --- | --- |
@@ -206,16 +206,54 @@
 | `jumpCircleImage` | Image |
 | `jumpCircleLife` | Lifetime |
 | `jumpCircleSize` | Diameter |
+| `lightAirColor` | — |
+| `lightAirColorRainbow` | Rainbow: Air color |
+| `lightAirDecay` | — |
+| `lightAirDecayRainbow` | Rainbow: Air decay |
+| `lightAirDensity` | Air density |
+| `lightAirGlare` | Air glare |
+| `lightAirHaze` | Air haze |
+| `lightAirOffset` | Air offset |
+| `lightAmbient` | — |
+| `lightAmbientRainbow` | Rainbow: Ambient light |
+| `lightAtmosphere` | Atmosphere controls |
 | `lightBloom` | Bloom |
+| `lightBloomSize` | Bloom size |
+| `lightBloomThreshold` | Bloom threshold |
 | `lightBlur` | Blur |
 | `lightBrightness` | Brightness |
+| `lightClock` | Time of day |
+| `lightColorBrightness` | Color brightness |
 | `lightContrast` | Contrast |
+| `lightDepth` | Depth of field |
+| `lightDiffuse` | Diffuse light |
 | `lightEnabled` | Manual lighting |
+| `lightEnvironment` | Environment controls |
 | `lightExposure` | Exposure |
+| `lightFarBlur` | Far blur |
+| `lightFocusDistance` | Focus distance |
+| `lightFocusRadius` | Focus radius |
+| `lightFogColor` | — |
+| `lightFogColorRainbow` | Rainbow: Fog color |
+| `lightFogEnd` | Fog end |
+| `lightFogStart` | Fog start |
+| `lightLatitude` | Sun latitude |
+| `lightLower` | — |
+| `lightLowerRainbow` | Rainbow: Lower light color |
+| `lightNearBlur` | Near blur |
+| `lightOutdoor` | — |
+| `lightOutdoorRainbow` | Rainbow: Outdoor light |
+| `lightRaySpread` | Ray spread |
 | `lightRays` | Sun rays |
+| `lightReplaceEffects` | Replace game effects |
 | `lightSaturation` | Saturation |
+| `lightShadows` | Shadows |
+| `lightSoftness` | Shadow softness |
+| `lightSpecular` | Reflections |
 | `lightTint` | — |
 | `lightTintRainbow` | Rainbow: Tint |
+| `lightUpper` | — |
+| `lightUpperRainbow` | Rainbow: Upper light color |
 | `lineColor` | — |
 | `lineEnabled` | Grab line style |
 | `lineGradient` | Gradient |
@@ -305,5 +343,3 @@
 | `waterSolid` | Non-swimmable water |
 | `waterSpeed` | Wave speed |
 | `waterWaves` | Wave size |
-
-В 2.3.0 состав 301 ключа и их подписи не изменились. Значения collectionSky переименованы с миграцией четырёх старых названий; подробности в журнале проверки.

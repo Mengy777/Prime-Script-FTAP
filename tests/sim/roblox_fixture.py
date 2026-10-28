@@ -175,6 +175,6 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("VisualExpansion","VisualPresets","Navigation","AntiKick"):
+for module in ("VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor"):
  lua.globals().TEST_VISUAL_SOURCE=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  lua.execute("local source=TEST_VISUAL_SOURCE; local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('"+module+".lua',1,true) then return source end return previous(self,url) end")
