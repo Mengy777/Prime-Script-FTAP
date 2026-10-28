@@ -181,3 +181,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Acceptance 2026-10-28: user explicitly approved all 2.3.0 sky replacements after receiving their test list. User clarified this acceptance covers the collection only, not all Sky controls or a new Reset test. Next: Graphics → Lighting, only new/improved GFX-01…GFX-05; do not repeat old approved shader tests. Documentation-only checkpoint, runtime stays 2.3.0.
 
 - Scope correction: latest sky approval is collection-only. Camera approval remains from earlier messages. Do not broaden collection approval to the whole Sky/View category or infer a new Reset test. Preserve historical approvals separately.
+
+- Completeness correction after code-level View audit: Remove haze (SKY-05) and the separate Reset time and sun button (SKY-07) lack individual explicit user confirmation. Ask these before declaring all View accepted. Custom ID/Load, automatic sun/cloud hide/manual override, sun/time and cloud controls have historical approvals; collection separately accepted at 2.3.0. See updated checklist rows SKY-04…SKY-08.
