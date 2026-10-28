@@ -25,3 +25,7 @@ Seven six-face sets were inspected as data in the author's [VISUALBOSS readme](h
 3. Disable and reenable, reset, and unload: normal movement/camera/sensitivity/UI restored, HUD disappears; body and overlay recover after respawn.
 4. Spectate player list labels/thumbnails, joins/leaves and selection; camera returns correctly and Freecam/Spectate exclude each other.
 5. New seven skies load without missing faces; old thirteen and Reset sky retain behavior.
+
+## Acceptance checkpoint — 2026-10-28
+
+The user has now approved the complete Camera subpage: existing FOV/third-person controls, Freecam 2.2.9, Camera noclip, ragdoll blur/body controls and the updated Spectate player list. These are user-reported live confirmations, not assistant-observed engine tests. The seven added skies are a separate Sky-subpage check and still have no explicit confirmation. Historical implementation details above describe 2.2.1; current Freecam behavior is documented in Freecam-Interaction.md.

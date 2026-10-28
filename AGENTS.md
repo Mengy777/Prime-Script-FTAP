@@ -117,7 +117,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 - User historically approved Home and original View/Graphics/Character/ESP/FTAP/Settings, plus the major config workflow. This does not imply all later imported functions are tested.
 - User confirmed full third-person operation and 2.2.0 wheel zoom. Invisible Anti-Kick and protection effectiveness have no explicit live confirmation.
-- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved; 2.2.1 Freecam rework, new Spectate picker and seven additional skies require live verification. See docs/View-2.2.1.md.
+- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved. Later user acceptance confirms the full 2.2.9 Freecam, Camera noclip and the new Spectate picker; only seven additional collection skies still lack explicit live confirmation. See docs/View-2.2.1.md.
 - Resume with the user's concrete request; do not automatically start a redesign, Vortex gameplay or another game's implementation from this memory.
 
 ## Testing / release checklist
@@ -162,3 +162,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - User explicitly marked the complete Freecam in 2.2.9 finished/approved after receiving the eight-point checklist: flight/look/speed, native E spawning and resumed flight, sideways RMB approach/return, ordinary LMB grab/release, native held-target RMB throw, player names, F4 restoration and death recovery. Treat this as user-reported acceptance, not an independently observed engine test. Do not reopen Freecam work without a new issue/request.
 - User separately reported one failed Blobman kick attempt against them while protection was enabled. Record as one reported successful defensive case, not universal immunity or a verified cause of an attack.
 - Runtime remains 2.2.9; this acceptance checkpoint changes documentation only.
+
+- User explicitly confirmed Camera noclip (camera through walls) and the new Spectate player list on 2026-10-28. Camera subpage is now fully accepted by the user. The seven added skies belong to Sky and remain unconfirmed; do not include them in camera acceptance. No runtime change/version bump.
