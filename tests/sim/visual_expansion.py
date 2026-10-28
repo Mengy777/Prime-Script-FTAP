@@ -269,42 +269,45 @@ local ground=Instance.new('Part')ground.Name='ExperimentalGround'ground.Anchored
 workspace.Raycast=function(_,origin,direction,params)
  return {Instance=(direction and direction.Y==-88) and ground or TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}
 end
-local function grab() TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{UserInputType=Enum.UserInputType.MouseButton1})end
-local function release() TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})end
-grab()TICK(.05)
-assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'automatic approach did not move avatar')
-assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'grab stopped camera rotation')
+local function rightClick(state)
+ return TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',state or Enum.UserInputState.Begin,{UserInputType=Enum.UserInputType.MouseButton2})
+end
+local function leftClick()
+ TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
+ TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
+end
+leftClick()assert(avatarRoot.CFrame==avatarStart,'LMB unexpectedly approached')
+assert(rightClick()==Enum.ContextActionResult.Sink)TICK(.05)
+assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'RMB did not approach')
+local atTarget=avatarRoot.CFrame
+rightClick(Enum.UserInputState.End)
+leftClick()TEST_DRAIN()TICK(.05)
+assert(avatarRoot.CFrame==atTarget,'mouse release or LMB unexpectedly returned avatar')
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'approach stopped camera look')
 local hitPoint=Vector3.new(camera.CFrame.Position.X,0,camera.CFrame.Position.Z)
 local offset=avatarRoot.CFrame.Position-hitPoint
 local sideways=Vector3.new(-camera.CFrame.LookVector.Z,0,camera.CFrame.LookVector.X).Unit
-assert(math.abs(offset.X*sideways.X+offset.Z*sideways.Z)>=5.99,'avatar still overlaps the viewing ray')
+assert(math.abs(offset.X*sideways.X+offset.Z*sideways.Z)>=5.99,'avatar overlaps target ray')
 local previousCamera=camera.CFrame
 TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Delta=Vector3.new(25,0,0)})TICK(.05)
-assert(camera.CFrame.LookVector.X~=previousCamera.LookVector.X,'look frozen while grabbing')
-release()assert(avatarRoot.CFrame==avatarStart,'return is not immediate')
-grab()local heldAgain=avatarRoot.CFrame TEST_DRAIN()
-assert(avatarRoot.CFrame==heldAgain,'quick re-grab was cancelled by old release')
-release()TEST_DRAIN()TICK(.05)
-assert(avatarRoot.CFrame==avatarStart,'release did not restore avatar')
-grab()release()
-TEST_OPTIONS.freeCameraEnabled:SetValue(false)
-assert(avatarRoot.CFrame==avatarStart,'disable failed to restore avatar')
-TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
-grab()local nextTrip=avatarRoot.CFrame TEST_DRAIN()
-assert(avatarRoot.CFrame==nextTrip,'stale release returned newer trip')
-release()TEST_DRAIN()
+assert(camera.CFrame.LookVector.X~=previousCamera.LookVector.X,'look frozen at target')
 workspace.Raycast=function()return nil end
-grab()assert(avatarRoot.CFrame==avatarStart,'no target moved avatar')
-workspace.Raycast=function(_,origin,direction)return {Instance=direction.Y==-88 and ground or TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
-w.Sit=true grab()w.Sit=false
-assert(avatarRoot.CFrame==avatarStart,'seated character moved')
-TEST_GRAB_TARGET.Anchored=true grab()
-assert(avatarRoot.CFrame~=avatarStart,'anchored scenery did not approach')
-release()assert(avatarRoot.CFrame==avatarStart)
-workspace.Raycast=function(_,origin)return {Instance=workspace.Terrain or ground,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
-grab()assert(avatarRoot.CFrame~=avatarStart,'ground hit did not approach')
+rightClick()assert(avatarRoot.CFrame==avatarStart,'second RMB failed to return without raycast target')
+rightClick()assert(avatarRoot.CFrame==avatarStart,'no target moved avatar')
+workspace.Raycast=function(_,origin)return {Instance=TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
+for cycle=1,10 do
+ rightClick()assert(avatarRoot.CFrame~=avatarStart)
+ leftClick()rightClick()assert(avatarRoot.CFrame==avatarStart)
+end
+rightClick()TEST_OPTIONS.freeCameraEnabled:SetValue(false)
+assert(avatarRoot.CFrame==avatarStart,'disable failed to return')
+TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
+w.Sit=true rightClick()w.Sit=false
+assert(avatarRoot.CFrame==avatarStart,'seated avatar moved')
+TEST_GRAB_TARGET.Anchored=true rightClick()
+assert(avatarRoot.CFrame~=avatarStart,'anchored hit did not approach')
 TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
-assert(avatarRoot.CFrame==avatarStart,'focus loss did not return avatar')
+assert(avatarRoot.CFrame==avatarStart,'focus loss failed to return')
 TEST_SERVICES.UserInputService.WindowFocused:Fire()
 TEST_GRAB_TARGET:Destroy()
 workspace.Raycast=previousRay ground:Destroy()

@@ -2,6 +2,13 @@
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.
 
+## 2.2.8 — Separate Freecam approach and grab · 2026-10-28
+
+- RMB now toggles own-avatar approach / return. First press uses the current target and preserves the >=6-stud lateral clearance; the next press returns to the saved position even when aiming at empty space.
+- LMB is left to native game interaction and no longer starts approach or returns on release. Releasing RMB also leaves the avatar at the chosen position.
+- Updated HUD/settings hints. Menu interaction retains ordinary RMB handling; flight consumes RMB to avoid conflicting native secondary actions. Focus loss, disable and unload retain restoration.
+- Luau compilation and simulated repeated cycles, release behavior, native LMB independence, empty-space return, camera rotation and lifecycle checks passed. Server acceptance of a later native grab remains a live-test question.
+
 ## 2.2.7 — Freecam pause and target clearance · 2026-10-28
 
 - Persistent Enabled ScreenGui shells no longer count as open toy panels. E-close explicitly clears the interaction request; native panel close also clears it. Zero-sized/offscreen panels and hidden ancestors do not hold the flight pause.
