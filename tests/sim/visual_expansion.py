@@ -407,14 +407,21 @@ assert(not FIND('PV_VisualExpansion'))
 """)
 print('PASS actual autosave/re-execution of enabled expansion features, 12 repeated character replacements and final restore/unload')
 
-# Exact catalog size/complete faces; gradients intentionally share horizontal faces.
+# Static faces and model references are distinct catalog entries; model textures resolve in Roblox.
 from support import ROOT
 data=lua.execute((ROOT/'lib/VisualPresets.lua').read_text(encoding='utf-8'))
 skies=data['Skies'];assert len(list(skies.keys()))==20
 fingerprints=set()
+models={}
 for name in skies.keys():
- faces=tuple(skies[name]['Skybox'+key] for key in ['Bk','Dn','Ft','Lf','Rt','Up'])
- assert all(isinstance(face,str) and face.startswith(('rbxassetid://','rbxasset://','http://')) for face in faces),name
- fingerprints.add(faces)
-assert len(fingerprints)==20,'catalog contains duplicate six-face sets'
-print('PASS 20 distinct complete skybox sets; texture availability still requires live Roblox')
+ if skies[name]['AssetId']:
+  asset=skies[name]['AssetId'];assert asset.isdigit();models[name]=asset
+  fingerprints.add(('model',asset))
+ else:
+  faces=tuple(skies[name]['Skybox'+key] for key in ['Bk','Dn','Ft','Lf','Rt','Up'])
+  assert all(isinstance(face,str) and face.startswith(('rbxassetid://','rbxasset://','http://')) for face in faces),name
+  fingerprints.add(faces)
+assert len(fingerprints)==20,'catalog contains duplicates'
+assert models=={'Rainbow Galaxy':'4943578383','Dark Matter':'110290405998332','Milky Way':'545702970'}
+assert not any(skies[name] for name in ['Vaporwave','Lavender Gradient','Rose Gradient','Golden Hour'])
+print('PASS 20 distinct skies: 17 static six-face sets and 3 exact model references; live assets require Roblox')

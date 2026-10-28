@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.2.9**, tag `v2.2.9`. Next normal runtime version: **2.3.0**. Consult Git for the release commit.
+- Published runtime target: **2.3.0**, tag `v2.3.0`. Next normal runtime version: **2.3.1**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -117,7 +117,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 - User historically approved Home and original View/Graphics/Character/ESP/FTAP/Settings, plus the major config workflow. This does not imply all later imported functions are tested.
 - User confirmed full third-person operation and 2.2.0 wheel zoom. Invisible Anti-Kick and protection effectiveness have no explicit live confirmation.
-- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved. Later user acceptance confirms the full 2.2.9 Freecam, Camera noclip and the new Spectate picker; only seven additional collection skies still lack explicit live confirmation. See docs/View-2.2.1.md.
+- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved. Later user acceptance confirms the full 2.2.9 Freecam, Camera noclip and the new Spectate picker; Blue Horizon, Purple Nebula and Pink Morning are now approved; four 2.3.0 sky replacements still need live confirmation. See docs/View-2.2.1.md.
 - Resume with the user's concrete request; do not automatically start a redesign, Vortex gameplay or another game's implementation from this memory.
 
 ## Testing / release checklist
@@ -163,10 +163,17 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - User separately reported one failed Blobman kick attempt against them while protection was enabled. Record as one reported successful defensive case, not universal immunity or a verified cause of an attack.
 - Runtime remains 2.2.9; this acceptance checkpoint changes documentation only.
 
-- User explicitly confirmed Camera noclip (camera through walls) and the new Spectate player list on 2026-10-28. Camera subpage is now fully accepted by the user. The seven added skies belong to Sky and remain unconfirmed; do not include them in camera acceptance. No runtime change/version bump.
+- User explicitly confirmed Camera noclip (camera through walls) and the new Spectate player list on 2026-10-28. Camera subpage is now fully accepted by the user. Sky acceptance is tracked per set in docs/Testing-Checklist.md; do not include them in camera acceptance. No runtime change/version bump.
 
 ## Mandatory acceptance ledger
 
 - Maintain docs/Testing-Checklist.md for every new/improved runtime feature and its parameters, stable IDs, version, user acceptance or pending/bug/rework/retest/removed status. Add new rows on release and record concrete user feedback after tests. Do not infer acceptance from silence or from simulations. Keep previous approval when changed behavior needs retesting.
 - docs/Settings-Inventory.md is a generated 301-key snapshot at 2.2.9, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
-- Current next pending items: seven added skies; then Graphics new presets/Fullbright/snow/ocean appearance. Camera is fully user-approved. Older approvals do not close newly added knobs, animations or ESP systems.
+- Current next pending items: four sky replacements (Rainbow Galaxy, Purple Radiance, Dark Matter, Milky Way); then Graphics new presets/Fullbright/snow/ocean appearance. Camera is fully user-approved. Older approvals do not close newly added knobs, animations or ESP systems.
+
+## Sky collection checkpoint — 2.3.0
+
+- User approved Blue Horizon/Purple Nebula/Pink Morning. Rejected Vaporwave/Lavender Gradient/Rose Gradient/Golden Hour aesthetically; replace with Rainbow Galaxy/Purple Radiance/Dark Matter/Milky Way, respectively. Preserve 20 entries and 16 unchanged approved definitions.
+- New model references: Rainbow Galaxy 4943578383; exact user links Dark Matter 110290405998332 and Milky Way 545702970. Purple Radiance uses known Purple Sky 570559352 six-face data. Previews inspected via public Roblox thumbnails; external model delivery returned 401, so three model face sets are resolved at runtime by the existing safe GetObjects reader, not guessed.
+- collectionSky aliases are part of dropdown specs and profile decode. Old saves must migrate without reset; only known aliases map, unknown dropdowns still reject. Resolved faces persist in existing sky payload, successful models cache in memory; failure does not replace current sky.
+- Relevant test: tests/sim/sky_collection.py (exact model references, cleanup/cache, failure retention, saved faces, four alias migrations, 16 pinned retained sets). Four replacements need user live verification. Camera remains accepted/unchanged.

@@ -747,7 +747,7 @@ return function(c)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)
         local names={} for name in pairs(c.Data.Skies) do names[#names+1]=name end table.sort(names)
-        choice(g,"collectionSky","Skybox",names,"Nebula",function() end)
+        choice(g,"collectionSky","Skybox",names,"Nebula",function() end,c.Data.SkyAliases)
         c.Action(g,"Apply selected skybox",function() c.ApplySky(c.Data.Skies[v.collectionSky]) end)
     end
     -- Camera features use native transforms/input. Mouse sensitivity is never changed.

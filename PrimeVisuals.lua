@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.2.9"
+local VERSION="2.3.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -693,9 +693,9 @@ local function skyFeedback(text,isError)
     if isError then Library:Notify(tostring(text),5) end
     if loadButton then loadButton.Text=text=="Loading skybox..." and "Loading..." or "Load" end
 end
-local function applyCustomSky()
+local function applyCustomSky(modelId)
     if skyLoadBusy then return end
-    local url=assetUrl(skyInput.Text)
+    local url=assetUrl(modelId or skyInput.Text)
     if not url then skyFeedback("Enter a valid skybox ID or Creator Store link.",true) return end
     local id=url:match("(%d+)$")
     skyLoadGeneration=skyLoadGeneration+1
@@ -715,6 +715,7 @@ local function applyCustomSky()
         if requestGeneration~=skyLoadGeneration or not gui.Parent then return end
         skyLoadBusy=false
         if not data then skyFeedback(message,true) return end
+        knownSkyboxes[id]=data
         local ok,err=pcall(function()
             local sky=ensureSky()
             skyRecoveryData=nil
@@ -976,9 +977,9 @@ local function buildVisualSystems()
         local widget=g:AddInput(key,{Text=text,Default=tostring(initial or ""),Finished=not live,CommitOnBlur=true,Callback=changed(key,callback)})
         return register(key,widget,tostring(initial or ""),callback,false,{Kind="Input"})
     end
-    local function choice(g,key,text,values,initial,callback)
+    local function choice(g,key,text,values,initial,callback,aliases)
         local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
-        return register(key,widget,initial,callback,false,{Kind="Dropdown",Values=values})
+        return register(key,widget,initial,callback,false,{Kind="Dropdown",Values=values,Aliases=aliases})
     end
     -- Existing rainbow implementations keep their own controls and efficient render paths.
     local legacyRainbowColors={lineColor=true,characterColor=true,hatColor=true}
@@ -2479,6 +2480,7 @@ local function buildVisualSystems()
             end,
             GetSky=ensureSky,
             ApplySky=function(data)
+                if data.AssetId then applyCustomSky(tostring(data.AssetId)) return end
                 skyLoadGeneration=skyLoadGeneration+1 skyLoadBusy=false
                 local sky=ensureSky() skyRecoveryData=nil
                 for property,value in pairs(data) do sky[property]=value end
@@ -2725,7 +2727,9 @@ local function buildVisualSystems()
             elseif spec.Kind=="Toggle" then assert(type(value)=="boolean","Invalid toggle")
             elseif spec.Kind=="Slider" then assert(finite(value) and value>=spec.Min and value<=spec.Max,"Slider outside supported range")
             elseif spec.Kind=="Input" then assert(type(value)=="string" and #value<=8192,"Invalid text")
-            elseif spec.Kind=="Dropdown" then assert(type(value)=="string" and table.find(spec.Values,value),"Unknown dropdown value")
+            elseif spec.Kind=="Dropdown" then
+                if type(value)=="string" and spec.Aliases then value=spec.Aliases[value] or value end
+                assert(type(value)=="string" and table.find(spec.Values,value),"Unknown dropdown value")
             else error("Unsupported setting type: "..tostring(spec.Kind)) end
             return value
         end
