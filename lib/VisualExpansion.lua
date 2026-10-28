@@ -783,7 +783,7 @@ return function(c)
         end
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
-        hudHint.Text=translated(free.approach and "RMB: return" or (free.interacting and "E: toy menu" or "RMB: approach · wheel: speed"))
+        hudHint.Text=translated(free.approach and "RMB: throw / return" or (free.interacting and "E: toy menu" or "RMB: approach · wheel: speed"))
         hudControls.Text=translated(free.interacting and "E: flight · F4: exit" or "E: objects · F4: exit")
     end
     local function visibleFreeBody()
@@ -914,12 +914,41 @@ return function(c)
             if c.Notify then c.Notify(tostring(message):gsub("^.-:%d+: ","")) end
         end
     end
+    local function holdingObject()
+        -- FTAP's local grab scope: GrabParts/GrabPart/WeldConstraint.Part1.
+        -- A visible line or another player's held mouse button is not a grab.
+        for _,scope in ipairs(W:GetChildren()) do
+            if scope.Name=="GrabParts" then
+                local part=scope:FindFirstChild("GrabPart")
+                local weld=part and part:FindFirstChild("WeldConstraint")
+                local targetPart=weld and weld.Part1
+                if targetPart and targetPart:IsA("BasePart") and targetPart:IsDescendantOf(W) then return true end
+            end
+        end
+        return false
+    end
+    local function updateFreeNames()
+        local current={}
+        for _,player in ipairs(P:GetPlayers()) do
+            if player~=me then
+                local h=humanoid(player)
+                if h then
+                    current[h]=true
+                    patch("freeNames",h,"DisplayDistanceType",Enum.HumanoidDisplayDistanceType.Subject)
+                    patch("freeNames",h,"NameDisplayDistance",1000000)
+                end
+            end
+        end
+        for h in pairs(free.names or {}) do if not current[h] then unpatch("freeNames",h) end end
+        free.names=current
+    end
     local function endFree()
         if not free.active then return end
         returnApproach(false)
         free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
         job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
-        free.interacting=false
+        free.interacting=false free.rmbNative=nil
+        unpatch("freeNames") free.names={}
         unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
         if hud then hud.Visible=false end
@@ -941,7 +970,7 @@ return function(c)
         free.active=true free.focused=true free.interacting=false free.menuReleased=false free.menuRequested=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
         free.position=camera.CFrame.Position free.velocity=Vector3.zero free.look=Vector2.new(0,0)
         free.pitch,free.yaw=camera.CFrame:ToEulerAnglesYXZ()
-        unpatch("body") visibleFreeBody() suppressToyMenus()
+        unpatch("body") visibleFreeBody() suppressToyMenus() updateFreeNames() free.nameElapsed=0
         job("Freecam toy UI",c.PlayerGui.DescendantAdded,hideToyMenu)
         game:GetService("ContextActionService"):BindActionAtPriority("PrimeVisualsFreecam",function(_,state,input)
             if input and input.KeyCode==Enum.KeyCode.E then
@@ -949,9 +978,14 @@ return function(c)
                 return Enum.ContextActionResult.Pass
             end
             if input and input.UserInputType==Enum.UserInputType.MouseButton2 then
-                if state==Enum.UserInputState.Begin and free.focused and not free.interacting and not c.MenuOpen() and not I:GetFocusedTextBox() then tryApproach() end
-                if free.focused and not free.interacting and not c.MenuOpen() and not I:GetFocusedTextBox() then return Enum.ContextActionResult.Sink end
-                return Enum.ContextActionResult.Pass
+                if state==Enum.UserInputState.Begin then
+                    free.rmbNative=holdingObject() or not free.focused or free.interacting or c.MenuOpen() or I:GetFocusedTextBox()~=nil
+                    if not free.rmbNative then tryApproach() end
+                end
+                -- Keep the whole press/release native even if the throw removes its weld.
+                local native=free.rmbNative
+                if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then free.rmbNative=nil end
+                return native and Enum.ContextActionResult.Pass or Enum.ContextActionResult.Sink
             end
             if free.interacting or c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
@@ -993,6 +1027,8 @@ return function(c)
             end
             for old in pairs(free.humanoids) do if old~=h then unpatch("freeCamera",old) free.humanoids[old]=nil end end
             visibleFreeBody() syncToyMenu()
+            free.nameElapsed=(free.nameElapsed or 0)+dt
+            if free.nameElapsed>=.5 then free.nameElapsed=0 updateFreeNames() end
             local menuPaused=not free.focused or c.MenuOpen() or I:GetFocusedTextBox()~=nil
             local paused=free.interacting or menuPaused
             if not paused then

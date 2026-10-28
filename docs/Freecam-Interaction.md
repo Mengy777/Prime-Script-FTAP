@@ -49,3 +49,9 @@ Approach offsets horizontally perpendicular to the camera ray by at least 6 stud
 ## 2.2.8 — RMB toggle, native LMB
 
 The user confirmed both 2.2.7 fixes live, but the game still rejected a grab. A message establishes rejection, not its precise check/timing. The new explicit experiment uses RMB to approach and RMB again to return, separating movement from a later ordinary LMB grab. No mouse release triggers return and no synthetic grab is emitted. Empty-space return works because an existing trip is checked before raycast validation. Flight consumes RMB; menus pass it through. Window focus loss/disable/unload still restore the saved living character. This change provides manual preparation time, not proof that the server accepted relocation or will allow interaction.
+
+## 2.2.9 — conditional native throw and names
+
+User confirmed the separate RMB approach works live. Saved Resonance source at lines 20286ff and 32286ff explicitly reads GrabParts/GrabPart/WeldConstraint.Part1 for the held target. The new callback checks the same local workspace scope before RMB handling. A live welded BasePart routes the full RMB gesture to native input; removing the weld during a throw does not change its End/Cancel routing. Empty folders alone do not count as holding. This does not synthesize a throw or rely on a key being held as proof of a grab.
+
+Freecam patches other player Humanoids to Subject name display and extended NameDisplayDistance, using their existing names and native occlusion, with full layer restoration. Refresh occurs twice per second and cleans replaced/removed Humanoids. Roblox name property reference: https://create.roblox.com/docs/characters/name-health-display . Engine rendering is not simulated; live confirmation is still needed.

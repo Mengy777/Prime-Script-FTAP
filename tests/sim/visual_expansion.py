@@ -56,7 +56,7 @@ local function character(name,x)
   part.CFrame=CFrame.new(part.Position)part.Color=Color3.new(.1,.2,.3)part.Transparency=0 part.LocalTransparencyModifier=0 part.Parent=char
  end
  char.GetBoundingBox=function()return CFrame.new(x,3,0),Vector3.new(5,6,2)end
- local h=Instance.new('Humanoid')h.Health=100 h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7 h.AutoRotate=true h.Died=Instance.new('Folder').Changed h.Parent=char
+ local h=Instance.new('Humanoid')h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.Viewer h.NameDisplayDistance=100 h.Health=100 h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7 h.AutoRotate=true h.Died=Instance.new('Folder').Changed h.Parent=char
  return char
 end
 CREATE_CHARACTER=character
@@ -280,6 +280,18 @@ leftClick()assert(avatarRoot.CFrame==avatarStart,'LMB unexpectedly approached')
 assert(rightClick()==Enum.ContextActionResult.Sink)TICK(.05)
 assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'RMB did not approach')
 local atTarget=avatarRoot.CFrame
+local otherHumanoid=ENEMY.Character:FindFirstChildOfClass('Humanoid')
+assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Subject and otherHumanoid.NameDisplayDistance==1000000,'native freecam names not enabled')
+local holding=Instance.new('Folder')holding.Name='GrabParts'holding.Parent=workspace
+local grabPart=Instance.new('Part')grabPart.Name='GrabPart'grabPart.Parent=holding
+local weld=Instance.new('WeldConstraint')weld.Part1=TEST_GRAB_TARGET weld.Parent=grabPart
+assert(rightClick()==Enum.ContextActionResult.Pass,'throw RMB blocked')
+assert(avatarRoot.CFrame==atTarget,'throw returned avatar')
+weld.Part1=nil
+assert(rightClick(Enum.UserInputState.End)==Enum.ContextActionResult.Pass,'throw release was swallowed after weld removed')
+assert(avatarRoot.CFrame==atTarget)
+holding:Destroy()
+
 rightClick(Enum.UserInputState.End)
 leftClick()TEST_DRAIN()TICK(.05)
 assert(avatarRoot.CFrame==atTarget,'mouse release or LMB unexpectedly returned avatar')
@@ -301,6 +313,7 @@ for cycle=1,10 do
 end
 rightClick()TEST_OPTIONS.freeCameraEnabled:SetValue(false)
 assert(avatarRoot.CFrame==avatarStart,'disable failed to return')
+assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Viewer and otherHumanoid.NameDisplayDistance==100,'native names not restored')
 TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
 w.Sit=true rightClick()w.Sit=false
 assert(avatarRoot.CFrame==avatarStart,'seated avatar moved')

@@ -2,6 +2,12 @@
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.
 
+## 2.2.9 — Native throws and player names in Freecam · 2026-10-28
+
+- RMB checks FTAP's local GrabParts/GrabPart/WeldConstraint.Part1. While holding a live target it passes through to the native throw; no approach/return occurs. Native routing is latched across release even when throwing destroys the weld. Empty-handed RMB retains approach/return.
+- Other player Humanoids use native Subject name display with extended distance during Freecam, retaining their own display text/occlusion. Values restore on disable/unload and replaced Humanoids are cleaned up. Players are refreshed twice per second, not through world scans.
+- Added actual-module simulations for throwing without avatar return, release after weld removal, native name properties and restoration. Real engine name rendering and live throw behavior still require confirmation.
+
 ## 2.2.8 — Separate Freecam approach and grab · 2026-10-28
 
 - RMB now toggles own-avatar approach / return. First press uses the current target and preserves the >=6-stud lateral clearance; the next press returns to the saved position even when aiming at empty space.
