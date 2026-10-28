@@ -155,4 +155,10 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 
 - User confirmed 2.2.7 menu-pause and target-occlusion fixes. Native grab still rejected; timing is suspected, not proven. 2.2.8 explicitly separates actions: RMB approach/return toggle, LMB wholly native; neither button release returns. Focus loss/disable/unload still return. No automatic grab dispatch or server confirmation was added.
 
-- User confirmed 2.2.8 works live. 2.2.9 adds held-target RMB pass-through using local GrabParts/GrabPart/WeldConstraint.Part1; latch routing across release so weld destruction cannot swallow the native throw. Empty-handed RMB remains approach/return. Native Humanoid name properties use freeNames restoration layer, refresh every 0.5s; no custom ESP labels or health changes. Await user confirmation of throw/name rendering.
+- User confirmed 2.2.8 works live. 2.2.9 adds held-target RMB pass-through using local GrabParts/GrabPart/WeldConstraint.Part1; latch routing across release so weld destruction cannot swallow the native throw. Empty-handed RMB remains approach/return. Native Humanoid name properties use freeNames restoration layer, refresh every 0.5s; no custom ESP labels or health changes. User subsequently approved the complete 2.2.9 Freecam on 2026-10-28.
+
+## User acceptance — 2026-10-28
+
+- User explicitly marked the complete Freecam in 2.2.9 finished/approved after receiving the eight-point checklist: flight/look/speed, native E spawning and resumed flight, sideways RMB approach/return, ordinary LMB grab/release, native held-target RMB throw, player names, F4 restoration and death recovery. Treat this as user-reported acceptance, not an independently observed engine test. Do not reopen Freecam work without a new issue/request.
+- User separately reported one failed Blobman kick attempt against them while protection was enabled. Record as one reported successful defensive case, not universal immunity or a verified cause of an attack.
+- Runtime remains 2.2.9; this acceptance checkpoint changes documentation only.
