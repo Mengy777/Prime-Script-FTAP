@@ -117,7 +117,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 - User historically approved Home and original View/Graphics/Character/ESP/FTAP/Settings, plus the major config workflow. This does not imply all later imported functions are tested.
 - User confirmed full third-person operation and 2.2.0 wheel zoom. Invisible Anti-Kick and protection effectiveness have no explicit live confirmation.
-- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved. Later user acceptance confirms the full 2.2.9 Freecam, Camera noclip and the new Spectate picker; Blue Horizon, Purple Nebula and Pink Morning are now approved; all four 2.3.0 replacements were subsequently approved, completing View (Camera + Sky). See docs/View-2.2.1.md.
+- Smooth camera was removed by user request. Spectate camera behavior, original thirteen collection skies and sky reset are approved. Later user acceptance confirms the full 2.2.9 Freecam, Camera noclip and the new Spectate picker; Blue Horizon, Purple Nebula and Pink Morning are now approved; all four 2.3.0 replacements and the collection were subsequently approved; this does not extend to other Sky controls. See docs/View-2.2.1.md.
 - Resume with the user's concrete request; do not automatically start a redesign, Vortex gameplay or another game's implementation from this memory.
 
 ## Testing / release checklist
@@ -169,13 +169,15 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 
 - Maintain docs/Testing-Checklist.md for every new/improved runtime feature and its parameters, stable IDs, version, user acceptance or pending/bug/rework/retest/removed status. Add new rows on release and record concrete user feedback after tests. Do not infer acceptance from silence or from simulations. Keep previous approval when changed behavior needs retesting.
 - docs/Settings-Inventory.md is a generated 301-key snapshot at 2.2.9, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
-- Current next pending items: Graphics new presets/Fullbright/snow/ocean appearance. View (Camera + Sky) is fully user-approved. Older approvals do not close newly added knobs, animations or ESP systems.
+- Current next pending items: Graphics new presets/Fullbright/snow/ocean appearance. Camera and the sky collection have separate user approvals; other Sky controls retain only their own historical acceptance. Older approvals do not close newly added knobs, animations or ESP systems.
 
 ## Sky collection checkpoint — 2.3.0
 
 - User approved Blue Horizon/Purple Nebula/Pink Morning. Rejected Vaporwave/Lavender Gradient/Rose Gradient/Golden Hour aesthetically; replace with Rainbow Galaxy/Purple Radiance/Dark Matter/Milky Way, respectively. Preserve 20 entries and 16 unchanged approved definitions.
 - New model references: Rainbow Galaxy 4943578383; exact user links Dark Matter 110290405998332 and Milky Way 545702970. Purple Radiance uses known Purple Sky 570559352 six-face data. Previews inspected via public Roblox thumbnails; external model delivery returned 401, so three model face sets are resolved at runtime by the existing safe GetObjects reader, not guessed.
 - collectionSky aliases are part of dropdown specs and profile decode. Old saves must migrate without reset; only known aliases map, unknown dropdowns still reject. Resolved faces persist in existing sky payload, successful models cache in memory; failure does not replace current sky.
-- Relevant test: tests/sim/sky_collection.py (exact model references, cleanup/cache, failure retention, saved faces, four alias migrations, 16 pinned retained sets). User subsequently approved all four replacements and accepted Sky in full on 2026-10-28. Camera remains accepted/unchanged.
+- Relevant test: tests/sim/sky_collection.py (exact model references, cleanup/cache, failure retention, saved faces, four alias migrations, 16 pinned retained sets). User subsequently approved all four replacements and accepted the sky collection only on 2026-10-28. Camera remains accepted/unchanged.
 
-- Acceptance 2026-10-28: user explicitly approved all 2.3.0 sky replacements after receiving their test list. Entire View is accepted. Next: Graphics → Lighting, only new/improved GFX-01…GFX-05; do not repeat old approved shader tests. Documentation-only checkpoint, runtime stays 2.3.0.
+- Acceptance 2026-10-28: user explicitly approved all 2.3.0 sky replacements after receiving their test list. User clarified this acceptance covers the collection only, not all Sky controls or a new Reset test. Next: Graphics → Lighting, only new/improved GFX-01…GFX-05; do not repeat old approved shader tests. Documentation-only checkpoint, runtime stays 2.3.0.
+
+- Scope correction: latest sky approval is collection-only. Camera approval remains from earlier messages. Do not broaden collection approval to the whole Sky/View category or infer a new Reset test. Preserve historical approvals separately.

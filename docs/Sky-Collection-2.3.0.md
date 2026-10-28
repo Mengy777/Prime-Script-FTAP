@@ -19,4 +19,4 @@ Verification: Luau compilation and simulated real handlers exercise exact model 
 
 ## User acceptance — 2026-10-28
 
-The user explicitly accepted all four replacements after receiving the live-test list (faces/appearance/reset). Sky and the complete View category are now user-approved on 2.3.0. The pending verification statements above describe the release-time state; this is subsequent user-reported acceptance, not an assistant-observed Roblox test.
+The user explicitly accepted all four replacements after receiving the live-test list (faces/appearance/reset). The user subsequently clarified: acceptance covers the sky collection only. Other Sky controls and a new Reset test were not included; earlier Camera approval is separate. The pending verification statements above describe the release-time state; this is subsequent user-reported acceptance, not an assistant-observed Roblox test.
