@@ -164,3 +164,9 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Runtime remains 2.2.9; this acceptance checkpoint changes documentation only.
 
 - User explicitly confirmed Camera noclip (camera through walls) and the new Spectate player list on 2026-10-28. Camera subpage is now fully accepted by the user. The seven added skies belong to Sky and remain unconfirmed; do not include them in camera acceptance. No runtime change/version bump.
+
+## Mandatory acceptance ledger
+
+- Maintain docs/Testing-Checklist.md for every new/improved runtime feature and its parameters, stable IDs, version, user acceptance or pending/bug/rework/retest/removed status. Add new rows on release and record concrete user feedback after tests. Do not infer acceptance from silence or from simulations. Keep previous approval when changed behavior needs retesting.
+- docs/Settings-Inventory.md is a generated 301-key snapshot at 2.2.9, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
+- Current next pending items: seven added skies; then Graphics new presets/Fullbright/snow/ocean appearance. Camera is fully user-approved. Older approvals do not close newly added knobs, animations or ESP systems.
