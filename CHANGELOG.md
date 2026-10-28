@@ -2,6 +2,13 @@
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.
 
+## 2.2.5 — Freecam interaction controls · 2026-10-28
+
+- Removed F3/F5 preparation. E switches native toy-menu/cursor access and flight; F4 exits in either mode.
+- LMB on a movable raycast target automatically approaches solid ground near that target with the visible own avatar. Camera mouse look and flight remain available during the attempt. Release returns the same living avatar after 0.2 seconds.
+- Preserved seat/ragdoll/ground/distance checks, unload/disable restoration and stale-release protection, including repeated clicks during the return delay. No remote hooks, concealment or server-acceptance guarantee.
+- Verified with real Luau compilation and Freecam/lifecycle/profile/camera simulations; native input ordering and game acceptance require live testing.
+
 ## 2.2.4 — Экспериментальное приближение персонажа к Freecam · 2026-10-27
 
 - В настройках Freecam добавлена кнопка «Тест: подойти / вернуть [F5]». F5 сохраняет положение своего персонажа, ищет твёрдую землю под камерой и однократно переносит персонажа туда, открывая режим курсора для обычных игровых действий.

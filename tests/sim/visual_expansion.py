@@ -15,7 +15,9 @@ cfmt.__index=cfmt
 function cfmt:ToEulerAnglesYXZ()return self.pitch or 0,self.yaw or 0,0 end
 function cfmt:VectorToWorldSpace(v)return v end
 function cfmt:PointToWorldSpace(v)return self.Position+v end
-cfmt.__mul=function(a,b)return setmetatable({Position=a.Position+b.Position,LookVector=Vector3.new(0,0,-1)},cfmt)end
+cfmt.__mul=function(a,b)
+ local yaw=(a.yaw or 0)+(b.yaw or 0) local pitch=(a.pitch or 0)+(b.pitch or 0)
+ return setmetatable({Position=a.Position+b.Position,yaw=yaw,pitch=pitch,LookVector=Vector3.new(-math.sin(yaw)*math.cos(pitch),math.sin(pitch),-math.cos(yaw)*math.cos(pitch))},cfmt)end
 cfmt.__sub=function(a,b)return CFrame.new(a.Position-b)end
 function cfmt:Lerp(b,t)return CFrame.new(self.Position:Lerp(b.Position,t))end
 CFrame.new=function(x,y,z)
@@ -223,7 +225,7 @@ TEST_SERVICES.UserInputService.WindowFocused:Fire()TICK(.1)
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
 menu.Visible=true assert(not menu.Visible,'game menu reopened during flight')
 local frozen=camera.CFrame.Position
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F3},false)TICK(.1)
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})TICK(.1)
 assert(hud.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
 menu.Visible=true assert(menu.Visible,'manual toy menu blocked in interaction mode')
 assert(TEST_SERVICES.ContextActionService.bound()==Enum.ContextActionResult.Pass)
@@ -232,7 +234,7 @@ assert((camera.CFrame.Position-frozen).Magnitude<.001,'camera moved while intera
 local beforeSpeed=TEST_OPTIONS.freeCameraSpeed.Value
 TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseWheel,Position=Vector3.new(0,0,1)})
 assert(TEST_OPTIONS.freeCameraSpeed.Value==beforeSpeed,'menu scrolling changed freecam speed')
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F3},false)TICK(.1)
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})TICK(.1)
 assert(not menu.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
 menu.Visible=true assert(not menu.Visible,'flight did not suppress menu after interaction mode')
 
@@ -243,41 +245,38 @@ assert(camera.CFrame.Position.Z<originalCF.Position.Z and ME.Character:FindFirst
 local avatarRoot=ME.Character:FindFirstChild('HumanoidRootPart')
 local avatarStart=avatarRoot.CFrame
 local previousRay=workspace.Raycast
+TEST_GRAB_TARGET=Instance.new('Part')TEST_GRAB_TARGET.Anchored=false TEST_GRAB_TARGET.Parent=workspace
 local ground=Instance.new('Part')ground.Name='ExperimentalGround'ground.Anchored=true ground.Parent=workspace
 workspace.Raycast=function(_,origin,direction,params)
- return {Instance=ground,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}
+ return {Instance=(direction and direction.Y==-88) and ground or TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}
 end
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)TICK(.05)
-assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'test did not move the avatar near the camera')
-assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default,'test did not free the cursor')
-TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
-TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
-TEST_DRAIN()TICK(.05)
-assert(avatarRoot.CFrame==avatarStart,'release did not restore avatar position')
-assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'release did not resume flight')
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-assert(avatarRoot.CFrame==avatarStart,'F5 cancel did not restore position')
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
-TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-local secondTrip=avatarRoot.CFrame
-TEST_DRAIN()
-assert(avatarRoot.CFrame==secondTrip,'stale release returned a newer test trip')
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-assert(avatarRoot.CFrame==avatarStart)
-workspace.Raycast=function()return nil end
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
-assert(avatarRoot.CFrame==avatarStart,'missing floor moved the character')
-workspace.Raycast=function(_,origin)return {Instance=ground,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
-w.Sit=true TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)w.Sit=false
-assert(avatarRoot.CFrame==avatarStart,'seated character was moved')
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F5},false)
+local function grab() TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)end
+local function release() TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})end
+grab()TICK(.05)
+assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'automatic approach did not move avatar')
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'grab stopped camera rotation')
+local previousCamera=camera.CFrame
+TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Delta=Vector3.new(25,0,0)})TICK(.05)
+assert(camera.CFrame.LookVector.X~=previousCamera.LookVector.X,'look frozen while grabbing')
+release()grab()local heldAgain=avatarRoot.CFrame TEST_DRAIN()
+assert(avatarRoot.CFrame==heldAgain,'quick re-grab was cancelled by old release')
+release()TEST_DRAIN()TICK(.05)
+assert(avatarRoot.CFrame==avatarStart,'release did not restore avatar')
+grab()release()
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
-assert(avatarRoot.CFrame==avatarStart,'Freecam disable did not restore test position')
+assert(avatarRoot.CFrame==avatarStart,'disable failed to restore avatar')
 TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
+grab()local nextTrip=avatarRoot.CFrame TEST_DRAIN()
+assert(avatarRoot.CFrame==nextTrip,'stale release returned newer trip')
+release()TEST_DRAIN()
+workspace.Raycast=function()return nil end
+grab()assert(avatarRoot.CFrame==avatarStart,'no target moved avatar')
+workspace.Raycast=function(_,origin,direction)return {Instance=direction.Y==-88 and ground or TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
+w.Sit=true grab()w.Sit=false
+assert(avatarRoot.CFrame==avatarStart,'seated character moved')
+TEST_GRAB_TARGET.Anchored=true grab()
+assert(avatarRoot.CFrame==avatarStart,'anchored scenery moved avatar')
+TEST_GRAB_TARGET:Destroy()
 workspace.Raycast=previousRay ground:Destroy()
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
 assert(not hud.Visible)
@@ -291,7 +290,7 @@ for i=1,4 do
  assert(w.WalkSpeed==16 and camera.CameraType==oldType,'F4 failed to restore camera/movement')
 end
 TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
-TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F3},false)TICK(.05)
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})TICK(.05)
 FIND('CloseFreecam',hud).MouseButton1Click:Fire()
 assert(not TEST_OPTIONS.freeCameraEnabled.Value and not hud.Visible and not TEST_SERVICES.ContextActionService.bound)
 assert(w.WalkSpeed==16 and w.JumpPower==50 and w.JumpHeight==7 and w.AutoRotate and camera.CameraType==Enum.CameraType.Custom)
