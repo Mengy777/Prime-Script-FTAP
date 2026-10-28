@@ -2,7 +2,7 @@
 return function(c)
     local lib,make,listen=c.Library,c.Make,c.Listen
     local pages={
-        View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
+        View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS","Experimental"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Objects","Tools"},
         FTAP={"Grab line","Crosshair","Blackholes","Audio"},Settings={"General","Profiles"},
     }
@@ -10,7 +10,7 @@ return function(c)
     local routes={
         Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},["Cinematic camera"]={"Camera","Camera tools",2}},
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
-        Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
+        Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1},["Experimental light"]={"Experimental","Bounce lighting",1},["Experimental shafts"]={"Experimental","Sunlight shafts",2}},
         Particles={Particles={"Weather","Particles",1},Snowfall={"Weather","Snowfall",2}},
         World={Water={"Water & FPS","Water",1},["Ocean appearance"]={"Water & FPS","Water",1},Performance={"Water & FPS","Performance",2}},
         Character={

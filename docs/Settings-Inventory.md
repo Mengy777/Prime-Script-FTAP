@@ -1,6 +1,6 @@
-# Инвентарь настроек Prime Visuals 2.3.1
+# Инвентарь настроек Prime Visuals 2.3.2
 
-Снимок 2026-10-28: все **339 сохраняемых настроек** извлечены из настоящего реестра основного файла в симуляции. Это контроль полноты, не подтверждение работы в Roblox. Личные конфиги не читались. Статусы проверки: [Testing-Checklist.md](Testing-Checklist.md). В 2.3.1 добавлено 38 ключей редактора освещения; старые ключи сохранены.
+Снимок 2026-10-28: **353 сохраняемые настройки** извлечены из настоящего реестра в симуляции. Это контроль полноты, не подтверждение рендеринга Roblox. Личные конфиги не читались. Статусы: [Testing-Checklist.md](Testing-Checklist.md). В 2.3.2 добавлены 14 параметров экспериментальной графики; старые ключи сохранены.
 
 | Ключ | Подпись контрола |
 | --- | --- |
@@ -185,6 +185,12 @@
 | `freeCameraSpeed` | Speed |
 | `fullbrightEnabled` | Fullbright |
 | `geometryDistance` | Maximum distance |
+| `giDistance` | Sample distance |
+| `giEnabled` | Bounce lighting |
+| `giLocalLights` | Sample local lights |
+| `giQuality` | Quality |
+| `giRange` | Light radius |
+| `giStrength` | Strength |
 | `grabInfo` | Grabbed object info |
 | `hatAlpha` | Transparency |
 | `hatColor` | — |
@@ -299,6 +305,14 @@
 | `serverGhostColor` | — |
 | `serverGhostColorRainbow` | Rainbow: Color |
 | `serverGhostEnabled` | My delayed position |
+| `shaftColor` | — |
+| `shaftColorRainbow` | Rainbow: Color |
+| `shaftCount` | Shaft count |
+| `shaftEnabled` | Sunlight shafts |
+| `shaftLength` | Shaft length |
+| `shaftOpacity` | Shaft opacity |
+| `shaftRadius` | Shaft radius |
+| `shaftWidth` | Shaft width |
 | `skeletonColor` | — |
 | `skeletonColorRainbow` | Rainbow: Color |
 | `skeletonEnabled` | Skeleton ESP |

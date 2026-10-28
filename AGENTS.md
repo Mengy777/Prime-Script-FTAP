@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.3.1**, tag `v2.3.1`. Next normal runtime version: **2.3.2**. Consult Git for the release commit.
+- Published runtime target: **2.3.2**, tag `v2.3.2`. Next normal runtime version: **2.3.3**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -99,7 +99,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 
 ### Anti-Kick 2.1.8 / 2.1.9
 
-- Default-on `antiKickEnabled` is persisted; currently **339 settings** overall (Smooth camera removed in 2.2.1).
+- Default-on `antiKickEnabled` is persisted; currently **353 settings** overall (Smooth camera removed in 2.2.1).
 - Own NinjaShuriken attaches to own HumanoidRootPart.RagdollTouchedHitbox. Require PartOwner and StickyWeld.Part1 confirmation, own-toy cleanup, retry backoff, death recovery and foreign-plot pause.
 - 2.1.9 hides all its BaseParts with LocalTransparencyModifier=1 and Decal/Texture with transparency; retain physical attachment. Do not delete the object just to hide it.
 - Attached means confirmed weld, not universal immunity. No Kick hook, anti-cheat concealment or ban reversal. Dispatched InvokeServer cannot be cancelled client-side.
@@ -168,7 +168,7 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 ## Mandatory acceptance ledger
 
 - Maintain docs/Testing-Checklist.md for every new/improved runtime feature and its parameters, stable IDs, version, user acceptance or pending/bug/rework/retest/removed status. Add new rows on release and record concrete user feedback after tests. Do not infer acceptance from silence or from simulations. Keep previous approval when changed behavior needs retesting.
-- docs/Settings-Inventory.md is a generated 339-key snapshot at 2.3.1, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
+- docs/Settings-Inventory.md is a generated 353-key snapshot at 2.3.2, from the actual registered autosave payload in a mock run. It guards against omitted small settings, not proof of engine behavior. Regenerate when registry keys change.
 - Current next pending items: Graphics new presets/Fullbright/snow/ocean appearance. Camera and the sky collection have separate user approvals; other Sky controls retain only their own historical acceptance. Older approvals do not close newly added knobs, animations or ESP systems.
 
 ## Sky collection checkpoint — 2.3.0
@@ -214,3 +214,11 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Downloaded/decoded NaNo.rbxm outside repo into development work/shader-audit, read 10 source fields without executing them. Photon genuinely raycasts and adds colored PointLights; volumetrics use layered Beams. Source has duplicated light-creation branches, lightLimit10000, serial wait0.1 and weak checks; not a drop-in module. No permissive repository license was returned; no foreign implementation copied into runtime.
 - Also read actual Pixel Shader source (GUI-grid renderer), CPU Path Tracer Controller/worker (Actors + EditableImage, author low-resolution benchmark), Radiosity Rendering/Canvas (baked lightmaps). Lumen repository has description/license only, no implementation. Do not claim live FTAP results.
 - Best next proposal is an optional, bounded, reversible dynamic bounce-light approximation integrated with current lighting editor. This is a research recommendation, not implemented or authorized as the next runtime change yet. Do not promise RTX/native renderer replacement or texture detail enhancement from grading alone.
+
+## Experimental graphics — 2.3.2
+
+- User explicitly authorized experimental graphics implementation after research. Added original lib/ExperimentalGraphics.lua with two default-off masters giEnabled/shaftEnabled under new Graphics Experimental subpage. No foreign code copied/executed. No GPU shader/RTX/texture-resolution claim.
+- GI: fixed quality budgets Low12/2 samples/.16s, Balanced24/4/.12s, High40/6/.10s, Ultra64/8/.09s. Native non-shadow PointLights, six-stud cell dedup/pool reuse, sunlight occlusion/incidence and bounded nearest local-light sampling, Neon approximation, 3ms CPU sampling check, fade/age/distance/moved-source removal. Local-light cache at most128, nearest16 examined and at most2 extra occlusion rays/sample. Scene Lighting/material properties untouched.
+- Shafts: 4–24 face-camera Beams, golden-angle offsets around camera, sun direction and geometry-limited length; remove at night (sun.Y<=.08). Parameters length/radius/width/opacity/count/color/rainbow. They are artificial rays, not physical participating media or shadow maps.
+- Lifecycle: shared protected named jobs; descendants light cache only when enabled, own root/parts, child light/attachments/beam owned by parent (not separately retained in main owned map), no physics/query collisions. Recover deleted root and clean on disable/unload; main teardown calls Destroy. Settings persist, old configs default effects off. Registry353 keys (+14), inventory/checklist updated.
+- Tests: experimental_graphics.py checks no rays while off, per-tick budgets/pool caps, sun/occlusion/local lights, no animation config writes, beam counts/night cleanup, root recovery, no scene-brightness edits, profile restore and unload. Compiler/runtime fixture include new module. Actual FTAP visibility/GPU cost unknown; XG-01…XG-08 await user testing. Prior View/Graphics(2.3.1) approvals remain historical; other acceptance tests stay deferred.
