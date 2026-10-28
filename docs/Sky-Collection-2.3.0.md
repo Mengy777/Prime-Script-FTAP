@@ -16,3 +16,7 @@ Public model delivery returned 401 without authentication. No credentials were r
 The collection contains 20 distinct entries: 17 static sets and 3 model references. Old selection names map to new names during validated profile decoding; named slots and imports use the same path. Old resolved sky payloads retain the user's prior actual appearance until explicitly applying a new selection. No unrelated camera/UI or effect behavior changed.
 
 Verification: Luau compilation and simulated real handlers exercise exact model IDs, six-face extraction, disposal, cache, inaccessible model retention, profile-restored resolved faces, four old-name migrations and 16 retained sky hashes. Live rendering/accessibility and aesthetic acceptance of all four replacements await the user.
+
+## User acceptance — 2026-10-28
+
+The user explicitly accepted all four replacements after receiving the live-test list (faces/appearance/reset). Sky and the complete View category are now user-approved on 2.3.0. The pending verification statements above describe the release-time state; this is subsequent user-reported acceptance, not an assistant-observed Roblox test.
