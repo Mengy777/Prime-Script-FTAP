@@ -225,8 +225,9 @@ assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
 TEST_SERVICES.UserInputService.WindowFocused:Fire()TICK(.1)
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
 menu.Visible=true assert(not menu.Visible,'game menu reopened during flight')
+local shell=Instance.new('ScreenGui')shell.Name='ToyMenuGui'shell.Enabled=false shell.Parent=ME:FindFirstChild('PlayerGui')
 local frozen=camera.CFrame.Position
-TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})menu.Visible=true TICK(.1)
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})menu.Visible=true shell.Enabled=true TICK(.1)
 assert(hud.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default)
 menu.Visible=true assert(menu.Visible,'manual toy menu blocked in interaction mode')
 assert(TEST_SERVICES.ContextActionService.bound()==Enum.ContextActionResult.Pass)
@@ -236,7 +237,7 @@ local beforeSpeed=TEST_OPTIONS.freeCameraSpeed.Value
 TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseWheel,Position=Vector3.new(0,0,1)})
 assert(TEST_OPTIONS.freeCameraSpeed.Value==beforeSpeed,'menu scrolling changed freecam speed')
 TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})menu.Visible=false TICK(.1)
-assert(not menu.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
+assert(not menu.Visible and TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'persistent enabled GUI shell froze flight')
 for cycle=1,10 do
  TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})
  menu.Visible=true TICK(.05)
@@ -245,6 +246,13 @@ for cycle=1,10 do
  menu.Visible=false TICK(.05)
  assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'native close left flight frozen')
 end
+-- Native menus can close by tweening offscreen while Visible remains true.
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})
+menu.Visible=true TICK(.05)
+local priorPosition=menu.Position local priorViewport=camera.ViewportSize
+camera.ViewportSize=Vector2.new(1280,720)menu.Position=UDim2.fromOffset(2000,0)TICK(.05)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'offscreen menu left flight paused')
+menu.Visible=false menu.Position=priorPosition camera.ViewportSize=priorViewport
 -- Rejected/processed native menu action must not create a phantom interaction mode.
 TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.E})TICK(.05)
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter)
@@ -266,6 +274,10 @@ local function release() TEST_SERVICES.UserInputService.InputEnded:Fire({UserInp
 grab()TICK(.05)
 assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'automatic approach did not move avatar')
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'grab stopped camera rotation')
+local hitPoint=Vector3.new(camera.CFrame.Position.X,0,camera.CFrame.Position.Z)
+local offset=avatarRoot.CFrame.Position-hitPoint
+local sideways=Vector3.new(-camera.CFrame.LookVector.Z,0,camera.CFrame.LookVector.X).Unit
+assert(math.abs(offset.X*sideways.X+offset.Z*sideways.Z)>=5.99,'avatar still overlaps the viewing ray')
 local previousCamera=camera.CFrame
 TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Delta=Vector3.new(25,0,0)})TICK(.05)
 assert(camera.CFrame.LookVector.X~=previousCamera.LookVector.X,'look frozen while grabbing')
@@ -299,7 +311,7 @@ workspace.Raycast=previousRay ground:Destroy()
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
 assert(not hud.Visible)
 menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')
-cameraHook:Disconnect()gameUI:Destroy()
+cameraHook:Disconnect()gameUI:Destroy()shell:Destroy()
 for i=1,4 do
  TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
  TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F4},false)

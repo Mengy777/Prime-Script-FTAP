@@ -2,6 +2,12 @@
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.
 
+## 2.2.7 — Freecam pause and target clearance · 2026-10-28
+
+- Persistent Enabled ScreenGui shells no longer count as open toy panels. E-close explicitly clears the interaction request; native panel close also clears it. Zero-sized/offscreen panels and hidden ancestors do not hold the flight pause.
+- Avatar approach adds at least 6 studs of horizontal clearance perpendicular to the camera view, in addition to surface clearance, keeping the avatar away from the original target ray. Immediate release return is preserved.
+- Added simulations for persistent enabled GUI shells, repeated E/native closes, offscreen tweened panels and lateral target-ray clearance. Live FTAP behavior still requires confirmation.
+
 ## 2.2.6 — Freecam menu synchronization and immediate return · 2026-10-28
 
 - E now passes to the native game handler. The first explicit E releases the activation-only panel guard; cursor/flight state follows actual tracked menu visibility, including close-after-spawn, rather than a second alternating toggle.

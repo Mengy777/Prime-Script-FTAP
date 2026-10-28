@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.2.6**, tag `v2.2.6`. Next normal runtime version: **2.2.7**. Consult Git for the release commit.
+- Published runtime target: **2.2.7**, tag `v2.2.7`. Next normal runtime version: **2.2.8**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -150,3 +150,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 2.2.5 supersedes F3/F5: E toggles menu/cursor mode directly; LMB raycasts a movable target and attempts visible own-avatar approach near it without pausing camera look/flight. Release returns after 0.2s; token guards handle repeated clicks. User confirmed 2.2.4 approximately works; 2.2.5 native click ordering remains to test.
 
 - 2.2.6 supersedes 2.2.5 input logic: first explicit E releases activation panel guard, then menu visibility determines flight/cursor pause. Native E toggles are never synthesized. High-priority primary-click approach passes through, accepts anchored/Terrain hits, offsets from the hit normal without requiring ground below; release/focus loss returns immediately. Native acceptance remains unverified.
+
+- 2.2.7 corrects persistent menu pause: Enabled ScreenGui shells are guard-only, not visible panels; E-close clears the request, native close/offscreen/hidden panels resume flight. Approach adds >=6 studs sideways perpendicular to the view ray. User confirmed real avatar movement in 2.2.6, but reported stuck flight and avatar target occlusion; these two fixes await live verification.

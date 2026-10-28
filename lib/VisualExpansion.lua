@@ -832,26 +832,35 @@ return function(c)
     end
     local returnApproach
     local function releaseToyMenus()
+        free.menuRequested=not free.interacting
+        if not free.menuRequested then free.interacting=false free.look=Vector2.zero free.velocity=Vector3.zero end
         if free.menuReleased then return end
         free.menuReleased=true
         unpatch("freeToyMenu")
     end
     local function syncToyMenu()
         local opened=false
-        if free.menuReleased then
+        if free.menuReleased and free.menuRequested then
             for object,entry in pairs(free.menus) do
-                if object.Parent and object[entry.property] then
+                -- Enabled ScreenGui shells often remain on after their panel closes.
+                -- They are activation guards, never proof that a menu is still open.
+                if object.Parent and object:IsA("GuiObject") and object[entry.property] then
                     local visible=true local ancestor=object.Parent
                     while ancestor and ancestor~=c.PlayerGui do
                         if (ancestor:IsA("GuiObject") and not ancestor.Visible) or (ancestor:IsA("ScreenGui") and not ancestor.Enabled) then visible=false break end
                         ancestor=ancestor.Parent
                     end
+                    local size=object.AbsoluteSize local position=object.AbsolutePosition
+                    local camera=W.CurrentCamera local viewport=camera and camera.ViewportSize
+                    if size and (size.X<=0 or size.Y<=0) then visible=false end
+                    if position and size and viewport and (position.X+size.X<=0 or position.Y+size.Y<=0 or position.X>=viewport.X or position.Y>=viewport.Y) then visible=false end
                     if visible then opened=true break end
                 end
             end
         end
         if opened~=free.interacting then
             free.interacting=opened free.look=Vector2.zero free.velocity=Vector3.zero
+            if not opened then free.menuRequested=false end
         end
     end
     returnApproach=function()
@@ -879,7 +888,13 @@ return function(c)
         if not hit or not hit.Instance or not (hit.Instance:IsA("BasePart") or hit.Instance:IsA("Terrain")) then return end
         local height=math.max(3,(h.HipHeight or 0)+(r.Size and r.Size.Y or 2)/2+1)
         local normal=hit.Normal or Vector3.new(0,1,0)
-        local position=hit.Position+normal*height
+        -- Step sideways relative to the viewing ray, rather than onto that ray.
+        -- A face normal alone can put the whole avatar between camera and target.
+        local look=camera.CFrame.LookVector
+        local side=Vector3.new(-look.Z,0,look.X)
+        side=side.Magnitude>.001 and side.Unit or Vector3.new(1,0,0)
+        local clearance=math.max(6,(r.Size and r.Size.X or 2)/2+4)
+        local position=hit.Position+side*clearance+normal*height
         for _,n in ipairs({position.X,position.Y,position.Z}) do
             assert(n==n and math.abs(n)<1000000,translated("Invalid test position"))
         end
@@ -923,7 +938,7 @@ return function(c)
         if not v.freeCameraEnabled then endFree() return end
         if free.active then return end
         local camera=W.CurrentCamera if not camera then return end
-        free.active=true free.focused=true free.interacting=false free.menuReleased=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
+        free.active=true free.focused=true free.interacting=false free.menuReleased=false free.menuRequested=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
         free.position=camera.CFrame.Position free.velocity=Vector3.zero free.look=Vector2.new(0,0)
         free.pitch,free.yaw=camera.CFrame:ToEulerAnglesYXZ()
         unpatch("body") visibleFreeBody() suppressToyMenus()
