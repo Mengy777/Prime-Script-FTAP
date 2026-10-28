@@ -11,3 +11,7 @@ Rendering references: [SunRaysEffect](https://create.roblox.com/docs/reference/e
 Validation executes actual main/module code under mocked Roblox APIs: three-scene field/effect comparisons, source independence, boolean false handling, original atmosphere/posteffect restoration, disabling advanced groups, recovery after deletion without config writes, all 339 keys, cold startup and legacy profiles. Luau compiler plus navigation/native-click/startup/long-session/camera/profile/sky regressions also passed. This proves code-level behavior only; actual rendering and panel usability still require user confirmation. The checklist LIT-01…LIT-13 is pending.
 
 Remove haze temporarily overrides manual Atmosphere/fog. Disabled/detached owned atmospheres are removed from its hidden-instance list before disposal, avoiding later resurrection of destroyed objects. Turning haze removal off reapplies active manual settings immediately. Numeric values copied from the game are clamped to the registered editor ranges before staging. The simulation covers atmosphere/haze toggles and restoration.
+
+## User acceptance — 2026-10-28
+
+After receiving the release test list, the user explicitly approved the entire Lighting subpage, including the new editor. LIT-01…LIT-13 are accepted by this section-level user report; no individual engine observations are invented. Earlier pending statements describe pre-acceptance release status. Other Graphics subpages remain separate.

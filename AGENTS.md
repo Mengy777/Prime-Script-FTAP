@@ -199,3 +199,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Prior approval of original presets remains; new manual editor and compatibility require live retest via LIT-01…LIT-13. Next pending: this editor, then Weather snow and ocean appearance. No changes to accepted Freecam.
 
 - Editor respects Remove haze: suppress manual Air while haze flag is active, retain extended fog, immediately resume on haze-off. Disposal removes owned atmospheres from hiddenAtmospheres first. Keep this coordination to avoid recreating hidden atmosphere or reparenting destroyed instances. Covered by lighting_editor.py; needs user interaction check LIT-13.
+
+- Latest acceptance 2026-10-28: user explicitly approved the entire Lighting subpage at 2.3.1, including the new preset editor/advanced manual controls, after the release test list. Mark GFX-01…GFX-05 and LIT-01…LIT-13 accepted by section-level user approval; do not invent per-slider observations. This supersedes pending-editor notes above. Next untested: Graphics → Weather new snowfall GFX-06/GFX-07; then ocean appearance GFX-08/GFX-09. Runtime unchanged (documentation-only acceptance).
