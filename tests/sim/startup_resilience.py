@@ -164,8 +164,3 @@ lu,s=setup();lu.execute("TEST_FAULT('LightingEditor','offline')")
 lu.execute(s)
 lu.execute("assert(TEST_MODULE_CALLS.LightingEditor==3 and #TEST_STARTUP_MESSAGES==1); TEST_NO_LEAKS()")
 print('PASS advanced lighting module HTTP failure cleans partial startup without changing the game')
-
-lu,s=setup();lu.execute("TEST_FAULT('ExperimentalGraphics','offline')")
-lu.execute(s)
-lu.execute("assert(TEST_MODULE_CALLS.ExperimentalGraphics==3 and #TEST_STARTUP_MESSAGES==1); TEST_NO_LEAKS()")
-print('PASS experimental graphics module failure cleans partial startup')

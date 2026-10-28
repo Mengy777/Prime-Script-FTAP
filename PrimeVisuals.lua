@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.2"
+local VERSION="2.3.3"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -748,7 +748,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,experimentalGraphics
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -764,7 +764,6 @@ local function buildVisualSystems()
         if antiKick then attempt("anti-kick",function() antiKick:Destroy() end) end
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
         if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
-        if experimentalGraphics then attempt("experimental graphics",function() experimentalGraphics:Destroy() end) end
         if navigation then attempt("navigation",function() navigation:Destroy() end) end
         if restoreWater then attempt("water",restoreWater) end
         for o,properties in pairs(patches) do
@@ -1323,12 +1322,6 @@ local function buildVisualSystems()
         end,
         Create=function(class,props,parent) return own(make(class,props,parent)) end,
         ApplySky=applySkyData,
-    })
-    experimentalGraphics=loadUIModule("ExperimentalGraphics")({
-        Workspace=Workspace,Lighting=Lighting,Run=Run,Players=Players,Controls=controls,ColorOwners=colorOwners,Translations=ru,
-        Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Choice=choice,Panel=featureSettings,Job=job,FeatureTips=featureTips,
-        Create=function(class,props,parent) return own(make(class,props,parent)) end,
-        Make=make,Dispose=dispose,
     })
     maintenance.Sky=function()
         if activeSky and skyRecoveryData and not (controls.visualPresetEnabled and controls.visualPreset=="Tokyowami") then
@@ -2540,7 +2533,7 @@ local function buildVisualSystems()
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
-            "giEnabled","shaftEnabled","waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
+            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
             "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled","animationEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}

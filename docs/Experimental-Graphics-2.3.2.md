@@ -1,3 +1,7 @@
+# Archived — removed in 2.3.3 at user request
+
+This document is historical. The module, both effects, settings and navigation were deleted; the implementation described below is no longer present or pending testing.
+
 # Experimental graphics 2.3.2
 
 This is an original implementation of two native client effects inspired by the concepts reviewed in Graphics-Research.md. It does not copy NaNo/Photon code, load foreign scripts, replace Roblox shaders, or claim RTX/native SSR. It changes spatial illumination using additional PointLights and draws Beam shafts; existing color/fog controls remain independent.
