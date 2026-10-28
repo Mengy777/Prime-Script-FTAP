@@ -2,6 +2,13 @@
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.
 
+## 2.2.6 — Freecam menu synchronization and immediate return · 2026-10-28
+
+- E now passes to the native game handler. The first explicit E releases the activation-only panel guard; cursor/flight state follows actual tracked menu visibility, including close-after-spawn, rather than a second alternating toggle.
+- Primary-click approach runs in a high-priority ContextActionService callback before ordinary input listeners and passes the click onward. Raycast accepts players/body parts, moving props, anchored parts and Terrain. Destination is offset from the hit surface; no separate ground-under-target requirement.
+- Mouse release returns the same living avatar immediately, without the previous 0.2-second delay. Focus loss, disable and unload also restore position. Freecam rotation/flight remain available while holding.
+- This is client-side visible avatar movement, not a guarantee of server acceptance. No live Roblox test was performed. Real Luau compilation and simulations cover repeated menu cycles, native close, ignored E, immediate release, repeat clicks, anchored targets and focus-loss return.
+
 ## 2.2.5 — Freecam interaction controls · 2026-10-28
 
 - Removed F3/F5 preparation. E switches native toy-menu/cursor access and flight; F4 exits in either mode.

@@ -806,7 +806,6 @@ return function(c)
     local toyMenus={toymenu=true,toysmenu=true,toymenugui=true,toysmenugui=true,spawntoymenu=true,
         spawnmenu=true,toyselection=true,toyselect=true,toyspawner=true,toyinventory=true,spawntoygui=true,spawnmenugui=true}
     local function hideToyMenu(object)
-        if free.interacting then return end
         if c.IsOwnUI and c.IsOwnUI(object) then return end
         if screen and (object==screen or object:IsDescendantOf(screen)) then return end
         local name=object.Name:lower():gsub("[%s_%-]","")
@@ -822,30 +821,40 @@ return function(c)
         if known or closed then
             if not free.menus[object] then
                 free.menus[object]={property=property,connection=connect(object:GetPropertyChangedSignal(property),function()
-                    if free.active and not free.interacting and object[property] then patch("freeToyMenu",object,property,false) end
+                    if free.active and not free.menuReleased and object[property] then patch("freeToyMenu",object,property,false) end
                 end)}
             end
-            patch("freeToyMenu",object,property,false)
+            if not free.menuReleased then patch("freeToyMenu",object,property,false) end
         end
     end
     local function suppressToyMenus()
         for _,object in ipairs(c.PlayerGui:GetDescendants()) do hideToyMenu(object) end
     end
     local returnApproach
-    local function toggleFreeInteraction()
-        if free.approach then returnApproach(false) end
-        if not free.active then return end
-        free.interacting=not free.interacting free.look=Vector2.new(0,0) free.velocity=Vector3.zero
-        if free.interacting then
-            unpatch("freeToyMenu") I.MouseBehavior=Enum.MouseBehavior.Default
-        else
+    local function releaseToyMenus()
+        if free.menuReleased then return end
+        free.menuReleased=true
+        unpatch("freeToyMenu")
+    end
+    local function syncToyMenu()
+        local opened=false
+        if free.menuReleased then
             for object,entry in pairs(free.menus) do
-                if object.Parent then patch("freeToyMenu",object,entry.property,false) end
+                if object.Parent and object[entry.property] then
+                    local visible=true local ancestor=object.Parent
+                    while ancestor and ancestor~=c.PlayerGui do
+                        if (ancestor:IsA("GuiObject") and not ancestor.Visible) or (ancestor:IsA("ScreenGui") and not ancestor.Enabled) then visible=false break end
+                        ancestor=ancestor.Parent
+                    end
+                    if visible then opened=true break end
+                end
             end
-            suppressToyMenus()
+        end
+        if opened~=free.interacting then
+            free.interacting=opened free.look=Vector2.zero free.velocity=Vector3.zero
         end
     end
-    returnApproach=function(resumeFlight)
+    returnApproach=function()
         local saved=free.approach
         if not saved then return end
         free.approach=nil
@@ -854,11 +863,10 @@ return function(c)
             saved.root.CFrame=saved.cframe
             saved.root.AssemblyLinearVelocity=Vector3.zero saved.root.AssemblyAngularVelocity=Vector3.zero
         end
-        if resumeFlight and free.active and free.interacting then toggleFreeInteraction() end
     end
     local function beginApproach()
         if not free.active then return end
-        if free.approach then free.approach.pressed=true free.approach.releaseToken=nil return end
+        if free.approach then free.approach.pressed=true return end
         local character=me.Character local r=root(me) local h=humanoid(me)
         assert(character and r and h and h.Health>0,translated("Character is not ready"))
         assert(not r.Anchored and not h.SeatPart and not h.Sit,translated("Leave the seat before this test"))
@@ -868,14 +876,10 @@ return function(c)
         local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
         params.FilterDescendantsInstances=world and {character,world} or {character}
         local hit=W:Raycast(camera.CFrame.Position,camera.CFrame.LookVector*5000,params)
-        if not hit or not hit.Instance or not hit.Instance:IsA("BasePart") or hit.Instance.Anchored then return end
-        local floor=W:Raycast(hit.Position+Vector3.new(0,8,0),Vector3.new(0,-88,0),params)
-        assert(floor and floor.Instance and floor.Normal and floor.Normal.Y>=.5,
-            translated("Lower Freecam above solid ground first"))
-        assert(floor.Instance:IsA("Terrain") or (floor.Instance:IsA("BasePart") and floor.Instance.Anchored),
-            translated("Choose solid ground, not a moving prop"))
+        if not hit or not hit.Instance or not (hit.Instance:IsA("BasePart") or hit.Instance:IsA("Terrain")) then return end
         local height=math.max(3,(h.HipHeight or 0)+(r.Size and r.Size.Y or 2)/2+1)
-        local position=floor.Position+Vector3.new(0,height,0)
+        local normal=hit.Normal or Vector3.new(0,1,0)
+        local position=hit.Position+normal*height
         for _,n in ipairs({position.X,position.Y,position.Z}) do
             assert(n==n and math.abs(n)<1000000,translated("Invalid test position"))
         end
@@ -919,36 +923,35 @@ return function(c)
         if not v.freeCameraEnabled then endFree() return end
         if free.active then return end
         local camera=W.CurrentCamera if not camera then return end
-        free.active=true free.focused=true free.interacting=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
+        free.active=true free.focused=true free.interacting=false free.menuReleased=false free.mouseBehavior=I.MouseBehavior free.mouseIcon=I.MouseIconEnabled
         free.position=camera.CFrame.Position free.velocity=Vector3.zero free.look=Vector2.new(0,0)
         free.pitch,free.yaw=camera.CFrame:ToEulerAnglesYXZ()
         unpatch("body") visibleFreeBody() suppressToyMenus()
         job("Freecam toy UI",c.PlayerGui.DescendantAdded,hideToyMenu)
         game:GetService("ContextActionService"):BindActionAtPriority("PrimeVisualsFreecam",function(_,state,input)
             if input and input.KeyCode==Enum.KeyCode.E then
-                if state==Enum.UserInputState.Begin and not c.MenuOpen() and not I:GetFocusedTextBox() then toggleFreeInteraction() end
+                if state==Enum.UserInputState.Begin and not c.MenuOpen() and not I:GetFocusedTextBox() then releaseToyMenus() end
+                return Enum.ContextActionResult.Pass
+            end
+            if input and input.UserInputType==Enum.UserInputType.MouseButton1 then
+                if state==Enum.UserInputState.Begin and free.focused and not free.interacting and not c.MenuOpen() and not I:GetFocusedTextBox() then tryApproach() end
                 return Enum.ContextActionResult.Pass
             end
             if free.interacting or c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
-        end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space)
+        end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space,Enum.UserInputType.MouseButton1)
         job("Freecam interaction",I.InputBegan,function(input,processed)
             if processed or I:GetFocusedTextBox() then return end
             if input.KeyCode==Enum.KeyCode.F4 then c.Setters.freeCameraEnabled(false,true) return end
-            if c.MenuOpen() or free.interacting or not free.focused then return end
-            if input.UserInputType==Enum.UserInputType.MouseButton1 then tryApproach() end
         end)
         job("Freecam release",I.InputEnded,function(input)
             local saved=free.approach
             if saved and saved.pressed and input.UserInputType==Enum.UserInputType.MouseButton1 then
                 saved.pressed=false
-                local token={} saved.releaseToken=token
-                task.delay(.2,function()
-                    if not dead and free.active and free.approach==saved and saved.releaseToken==token and not saved.pressed then returnApproach(true) end
-                end)
+                returnApproach(false)
             end
         end)
-        job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
+        job("Freecam focus lost",I.WindowFocusReleased,function() returnApproach(false) free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
         job("Freecam input",I.InputChanged,function(input)
             if free.interacting or not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end
@@ -980,7 +983,7 @@ return function(c)
                 free.humanoids[h]=true
             end
             for old in pairs(free.humanoids) do if old~=h then unpatch("freeCamera",old) free.humanoids[old]=nil end end
-            visibleFreeBody()
+            visibleFreeBody() syncToyMenu()
             local menuPaused=not free.focused or c.MenuOpen() or I:GetFocusedTextBox()~=nil
             local paused=free.interacting or menuPaused
             if not paused then
@@ -1000,7 +1003,8 @@ return function(c)
             if paused then free.velocity=Vector3.zero end
             updateHUD(speed,menuPaused)
             free.velocity=free.velocity:Lerp(velocity,1-math.exp(-12*math.min(dt,0.1))) free.position=free.position+free.velocity*math.min(dt,0.1)
-            camera.CameraType=Enum.CameraType.Scriptable camera.CFrame=CFrame.new(free.position)*rotation camera.Focus=camera.CFrame*CFrame.new(0,0,-16)
+            if camera.CameraType~=Enum.CameraType.Scriptable then camera.CameraType=Enum.CameraType.Scriptable end
+            camera.CFrame=CFrame.new(free.position)*rotation camera.Focus=camera.CFrame*CFrame.new(0,0,-16)
             return
         end
         if free.active then endFree() end

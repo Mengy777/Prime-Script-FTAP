@@ -33,3 +33,9 @@ Native server acceptance and actual grab behavior cannot be proven by mocked phy
 ## 2.2.5 — direct controls (supersedes F3/F5)
 
 E now releases panel suppression/cursor for native toy selection; E again restores flight. F4 exits either mode. LMB in flight raycasts from the camera, excludes own character/visual objects, requires a movable BasePart, then uses the existing grounded approach near the hit position. This is a pre-interaction attempt triggered by the click, not confirmation that the game has grabbed anything. Native handler order and replication may require another click or reject the action; simulations cannot establish acceptance. Camera look and flight remain active during approach. Release returns the same living character with delay and per-release token guards. Anchored scenery, invalid surfaces, seats/ragdoll and oversized destinations remain excluded. There are no server changes or invisibility guarantees.
+
+## 2.2.6 — visibility-driven menus and immediate release
+
+The first E only releases the activation guard; subsequent presses pass untouched to native game code. The cursor/flight pause follows actual visibility of tracked panels and their GUI ancestors, so selecting a toy or closing by a native button does not leave a phantom toggle. This is an inspected hierarchy heuristic, still requiring live verification against FTAP.
+
+A high-priority CAS primary-button callback performs the approach attempt before normal input listeners and returns Pass. Raycast hits can be character parts, props, anchored surfaces or Terrain. The avatar is placed one body-clearance distance along the hit normal. The former anchored-target exclusion and second floor ray are removed. Release and window focus loss return immediately, retaining same-avatar/alive checks. No deferred release callbacks remain. The ordinary game handler and server can still decline the action; local input order is not proof of replication/server acceptance.
