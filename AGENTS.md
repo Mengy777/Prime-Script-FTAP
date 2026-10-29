@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.3.4**, tag `v2.3.4`. Next normal runtime version: **2.3.5**. Consult Git for the release commit.
+- Published runtime target: **2.3.5**, tag `v2.3.5`. Next normal runtime version: **2.3.6**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -234,3 +234,18 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 2.3.4: user requested removing Character animations pending future Vortex work. Removed runtime playback, UI route/card,46 definitions and3 registry keys (336 remain). Old profiles ignore those keys. No Vortex change. Prime Visuals intended scope is local-only visuals; do not restore replicated character animations. CHR-01…08 approved; CHR-09/ANI rows removed, not approved.
 
 - Acceptance 2026-10-29: user explicitly accepted the entire current Character section on2.3.4. Treat as section-level user approval, without invented individual tests. Removed animations remain removed, not tested; deferred mannequin physics fidelity remains backlog. Next acceptance batch: new/improved ESP. Documentation only, no runtime bump.
+
+## UI redesign — 2.3.5, 2026-10-29
+
+- User requested stronger UI/UX: feature settings now independent draggable floats (header LMB/touch), above main controls, native overlay palettes/dropdowns remain above floats. Remembered positions use existing profile ui.panels; clamp to viewport after movement/resize/DPI. No forced main-window following or per-frame layout resize; watcher only checks owner visibility/state and DPI changes. Preserve outside-click/Escape/owner-hide dismissal and enabled-only access.
+- All top section bars redesigned as framed segmented controls with Lucide icons, animated shared selection, hover and unified spacing. Offset50 replaces42. Search/translation and setting keys preserved. Window entrance is one short UIScale tween, cancellable on toggle/unload; no artificial delay/loading screen. Main opts in via WindowEntranceEnabled; Vortex entry source unchanged. Main tab/group timings shortened.
+- Checked current ScriptBlox Resonanse open-source listing and actual remote source UI configuration without executing foreign code. No gameplay functions copied or changed. Runtime remains336 settings.
+- Luau compilation and simulations: actual native header drag, bounds1/1.5/2 DPI, independent position/reopen, child dropdown/outside/Escape/cleanup, profile coordinate cold restore, native controls/clicks, startup failure recovery, lighting editor. Real Roblox appearance/input needs user validation UI-06…UI-09; previous gameplay approvals stay accepted.
+
+## Expanded simulation request — 2026-10-29
+
+- User requested a complete stronger simulation and immediate notification/fixing of any discovered actual bug. Do not equate missing mock APIs with runtime bugs.
+- Added tests/run_simulations.py (isolated subprocess suite), controls_matrix.py (336 registry keys, toggles/dropdown entries/numeric endpoints/colors; strict unexpected warning/notice checks), server_model.py + server_integration.py. Server model uses independent Lua VMs/scenes/filesystems, canonical roster, deterministic latency/jitter, reliable ordered event delivery and connection epochs. This is explicitly not Roblox/FTAP server code/protocol/physics.
+- Strengthened mocks: empty Multi dropdown is{}, actual Mannequins/MannequinRagdoll modules loaded, ancestor lookup/Touched API; controls fixture supplies fromOrientation. Prior mock-only false alarms disappeared. Remaining expected matrix warnings: no local-image API (artwork fallback) and absent native CameraInput (RMB fallback), separately covered by emblems/third_person_pan.
+- Server integration tests include two-client local effect isolation, selected-player leave/rejoin, stale-session event rejection,25 delayed respawns plus beam removal/recreation, real mannequin/R6 modules for spawn/avatar replacement/limit/error retention, local grab/rotation-input/scroll/throw/focus-loss and cleanup. No real ragdoll trajectory, arbitrary uploaded-asset availability, server authority or anti-kick guarantee asserted.
+- Final simulation results in docs/Simulation-2.3.5.md; manual UI acceptance remains pending, gameplay acceptances retained. No runtime gameplay bug identified by these scenarios.

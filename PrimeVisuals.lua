@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.4"
+local VERSION="2.3.5"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -537,6 +537,9 @@ local Library=loadUIModule("Library")
 if type(Library)=="table" then startup.Library=Library end
 assert(type(Library)=="table" and type(Library.CreateWindow)=="function","Obsidian returned an invalid library")
 Library.ForceCheckbox=true
+Library.WindowEntranceEnabled=true
+Library.TabTransitionInfo=TweenInfo.new(0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+Library.GroupboxTweenInfo=TweenInfo.new(0.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
 Library.Scheme.AccentColor=purple
 local savedBehavior,savedIcon=UIS.MouseBehavior,UIS.MouseIconEnabled
 local viewport=Workspace.CurrentCamera and Workspace.CurrentCamera.ViewportSize or Vector2.new(1280,720)
@@ -963,7 +966,7 @@ local function buildVisualSystems()
         return register(key,widget,initial,callback,false,{Kind="Toggle"})
     end
     local function featureSettings(key)
-        local panel=Library:AddFeatureSettings(widgets[key],{Docked=true,Window=nativeWindow.MainFrame})
+        local panel=Library:AddFeatureSettings(widgets[key],{Docked=false,Window=nativeWindow.MainFrame})
         featurePanels[key]=panel
         return panel
     end

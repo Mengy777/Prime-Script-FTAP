@@ -10307,7 +10307,7 @@ end
 local ActiveFeatureSettings
 function Library:AddFeatureSettings(Toggle, Info)
     Info = Info or {}
-    local Docked = Info.Docked == true and Info.Window ~= nil
+    local Docked = false -- Feature settings are independent floating windows.
     local Panel = New("Frame", {
         Name = "FeatureSettings", BackgroundColor3 = "BackgroundColor",
         Size = UDim2.fromOffset(312, 100), Visible = false, Active = true,
@@ -10315,17 +10315,18 @@ function Library:AddFeatureSettings(Toggle, Info)
     })
     New("UIStroke", { Color = "OutlineColor", Thickness = 1, Parent = Panel })
     New("Frame", { BackgroundColor3 = "AccentColor", BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 2), Parent = Panel })
-    -- Registered as an interaction surface even when its position is docked.
+    New("UICorner", { CornerRadius = UDim.new(0, 7), Parent = Panel })
+    -- Interaction surface prevents clicks reaching underlying controls.
     table.insert(Library.DraggableElements, Panel)
     local Scale = New("UIScale", { Scale = Library.DPIScale, Parent = Panel })
     table.insert(Library.Scales, Scale)
     local Header = New("TextLabel", {
         Name = "SettingsHeader", Active = true, BackgroundColor3 = "MainColor",
         Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, -32, 0, 32), Text = Toggle.Text,
-        TextColor3 = "AccentColor", TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
+        TextColor3 = "FontColor", TextSize = 14, TextTruncate = Enum.TextTruncate.AtEnd, TextXAlignment = Enum.TextXAlignment.Left, Parent = Panel,
     })
     New("UIPadding", { PaddingLeft = UDim.new(0, 10), Parent = Header })
-    if not Docked then Library:MakeDraggable(Panel, Header, false) end
+    Library:MakeDraggable(Panel, Header, false)
     local CloseButton = New("TextButton", {
         BackgroundColor3 = "MainColor", Position = UDim2.new(1, -32, 0, 0),
         Size = UDim2.fromOffset(32, 32), Text = "×", TextSize = 20, Parent = Panel,
@@ -10378,30 +10379,36 @@ function Library:AddFeatureSettings(Toggle, Info)
     function Settings:Resize()
         if Settings.Destroyed then return end
         local DPI = math.max(Library.DPIScale, 0.1)
-        local View = Docked and Info.Window.AbsoluteSize or Floats.AbsoluteSize
-        local Width = math.min(312, math.max(100, (View.X - (Docked and 20 * DPI or 16)) / DPI))
+        local View = Floats.AbsoluteSize
+        local Width = math.min(328, math.max(100, (View.X - 16) / DPI))
         local Height = math.min(List.AbsoluteContentSize.Y / DPI + 18,
-            math.max(40, math.min(460, (View.Y - (Docked and 80 * DPI or 24)) / DPI - 32)))
+            math.max(40, math.min(500, (View.Y - 24) / DPI - 32)))
         Panel.Size = UDim2.fromOffset(Width, Height + 32)
     end
+    local Clamping = false
     local function PositionPanel()
-        if not Docked then return end
-        local DPI = math.max(Library.DPIScale, 0.1)
-        local Origin = Info.Window.AbsolutePosition - Floats.AbsolutePosition
-        local Size = Info.Window.AbsoluteSize
-        local X = Origin.X + Size.X - Panel.Size.X.Offset * DPI - 10 * DPI
-        local Y = Origin.Y + 54 * DPI
-        local View = Floats.AbsoluteSize
-        Panel.Position = UDim2.fromOffset(math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8)),
-            math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8)))
+        if Clamping or not Panel.Visible then return end
+        Clamping = true
+        local View, DPI = Floats.AbsoluteSize, math.max(Library.DPIScale, 0.1)
+        local X = math.clamp(Panel.Position.X.Offset, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8))
+        local Y = math.clamp(Panel.Position.Y.Offset, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8))
+        if X ~= Panel.Position.X.Offset or Y ~= Panel.Position.Y.Offset then Panel.Position = UDim2.fromOffset(X, Y) end
+        Clamping = false
     end
+    Library:GiveSignal(Panel:GetPropertyChangedSignal("Position"):Connect(PositionPanel))
+    Library:GiveSignal(Panel:GetPropertyChangedSignal("Size"):Connect(PositionPanel))
+    Library:GiveSignal(Floats:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        Settings:Resize() PositionPanel()
+    end))
     function Settings:AddPage(Name)
         if not Settings.PageBar then
-            Settings.PageBar = New("Frame", { Name = "SettingsPages", BackgroundTransparency = 1,
+            Settings.PageBar = New("Frame", { Name = "SettingsPages", BackgroundColor3 = "MainColor", BorderSizePixel = 0,
                 LayoutOrder = -1000, Size = UDim2.new(1, 0, 0, 28), Parent = Body })
         end
         local Index = #Settings.Pages + 1
         local Button = New("TextButton", { BackgroundColor3 = "MainColor", Text = Name, TextSize = 13, Parent = Settings.PageBar })
+        New("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Button })
+        Button.AutoButtonColor = false
         local Container = New("Frame", { Name = "Page_" .. Name, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 0), Visible = Index == 1, Parent = Body })
         local Layout = New("UIListLayout", { Padding = UDim.new(0, 8), Parent = Container })
@@ -10445,7 +10452,9 @@ function Library:AddFeatureSettings(Toggle, Info)
             and Menu.Menu.Visible and Library:MouseIsOverFrame(Menu.Menu, Point)
     end
     function Settings:Close()
-        if Panel.Visible and not Docked then Settings.LastPosition = Panel.Position end
+        if Panel.Visible then Settings.LastPosition = Panel.Position end
+        if Settings.OpenTween then Settings.OpenTween:Cancel() Settings.OpenTween = nil end
+        Scale.Scale = Library.DPIScale
         Panel.Visible = false
         if ActiveFeatureSettings == Settings then ActiveFeatureSettings = nil end
         if Settings.Watch then Settings.Watch:Disconnect() Settings.Watch = nil end
@@ -10474,11 +10483,24 @@ function Library:AddFeatureSettings(Toggle, Info)
         Y = math.clamp(Y, 8, math.max(8, View.Y - Panel.Size.Y.Offset * DPI - 8))
         Panel.Position = UDim2.fromOffset(X, Y)
         PositionPanel()
+        -- Last sibling above other floats; native dropdowns can still rise above us.
+        Panel.Parent = nil Panel.Parent = Floats
         Panel.Visible = true
+        PositionPanel()
+        if Settings.OpenTween then Settings.OpenTween:Cancel() end
+        Scale.Scale = DPI * 0.975
+        Settings.OpenTween = TweenService:Create(Scale, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = DPI})
+        Settings.OpenTween:Play()
         ActiveFeatureSettings = Settings
+        local LastDPI = DPI
         Settings.Watch = RunService.Heartbeat:Connect(function()
+            if LastDPI ~= Library.DPIScale then
+                LastDPI = Library.DPIScale
+                if Settings.OpenTween then Settings.OpenTween:Cancel() Settings.OpenTween = nil end
+                Scale.Scale = LastDPI Settings:Resize() PositionPanel()
+            end
             if not Library.Toggled or not Toggle.Value or not OwnerVisible() then Settings:Close()
-            elseif Docked then Settings:Resize() PositionPanel() end
+            end
         end)
     end
     function Settings:Destroy()
@@ -11506,6 +11528,8 @@ function Library:CreateWindow(WindowInfo)
 
     local Window = {}
     local Fading = false
+    local EntranceTween
+    Library:OnUnload(function() if EntranceTween then EntranceTween:Cancel() EntranceTween = nil end end)
 
     local function SetUICorner(UICorner, Corner, HalfValue)
         local Current = UICorner[Corner]
@@ -14123,6 +14147,18 @@ function Library:CreateWindow(WindowInfo)
             end)
         else
             MainFrame.Visible = Library.Toggled
+            if EntranceTween then EntranceTween:Cancel() EntranceTween = nil end
+            if Library.WindowEntranceEnabled then
+                local Scale = MainFrame:FindFirstChildOfClass("UIScale")
+                if Scale then
+                    Scale.Scale = Library.DPIScale
+                    if Library.Toggled then
+                        Scale.Scale = Library.DPIScale * 0.985
+                        EntranceTween = TweenService:Create(Scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = Library.DPIScale})
+                        EntranceTween:Play()
+                    end
+                end
+            end
         end
 
         if WindowInfo.UnlockMouseWhileOpen then

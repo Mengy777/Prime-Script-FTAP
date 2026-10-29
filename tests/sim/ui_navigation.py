@@ -44,6 +44,13 @@ rainbow:SetValue(true)assert(rainbow.Value)
 rainbow:SetValue(false)
 """)
 print('PASS inline rainbow survives native swatch failure, fallback and Reset filters')
+# Main profile registry must retain independent inspector positions across cold start.
+lua.execute("for _,p in ipairs(TEST_SETTINGS) do if p.Owner==TEST_OPTIONS.lightEnabled then TEST_FLOAT=p break end end; assert(TEST_FLOAT and not TEST_FLOAT.Docked); TEST_FLOAT.Holder.Visible=true; TEST_FLOAT.Holder.Position=UDim2.fromOffset(730,220); TEST_DRAIN()")
+saved=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
+assert saved['payload']['ui']['panels']['lightEnabled']['x']==730
+lua2,*_=session(D)
+lua2.execute("local found=false for _,p in ipairs(TEST_SETTINGS)do if p.Owner==TEST_OPTIONS.lightEnabled then assert(p.LastPosition.X.Offset==730 and p.LastPosition.Y.Offset==220); found=true end end assert(found)")
+print('PASS floating inspector coordinates autosave and restore on cold start')
 lua.execute("TEST_ACTIONS['Unload script']()")
 print('PASS navigation creates no profile writes; 336 current settings retained (advanced lighting editor included)')
 # Exercise the actual native feature-panel implementation rather than the main UI stub.
@@ -52,9 +59,9 @@ block=native[native.index('local ActiveFeatureSettings'):native.index('function 
 lua.execute(r"""
 Library={Toggled=true,Unloaded=false,DPIScale=1,Registry={},Scales={},DraggableElements={},Signals={},Unloads={},
  Scheme={AccentColor=Color3.new(.6,.3,1),FontColor=Color3.new(1,1,1),MainColor=Color3.new(.05,.05,.05)}}
-ScreenGui=Instance.new('ScreenGui')
+ScreenGui=Instance.new('ScreenGui')ScreenGui.Parent=Instance.new('Folder')
 Floats=Instance.new('Frame')Floats.Size=UDim2.fromOffset(1600,1000)Floats.Parent=ScreenGui
-RunService=TEST_SERVICES.RunService UserInputService=TEST_SERVICES.UserInputService
+RunService=TEST_SERVICES.RunService UserInputService=TEST_SERVICES.UserInputService TweenService=TEST_SERVICES.TweenService
 CURRENT_POINT=Vector2.new(500,250)
 UserInputService.GetMouseLocation=function()return CURRENT_POINT end
 function Library:GiveSignal(c)table.insert(self.Signals,c)return c end
@@ -81,15 +88,21 @@ OWNER={Value=false,Text='Sample feature',Holder=Instance.new('TextButton'),TextL
 OWNER.Holder.Parent=ScreenGui OWNER.Holder.Size=UDim2.fromOffset(300,24)OWNER.TextLabel.Size=UDim2.new(1,-40,1,0)OWNER.TextLabel.Text='Sample feature'
 WINDOW=Instance.new('Frame')WINDOW.Position=UDim2.fromOffset(200,100)WINDOW.Size=UDim2.fromOffset(720,600)WINDOW.Parent=ScreenGui
 """)
+drag=native[native.index('function Library:MakeDraggable('):native.index('function Library:MakeDraggable(')+20000]
+drag=drag[:drag.index('\nend')+4]
+drag='function Library:MakeDraggable(UI,DragFrame,IgnoreToggled,IsMainWindow,SnapConfig)\n'+drag[drag.index('    local StartPos'):]
+drag=drag.replace('Input: InputObject','Input')
+lua.execute("function IsClickInput(i)return i.UserInputType==Enum.UserInputType.MouseButton1 end; function IsHoverInput(i)return i.UserInputType==Enum.UserInputType.MouseMovement end")
+lua.execute(drag)
 lua.execute(block)
 lua.execute(r"""
 PANEL=Library:AddFeatureSettings(OWNER,{Docked=true,Window=WINDOW})
 assert(OWNER.SettingsButton and not PANEL.Holder.Visible)
 PANEL:Open()assert(not PANEL.Holder.Visible,'disabled effect settings opened')
 OWNER.Value=true OWNER:Display()OWNER.SettingsButton.MouseButton1Click:Fire()
-assert(PANEL.Holder.Visible and PANEL.Docked)
-assert(PANEL.Holder.Position.X.Offset>=WINDOW.AbsolutePosition.X)
-assert(PANEL.Holder.Position.X.Offset+PANEL.Holder.Size.X.Offset<=WINDOW.AbsolutePosition.X+WINDOW.AbsoluteSize.X)
+assert(PANEL.Holder.Visible and not PANEL.Docked)
+assert(PANEL.Holder.Position.X.Offset>=8)
+assert(PANEL.Holder.Position.X.Offset+PANEL.Holder.Size.X.Offset<=Floats.AbsoluteSize.X-8)
 local p=PANEL.Holder.AbsolutePosition
 CURRENT_POINT=Vector2.new(p.X+20,p.Y+50)
 UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1,Position=CURRENT_POINT})
@@ -101,15 +114,26 @@ CURRENT_POINT=Vector2.new(1150,350)
 UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1,Position=CURRENT_POINT})
 assert(PANEL.Holder.Visible,'child dropdown outside panel incorrectly dismissed it')
 CurrentMenu=nil
+local previous=PANEL.Holder.Position
 WINDOW.Position=UDim2.fromOffset(300,170)RunService.Heartbeat:Fire(.1)
-assert(PANEL.Holder.Position.Y.Offset==224 and not PANEL.LastPosition,'docked following polluted saved float coordinates')
+assert(PANEL.Holder.Position.X.Offset==previous.X.Offset and PANEL.Holder.Position.Y.Offset==previous.Y.Offset,'floating inspector followed main window')
+local changed={Connect=function(self,f)self.fn=f return {Connected=true,Disconnect=function(self)self.Connected=false end}end}
+local header=PANEL.Holder:FindFirstChild('SettingsHeader')
+local from=PANEL.Holder.Position
+header.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1,Position=Vector2.new(500,250),Changed=changed})
+UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Position=Vector2.new(540,280)})
+assert(PANEL.Holder.Position.X.Offset==from.X.Offset+40 and PANEL.Holder.Position.Y.Offset==from.Y.Offset+30,'native header drag failed')
+PANEL.Holder.Position=UDim2.fromOffset(650,180)
+PANEL:Close()PANEL:Open()
+assert(PANEL.Holder.Position.X.Offset==650 and PANEL.Holder.Position.Y.Offset==180,'floating position not retained')
 for _,dpi in ipairs({1,1.5,2})do
- Library.DPIScale=dpi WINDOW.Position=UDim2.fromOffset(20,20)WINDOW.Size=UDim2.fromOffset(560,360)
- RunService.Heartbeat:Fire(.1)
- assert(PANEL.Holder.Position.X.Offset>=20 and PANEL.Holder.Position.X.Offset+PANEL.Holder.Size.X.Offset*dpi<=580)
- assert(PANEL.Holder.Position.Y.Offset>=20 and PANEL.Holder.Position.Y.Offset+PANEL.Holder.Size.Y.Offset*dpi<=380)
+ Library.DPIScale=dpi RunService.Heartbeat:Fire(.1)
+ PANEL.Holder.Position=UDim2.fromOffset(9000,9000)
+ assert(PANEL.Holder.Position.X.Offset>=8 and PANEL.Holder.Position.X.Offset+PANEL.Holder.Size.X.Offset*dpi<=Floats.AbsoluteSize.X-8)
+ assert(PANEL.Holder.Position.Y.Offset>=8 and PANEL.Holder.Position.Y.Offset+PANEL.Holder.Size.Y.Offset*dpi<=Floats.AbsoluteSize.Y-8)
 end
-Library.DPIScale=1 WINDOW.Position=UDim2.fromOffset(300,170)WINDOW.Size=UDim2.fromOffset(720,600)RunService.Heartbeat:Fire(.1)
+Library.DPIScale=1 RunService.Heartbeat:Fire(.1)
+PANEL.Holder.Position=UDim2.fromOffset(650,180)
 local general=PANEL:AddPage('General')local appearance=PANEL:AddPage('Appearance')
 assert(general.Container.Visible and not appearance.Container.Visible)
 appearance:Show()assert(not general.Container.Visible and appearance.Container.Visible)
@@ -126,7 +150,7 @@ for i=1,8 do table.insert(appearance.Elements,{Destroy=function()count=count+1 t
 PANEL:Destroy()assert(count==8 and PANEL.Destroyed and not OWNER.SettingsButton)
 for _,con in ipairs(Library.Signals)do con:Disconnect()end
 """)
-print('PASS actual Obsidian docked inspector: gear, enabled-only access, bounds/following, inside/outside/dropdown clicks, Escape/hidden owner, parameter pages, inline rainbow and full cleanup')
+print('PASS actual Obsidian floating inspector: gear, enabled-only access, viewport bounds/independent position, inside/outside/dropdown clicks, Escape/hidden owner, parameter pages, inline rainbow and full cleanup')
 case=native[native.index('local function SearchCasefold'):native.index('local function NormalizeSearch')]
 case=case.replace('(Text: string): string','(Text)')
 lua.execute(case+'\nassert(SearchCasefold("НЕБО Ёж") == "небо ёж")')
@@ -143,6 +167,8 @@ for _,category in ipairs({'View','Graphics','Character','ESP','FTAP','Settings'}
  end
 end
 local lib={Scheme={},Searching=false}
+function lib:GetCustomIcon(name)return {Name=name}end
+function lib:ApplyLucideIcon(icon,data)icon.Image=data.Name end
 local calls=0
 function lib:UpdateSearch(text)
  calls=calls+1 self.Searching=text~=''
@@ -155,8 +181,18 @@ local nav=NAV_FACTORY({Library=lib,Tabs=tabs,Make=function(class,props,parent)
 end,Listen=function(signal,fn)return signal:Connect(fn)end})
 local camera=nav:Group('Camera','Camera',1,'camera')local sky=nav:Group('Sky','Skybox',1,'cloud')
 assert(camera.BoxHolder.Visible and not sky.BoxHolder.Visible)
+assert(nav.States.View.icons.Camera.Image=='camera' and nav.States.View.icons.Sky.Image=='cloud-sun')
+for i=1,50 do nav.States.View.buttons.Sky.MouseButton1Click:Fire(); nav.States.View.buttons.Camera.MouseButton1Click:Fire() end
+assert(nav.States.View.indicator.Position.X.Scale==0 and nav.States.View.buttons.Camera.TextTransparency==0)
+nav.States.View.buttons.Sky.MouseEnter:Fire(); nav.States.View.buttons.Sky.MouseLeave:Fire()
+assert(nav.States.View.buttons.Sky.BackgroundTransparency==1)
 lib:UpdateSearch('skybox')assert(sky.BoxHolder.Visible and not camera.BoxHolder.Visible and calls==1)
 lib:ClearSearch()assert(camera.BoxHolder.Visible and not sky.BoxHolder.Visible)
+assert(nav.States.View.icons.Camera.Image=='camera' and nav.States.View.icons.Sky.Image=='cloud-sun')
+for i=1,50 do nav.States.View.buttons.Sky.MouseButton1Click:Fire(); nav.States.View.buttons.Camera.MouseButton1Click:Fire() end
+assert(nav.States.View.indicator.Position.X.Scale==0 and nav.States.View.buttons.Camera.TextTransparency==0)
+nav.States.View.buttons.Sky.MouseEnter:Fire(); nav.States.View.buttons.Sky.MouseLeave:Fire()
+assert(nav.States.View.buttons.Sky.BackgroundTransparency==1)
 lib:UpdateSearch('no-such-feature')assert(nav.States.View.empty.Visible)
 lib:ClearSearch()assert(not nav.States.View.empty.Visible)
 lib:UpdateSearch('skybox')

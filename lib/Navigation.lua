@@ -36,33 +36,70 @@ return function(c)
     local function theme(object,properties)
         if type(lib.AddToRegistry)=="function" then lib:AddToRegistry(object,properties) end
     end
+    local tweenService=game:GetService("TweenService")
+    local tweens={}
+    local function animate(object,goal)
+        if tweens[object] then tweens[object]:Cancel() end
+        local tween=tweenService:Create(object,TweenInfo.new(0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),goal)
+        tweens[object]=tween tween:Play()
+    end
+    local pageIcons={Camera="camera",Sky="cloud-sun",Lighting="sun",Weather="cloud-snow",["Water & FPS"]="waves",
+        Appearance="user-round",Movement="footprints",Mannequins="users-round",Players="users",Objects="box",Tools="scan-eye",
+        ["Grab line"]="link",Crosshair="crosshair",Blackholes="orbit",Audio="volume-2",General="settings",Profiles="folder"}
     local function refresh(state)
         state.empty.Visible=false
         for _,entry in ipairs(state.groups) do
-            if not entry.group.Destroyed then
-                entry.group.BoxHolder.Visible=searching or entry.page==state.selected
-            end
+            if not entry.group.Destroyed then entry.group.BoxHolder.Visible=searching or entry.page==state.selected end
         end
-        for name,button in pairs(state.buttons) do
+        state.indicator.Visible=not searching
+        for index,name in ipairs(state.names) do
+            local button=state.buttons[name]
             local selected=name==state.selected and not searching
-            button.BackgroundColor3=selected and (lib.Scheme.AccentColor or Color3.fromRGB(145,85,255)) or Color3.fromRGB(20,20,24)
-            button.BackgroundTransparency=selected and 0.82 or 0
+            if tweens[button] then tweens[button]:Cancel() tweens[button]=nil end
             button.TextTransparency=selected and 0 or 0.35
-            theme(button,{BackgroundColor3=selected and "AccentColor" or "MainColor",TextColor3="FontColor"})
+            if state.icons[name] then
+                state.icons[name].ImageColor3=selected and (lib.Scheme.AccentColor or Color3.fromRGB(160,106,255)) or (lib.Scheme.FontColor or Color3.new(1,1,1))
+                state.icons[name].ImageTransparency=selected and 0 or 0.4
+            end
+            if selected and state.rendered~=name then
+                local position=UDim2.new((index-1)/#state.names,4,0,4)
+                if state.rendered then animate(state.indicator,{Position=position}) else state.indicator.Position=position end
+                state.rendered=name
+            end
         end
     end
     for category,names in pairs(pages) do
         local tab=c.Tabs[category]
-        local bar=make("Frame",{Name="PV_SectionBar",BackgroundTransparency=1,Size=UDim2.new(1,0,0,32),Position=UDim2.fromOffset(0,0)},tab.Container)
+        local bar=make("Frame",{Name="PV_SectionBar",BackgroundColor3=Color3.fromRGB(15,15,19),BorderSizePixel=0,Size=UDim2.new(1,0,0,40),Position=UDim2.fromOffset(0,0)},tab.Container)
+        make("UICorner",{CornerRadius=UDim.new(0,7)},bar)
+        local barStroke=make("UIStroke",{Color=Color3.fromRGB(42,40,49),Transparency=0.4,Thickness=1},bar)
+        theme(bar,{BackgroundColor3="MainColor"}) theme(barStroke,{Color="OutlineColor"})
+        local indicator=make("Frame",{Name="ActiveSection",BackgroundColor3=Color3.fromRGB(33,28,43),BorderSizePixel=0,
+            Size=UDim2.new(1/#names,-8,1,-8),Position=UDim2.fromOffset(4,4),ZIndex=1},bar)
+        make("UICorner",{CornerRadius=UDim.new(0,5)},indicator)
+        local edge=make("UIStroke",{Color=lib.Scheme.AccentColor or Color3.fromRGB(160,106,255),Transparency=0.65,Thickness=1},indicator)
+        theme(edge,{Color="AccentColor"})
         local empty=make("TextLabel",{Name="NoSearchResults",Text="Nothing found",Font=Enum.Font.BuilderSans,TextSize=14,
             TextColor3=Color3.fromRGB(150,150,160),BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),
             Position=UDim2.fromScale(0.5,0.5),Size=UDim2.new(1,-32,0,28),Visible=false},tab.Container)
-        local state={tab=tab,selected=names[1],buttons={},groups={},bar=bar,names=names,empty=empty}
+        local state={tab=tab,selected=names[1],buttons={},icons={},groups={},bar=bar,names=names,empty=empty,indicator=indicator}
         states[category]=state
         for i,name in ipairs(names) do
             local button=make("TextButton",{Name="Section_"..name,Text=name,Font=Enum.Font.BuilderSans,TextSize=13,TextColor3=Color3.new(1,1,1),AutoButtonColor=false,
-                BackgroundColor3=Color3.fromRGB(20,20,24),BorderSizePixel=0,Size=UDim2.new(1/#names,-5,1,0),Position=UDim2.new((i-1)/#names,2,0,0)},bar)
+                BackgroundTransparency=1,BackgroundColor3=Color3.fromRGB(160,106,255),BorderSizePixel=0,ZIndex=2,Size=UDim2.new(1/#names,-8,1,-8),Position=UDim2.new((i-1)/#names,4,0,4)},bar)
             make("UICorner",{CornerRadius=UDim.new(0,4)},button)
+            theme(button,{TextColor3="FontColor"})
+            if type(lib.GetCustomIcon)=="function" and type(lib.ApplyLucideIcon)=="function" then
+                local data=lib:GetCustomIcon(pageIcons[name] or "circle")
+                if data then
+                    local icon=make("ImageLabel",{Name="SectionIcon_"..name,BackgroundTransparency=1,Size=UDim2.fromOffset(15,15),
+                        AnchorPoint=Vector2.new(0,0.5),Position=UDim2.new((i-1)/#names,15,0.5,0),ZIndex=3},bar)
+                    lib:ApplyLucideIcon(icon,data) state.icons[name]=icon
+                    make("UIPadding",{PaddingLeft=UDim.new(0,25),PaddingRight=UDim.new(0,5)},button)
+                end
+            end
+            listen(button.MouseEnter,function() if not destroyed then animate(button,{BackgroundTransparency=0.94,TextTransparency=0}) end end)
+            listen(button.MouseLeave,function() if not destroyed then animate(button,{BackgroundTransparency=1,TextTransparency=name==state.selected and 0 or 0.35}) end end)
             state.buttons[name]=button
             listen(button.MouseButton1Click,function()
                 if destroyed then return end
@@ -72,10 +109,10 @@ return function(c)
                 for _,side in ipairs(tab.Sides) do if side:IsA("ScrollingFrame") then side.CanvasPosition=Vector2.new(0,0) end end
             end)
         end
-        tab.NavigationOffset=42
+        tab.NavigationOffset=50
         for i,side in ipairs(tab.Sides) do
-            side.Position=i==2 and UDim2.new(1,0,0,42) or UDim2.fromOffset(0,42)
-            side.Size=UDim2.new(0.5,-4,1,-42)
+            side.Position=i==2 and UDim2.new(1,0,0,50) or UDim2.fromOffset(0,50)
+            side.Size=UDim2.new(0.5,-4,1,-50)
             side.ScrollBarThickness=2 side.ScrollBarImageTransparency=0.55
             side.ScrollBarImageColor3=lib.Scheme.AccentColor or Color3.fromRGB(145,85,255)
         end
@@ -123,6 +160,7 @@ return function(c)
     end
     function controller:Destroy()
         if destroyed then return end destroyed=true
+        for object,tween in pairs(tweens) do tween:Cancel() tweens[object]=nil end
         if oldSearch then lib.UpdateSearch=oldSearch end
     end
     return controller
