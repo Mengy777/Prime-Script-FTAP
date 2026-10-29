@@ -232,3 +232,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Acceptance 2026-10-29: user explicitly approved Character CHR-01…CHR-08, including smooth Jump circle. CHR-09/all46 ANI remain unconfirmed. Animation code uses existing character Animator, falling back to a locally created Animator; do not promise all tracks are local-only or visible to everyone without a second-client test. No runtime change.
 
 - 2.3.4: user requested removing Character animations pending future Vortex work. Removed runtime playback, UI route/card,46 definitions and3 registry keys (336 remain). Old profiles ignore those keys. No Vortex change. Prime Visuals intended scope is local-only visuals; do not restore replicated character animations. CHR-01…08 approved; CHR-09/ANI rows removed, not approved.
+
+- Acceptance 2026-10-29: user explicitly accepted the entire current Character section on2.3.4. Treat as section-level user approval, without invented individual tests. Removed animations remain removed, not tested; deferred mannequin physics fidelity remains backlog. Next acceptance batch: new/improved ESP. Documentation only, no runtime bump.
