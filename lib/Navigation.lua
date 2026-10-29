@@ -17,7 +17,7 @@ return function(c)
             ["Character finish"]={"Appearance","Body style",1},["Body appearance"]={"Appearance","Body style",1},
             ["Self ESP"]={"Appearance","Accessories",2},["Cone hat"]={"Appearance","Accessories",2},
             ["Movement visuals"]={"Movement","Movement effects",1},["Death visuals"]={"Movement","Movement effects",1},
-            Animations={"Movement","Animations",2},Mannequins={"Mannequins","Local mannequins",1},
+            Mannequins={"Mannequins","Local mannequins",1},
         },
         ESP={Visibility={"Players","Player highlight",1},["Player markers"]={"Players","Player highlight",1},
             Geometry={"Players","Player overlays",2},["World markers"]={"Objects","World markers",1},

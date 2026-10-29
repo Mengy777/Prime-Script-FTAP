@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.3"
+local VERSION="2.3.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -938,7 +938,7 @@ local function buildVisualSystems()
         lightEnabled="Manual lighting",visualPresetEnabled="Lighting preset",characterEnabled="Forcefield material",selfESP="Own outline",
         bodyAppearance="Body colors",holeSprite="Blackhole animation",espServer="Server markers",serverGhostEnabled="My delayed position",
         lineEnabled="Grab line style",traceEnabled="Line to player",particleEnabled="Floating particles",snowEnabled="Snowfall",
-        animationEnabled="Animations",revealInvisible="Reveal hidden players",antiKickESP="Anti-kick items",combatESP="Combat items",
+        revealInvisible="Reveal hidden players",antiKickESP="Anti-kick items",combatESP="Combat items",
     }
     local featureTips={
         camThird="Rotate with the mouse; use the wheel to zoom into first person or back out.",
@@ -955,7 +955,6 @@ local function buildVisualSystems()
         espPlayers="Highlight all players or choose specific players in settings.",espServer="Show the game's character location detectors.",
         antiKickESP="Highlight Shuriken, Kunai, Plate, Pickaxe and Pallet objects. This is not anti-kick protection.",
         combatESP="Highlight selected toy types and show their item icons.",
-        animationEnabled="Choose an emote, dance or FTAP pose in settings. Asset availability depends on the game and rig.",
         holeSprite="Show a rotating, pulsing picture at a blackhole.",
     }
     local function toggle(g,key,text,initial,callback)
@@ -2534,7 +2533,7 @@ local function buildVisualSystems()
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
             "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
-            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled","animationEnabled",
+            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local lastLanguage

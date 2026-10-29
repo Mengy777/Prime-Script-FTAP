@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.3.3**, tag `v2.3.3`. Next normal runtime version: **2.3.4**. Consult Git for the release commit.
+- Published runtime target: **2.3.4**, tag `v2.3.4`. Next normal runtime version: **2.3.5**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -230,3 +230,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - XG rows are removed/cancelled, not accepted; no further experiment test requested. Other acceptance tests remain deferred. Runtime2.3.3, next2.3.4.
 
 - Acceptance 2026-10-29: user explicitly approved Character CHR-01…CHR-08, including smooth Jump circle. CHR-09/all46 ANI remain unconfirmed. Animation code uses existing character Animator, falling back to a locally created Animator; do not promise all tracks are local-only or visible to everyone without a second-client test. No runtime change.
+
+- 2.3.4: user requested removing Character animations pending future Vortex work. Removed runtime playback, UI route/card,46 definitions and3 registry keys (336 remain). Old profiles ignore those keys. No Vortex change. Prime Visuals intended scope is local-only visuals; do not restore replicated character animations. CHR-01…08 approved; CHR-09/ANI rows removed, not approved.

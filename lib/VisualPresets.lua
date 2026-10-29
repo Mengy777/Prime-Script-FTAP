@@ -115,50 +115,6 @@ skies["Pink Morning"]={SkyboxBk="rbxassetid://12635309703",SkyboxDn="rbxassetid:
 skies["Purple Radiance"]={SkyboxBk="rbxassetid://570557514",SkyboxDn="rbxassetid://570557775",SkyboxFt="rbxassetid://570557559",SkyboxLf="rbxassetid://570557620",SkyboxRt="rbxassetid://570557672",SkyboxUp="rbxassetid://570557727",CelestialBodiesShown=false}
 skies["Dark Matter"]={AssetId="110290405998332"}
 skies["Milky Way"]={AssetId="545702970"}
-local animations={
-    ["Emote / Head Throw"]={Id=35154961,Speed=1,Repeats=nil},
-    ["Emote / Floating Head"]={Id=121572214,Speed=1,Repeats=nil},
-    ["Emote / Crouch"]={Id=182724289,Speed=1,Repeats=nil},
-    ["Emote / Floor Crawl"]={Id=282574440,Speed=1,Repeats=nil},
-    ["Emote / Dino Walk"]={Id=204328711,Speed=1,Repeats=nil},
-    ["Emote / Jumping Jacks"]={Id=429681631,Speed=1,Repeats=nil},
-    ["Emote / Loop Head"]={Id=35154961,Speed=1,Repeats=1000000},
-    ["Emote / Hero Jump"]={Id=184574340,Speed=1,Repeats=1},
-    ["Emote / Faint"]={Id=181526230,Speed=1,Repeats=nil},
-    ["Emote / Floor Faint"]={Id=181525546,Speed=1,Repeats=2},
-    ["Emote / Super Faint"]={Id=181525546,Speed=0.5,Repeats=40},
-    ["Emote / Levitate"]={Id=313762630,Speed=1,Repeats=nil},
-    ["Emote / Float Sit"]={Id=179224234,Speed=1,Repeats=nil},
-    ["Emote / Weird Move"]={Id=215384594,Speed=1,Repeats=nil},
-    ["Emote / Clone Illusion"]={Id=215384594,Speed=1,Repeats=10000000},
-    ["Emote / Glitch Levitate"]={Id=313762630,Speed=1,Repeats=10000000},
-    ["Emote / Full Punch"]={Id=204062532,Speed=1,Repeats=1},
-    ["Emote / Bow Down"]={Id=204292303,Speed=1,Repeats=3},
-    ["Emote / Sword Slam"]={Id=204295235,Speed=1,Repeats=1},
-    ["Emote / Loop Slam"]={Id=204295235,Speed=1,Repeats=10000},
-    ["Emote / Mega Insane"]={Id=184574340,Speed=0.5,Repeats=40},
-    ["Emote / Super Punch"]={Id=126753849,Speed=1,Repeats=3},
-    ["Emote / Full Swing"]={Id=218504594,Speed=1,Repeats=1},
-    ["Emote / Arm Turbine"]={Id=259438880,Speed=1,Repeats=1000},
-    ["Emote / Barrel Roll"]={Id=136801964,Speed=1,Repeats=1},
-    ["Emote / Scared"]={Id=180612465,Speed=1,Repeats=1},
-    ["Emote / Insane"]={Id=33796059,Speed=1,Repeats=100000000},
-    ["Emote / Arm Detach"]={Id=33169583,Speed=1,Repeats=1000000},
-    ["Emote / Sword Slice"]={Id=35978879,Speed=1,Repeats=nil},
-    ["Emote / Insane Arms"]={Id=27432691,Speed=1,Repeats=10000},
-    ["Dance / Dab"]={Id=183412246,Speed=1,Repeats=1},
-    ["Dance / Spinner"]={Id=188632011,Speed=1,Repeats=2},
-    ["Dance / Moving Dance"]={Id=429703734,Speed=1,Repeats=1},
-    ["Dance / Spin Dance"]={Id=429730430,Speed=1,Repeats=1},
-    ["Dance / Moon Dance"]={Id=45834924,Speed=1,Repeats=1},
-    ["Dance / Spin Dance 2"]={Id=186934910,Speed=1,Repeats=1},
-    ["Dance / Thriller"]={Id=27789359,Speed=1,Repeats=1},
-    ["Dance / Robot"]={Id=30196114,Speed=1,Repeats=1},
-    ["Dance / Shuffle"]={Id=248263260,Speed=1,Repeats=1},
-    ["Dance / Groove"]={Id=33796059,Speed=1,Repeats=1},
-    ["Dance / Club"]={Id=28488254,Speed=1,Repeats=1},
-    ["Dance / Jump Dance"]={Id=52155728,Speed=1,Repeats=1},
-}
 -- Migrate saved selection names without retaining rejected entries in the menu.
 local skyAliases={Vaporwave="Rainbow Galaxy",["Lavender Gradient"]="Purple Radiance",["Rose Gradient"]="Dark Matter",["Golden Hour"]="Milky Way"}
-return {Skies=skies,Animations=animations,SkyAliases=skyAliases}
+return {Skies=skies,SkyAliases=skyAliases}

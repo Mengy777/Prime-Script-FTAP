@@ -182,16 +182,9 @@ TEST_OPTIONS.holeSprite:SetValue(false)
 TEST_OPTIONS.serverGhostEnabled:SetValue(true)TICK(.1)
 local n=0 for _,o in ipairs(workspace:GetDescendants())do if o.Name=='PV_EstimatedServerPosition'then n=n+1 end end assert(n==32)
 TEST_OPTIONS.serverGhostEnabled:SetValue(false)assert(not FIND('PV_EstimatedServerPosition'))
-TEST_OPTIONS.animationEnabled:SetValue(true)assert(TEST_TRACK.Asset=='rbxassetid://183412246')
-local track=TEST_TRACK TEST_OPTIONS.animationSpeed:SetValue(2.5)assert(track.Speed==2.5)
-TEST_OPTIONS.animationName:SetValue('Emote / Super Faint')assert(track.Destroyed)
-track=TEST_TRACK assert(track.Asset=='rbxassetid://181525546'and track.Speed==1.25)
-track.Stopped:Fire()assert(track.Plays==2)
-TEST_OPTIONS.animationEnabled:SetValue(false)assert(track.Destroyed)
-TEST_OPTIONS.animationEnabled:SetValue(true)track=TEST_TRACK track:Destroy()TICK(.51)assert(TEST_TRACK~=track,'destroyed animation did not recover')
-TEST_OPTIONS.animationEnabled:SetValue(false)
+assert(not TEST_OPTIONS.animationEnabled and not TEST_OPTIONS.animationName and not TEST_OPTIONS.animationSpeed)
 """)
-print('PASS source object matching/icon deduplication, invisibility restore, animated blackhole repair/expiry/live controls, 32-part position ghost and emote assets/repeats/speed/recovery')
+print('PASS source object matching/icon deduplication, invisibility restore, animated blackhole repair/expiry/live controls, 32-part position ghost; animation controls removed')
 lua.execute(r"""
 local w=ME.Character:FindFirstChildOfClass('Humanoid')local originalSubject=workspace.CurrentCamera.CameraSubject
 local camera=workspace.CurrentCamera local originalCF=camera.CFrame

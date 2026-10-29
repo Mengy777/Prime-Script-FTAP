@@ -628,73 +628,6 @@ return function(c)
         color(g,"serverGhostColor","Color",Color3.fromRGB(160,150,255),function() end)
         g:AddLabel("Client history delayed by ping; an estimate, not server telemetry.")
     end
-    -- All 42 non-sexual source emotes/dances, plus four actual FTAP Animation lookups.
-    local animation,animationObject,animationHum,animationConnection
-    local animationGeneration=0
-    local playingName
-    local function stopAnimation()
-        animationGeneration=animationGeneration+1
-        disconnect(animationConnection) animationConnection=nil
-        if animation then pcall(function() animation:Stop(0.1) animation:Destroy() end) end
-        animation=nil animationHum=nil playingName=nil destroy(animationObject) animationObject=nil
-    end
-    local poseNames={Crouch={"Crouch","Squat"},["Fire Flail"]={"FireFlailAnimation","FireFlail","Flail"},Flail={"Flail","ThrowFlail"},Type={"Type","Typing","Keyboard"}}
-    local function gameAnimation(name)
-        local aliases=poseNames[name] or {}
-        for _,service in ipairs({"ReplicatedFirst","ReplicatedStorage","Workspace"}) do
-            local location=game:GetService(service)
-            if location then for _,o in ipairs(location:GetDescendants()) do if o:IsA("Animation") then
-                local n=o.Name:lower()
-                for _,alias in ipairs(aliases) do if n:find(alias:lower(),1,true) then return o.AnimationId end end
-            end end end
-        end
-        error("FTAP animation not found: "..name)
-    end
-    local function updateAnimation()
-        if not v.animationEnabled then stopAnimation() return end
-        local h=humanoid(me) if not h or h.Health<=0 then stopAnimation() return end
-        if animation and h==animationHum and playingName==v.animationName then
-            local data=c.Data.Animations[v.animationName]
-            local ok=pcall(animation.AdjustSpeed,animation,v.animationSpeed*(data and data.Speed or 1))
-            if ok then return end
-        end
-        stopAnimation()
-        local generation=animationGeneration
-        local name=v.animationName
-        local data=c.Data.Animations[name]
-        local asset=data and "rbxassetid://"..data.Id or gameAnimation(name:gsub("^FTAP / ",""))
-        local animator=h:FindFirstChildOfClass("Animator")
-        if not animator then animator=create("Animator",{},h) end
-        local object=create("Animation",{AnimationId=asset},nil)
-        local ok,track=pcall(animator.LoadAnimation,animator,object)
-        if not ok or not track then destroy(object) error("Animation unavailable: "..tostring(name)) end
-        if dead or not v.animationEnabled or generation~=animationGeneration or h~=humanoid(me) then
-            pcall(function() track:Destroy() end) destroy(object) return
-        end
-        animationObject=object animation=track animationHum=h playingName=name
-        track.Priority=Enum.AnimationPriority.Action4 track.Looped=not data or data.Repeats==nil
-        local remaining=data and data.Repeats or 1
-        track:Play(0.1,1,v.animationSpeed*(data and data.Speed or 1))
-        if not track.Looped then
-            animationConnection=connect(track.Stopped,function()
-                if animation~=track or dead or not v.animationEnabled or generation~=animationGeneration then return end
-                remaining=remaining-1
-                if remaining>0 then track:Play(0.1,1,v.animationSpeed*(data and data.Speed or 1)) end
-            end)
-        end
-    end
-    do
-        local g=group("Character","Animations",2)
-        toggle(g,"animationEnabled","Custom animation",false,updateAnimation) g=panel("animationEnabled")
-        local names={} for name in pairs(c.Data.Animations) do names[#names+1]=name end table.sort(names)
-        for _,name in ipairs({"Crouch","Fire Flail","Flail","Type"}) do names[#names+1]="FTAP / "..name end
-        choice(g,"animationName","Animation",names,"Dance / Dab",updateAnimation)
-        slider(g,"animationSpeed","Animation speed",0.1,5,1,0.1,function()
-            local d=c.Data.Animations[v.animationName]
-            if animation then animation:AdjustSpeed(v.animationSpeed*(d and d.Speed or 1)) end
-        end)
-        c.Action(g,"Stop animation",function() c.Setters.animationEnabled(false,true) end)
-    end
     -- Named shader presets keep exact source parameter values; switching is exclusive.
     local rgb=Color3.fromRGB
     local presets={
@@ -1111,7 +1044,6 @@ return function(c)
             elapsed=elapsed%0.5 run("Jump circle",updateJump) run("Object highlights",updateMarkers)
             if v.oceanAppearance then run("Ocean appearance",updateOcean) end
             if v.bodyAppearance then run("Body appearance",updateAppearance) end
-            if v.animationEnabled then run("Animation",updateAnimation) end
             if v.snowEnabled then run("Snowfall",updateSnow) end
             for b,t in pairs(dustBursts) do if os.clock()-t>=8 or not b.Parent then destroy(b) dustBursts[b]=nil end end
             for h,list in pairs(dustHum) do if not h:IsDescendantOf(W) then for _,con in ipairs(list) do disconnect(con) end dustHum[h]=nil end end
@@ -1135,7 +1067,6 @@ return function(c)
     teardown=function()
         if dead then return end dead=true
         endFree() stopSpectate()
-        stopAnimation()
         if bound then R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end
         for con in pairs(links) do con:Disconnect() end links={}
         for o in pairs(objects) do pcall(function() o:Destroy() end) end objects={}

@@ -1,8 +1,8 @@
 # Prime Visuals — список нового и журнал проверки
 
-Обновлён: 2026-10-28. Текущий код: **2.3.3**.
+Обновлён: 2026-10-28. Текущий код: **2.3.4**.
 
-Это текущий список новых/улучшенных функций после большого переноса **2.1.3**, последующих исправлений и переделки интерфейса. Старые функции, которые не менялись, повторно не отправляются на проверку. Более ранние системы отмечены в отдельном разделе ниже. История выпусков: [CHANGELOG](../CHANGELOG.md); источники переноса: [Visual-Source-Audit](Visual-Source-Audit.md). Все 339 сохраняемых настроек перечислены отдельно: [Settings-Inventory](Settings-Inventory.md).
+Это текущий список новых/улучшенных функций после большого переноса **2.1.3**, последующих исправлений и переделки интерфейса. Старые функции, которые не менялись, повторно не отправляются на проверку. Более ранние системы отмечены в отдельном разделе ниже. История выпусков: [CHANGELOG](../CHANGELOG.md); источники переноса: [Visual-Source-Audit](Visual-Source-Audit.md). Все 336 сохраняемых настроек перечислены отдельно: [Settings-Inventory](Settings-Inventory.md).
 
 ## Как вести список
 
@@ -128,7 +128,7 @@
 | CHR-06 | Character trail: положение, lifetime, начальная прозрачность, цвет/радуга | 2.1.3 | Подтверждено пользователем 2026-10-29 |
 | CHR-07 | Trail gradient: начало/конец, переключение между градиентом и одноцветным режимом | 2.1.3 | Подтверждено пользователем 2026-10-29 |
 | CHR-08 | Disintegration dust: четыре слоя при смерти, без дублей, исчезновение эффекта | 2.1.3 | Подтверждено пользователем 2026-10-29 |
-| CHR-09 | Custom animation: выбор каждого варианта ниже, speed 0.1–5, Stop animation, респавн | 2.1.3 | Не проверено |
+| CHR-09 | Custom animation: выбор каждого варианта ниже, speed 0.1–5, Stop animation, респавн | 2.1.3 | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
 
 Старые Forcefield/Cone hat одобрены раньше. У манекенов известно отличие ragdoll от физики FTAP: пользователь отложил доработку; не объявлять точным совпадением или исправленным.
 
@@ -138,52 +138,52 @@
 
 | ID | Вариант | Статус |
 | --- | --- | --- |
-| ANI-01 | Dance / Club | Не проверено |
-| ANI-02 | Dance / Dab | Не проверено |
-| ANI-03 | Dance / Groove | Не проверено |
-| ANI-04 | Dance / Jump Dance | Не проверено |
-| ANI-05 | Dance / Moon Dance | Не проверено |
-| ANI-06 | Dance / Moving Dance | Не проверено |
-| ANI-07 | Dance / Robot | Не проверено |
-| ANI-08 | Dance / Shuffle | Не проверено |
-| ANI-09 | Dance / Spin Dance | Не проверено |
-| ANI-10 | Dance / Spin Dance 2 | Не проверено |
-| ANI-11 | Dance / Spinner | Не проверено |
-| ANI-12 | Dance / Thriller | Не проверено |
-| ANI-13 | Emote / Arm Detach | Не проверено |
-| ANI-14 | Emote / Arm Turbine | Не проверено |
-| ANI-15 | Emote / Barrel Roll | Не проверено |
-| ANI-16 | Emote / Bow Down | Не проверено |
-| ANI-17 | Emote / Clone Illusion | Не проверено |
-| ANI-18 | Emote / Crouch | Не проверено |
-| ANI-19 | Emote / Dino Walk | Не проверено |
-| ANI-20 | Emote / Faint | Не проверено |
-| ANI-21 | Emote / Float Sit | Не проверено |
-| ANI-22 | Emote / Floating Head | Не проверено |
-| ANI-23 | Emote / Floor Crawl | Не проверено |
-| ANI-24 | Emote / Floor Faint | Не проверено |
-| ANI-25 | Emote / Full Punch | Не проверено |
-| ANI-26 | Emote / Full Swing | Не проверено |
-| ANI-27 | Emote / Glitch Levitate | Не проверено |
-| ANI-28 | Emote / Head Throw | Не проверено |
-| ANI-29 | Emote / Hero Jump | Не проверено |
-| ANI-30 | Emote / Insane | Не проверено |
-| ANI-31 | Emote / Insane Arms | Не проверено |
-| ANI-32 | Emote / Jumping Jacks | Не проверено |
-| ANI-33 | Emote / Levitate | Не проверено |
-| ANI-34 | Emote / Loop Head | Не проверено |
-| ANI-35 | Emote / Loop Slam | Не проверено |
-| ANI-36 | Emote / Mega Insane | Не проверено |
-| ANI-37 | Emote / Scared | Не проверено |
-| ANI-38 | Emote / Super Faint | Не проверено |
-| ANI-39 | Emote / Super Punch | Не проверено |
-| ANI-40 | Emote / Sword Slam | Не проверено |
-| ANI-41 | Emote / Sword Slice | Не проверено |
-| ANI-42 | Emote / Weird Move | Не проверено |
-| ANI-43 | FTAP / Crouch | Не проверено |
-| ANI-44 | FTAP / Fire Flail | Не проверено |
-| ANI-45 | FTAP / Flail | Не проверено |
-| ANI-46 | FTAP / Type | Не проверено |
+| ANI-01 | Dance / Club | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-02 | Dance / Dab | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-03 | Dance / Groove | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-04 | Dance / Jump Dance | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-05 | Dance / Moon Dance | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-06 | Dance / Moving Dance | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-07 | Dance / Robot | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-08 | Dance / Shuffle | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-09 | Dance / Spin Dance | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-10 | Dance / Spin Dance 2 | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-11 | Dance / Spinner | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-12 | Dance / Thriller | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-13 | Emote / Arm Detach | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-14 | Emote / Arm Turbine | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-15 | Emote / Barrel Roll | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-16 | Emote / Bow Down | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-17 | Emote / Clone Illusion | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-18 | Emote / Crouch | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-19 | Emote / Dino Walk | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-20 | Emote / Faint | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-21 | Emote / Float Sit | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-22 | Emote / Floating Head | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-23 | Emote / Floor Crawl | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-24 | Emote / Floor Faint | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-25 | Emote / Full Punch | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-26 | Emote / Full Swing | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-27 | Emote / Glitch Levitate | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-28 | Emote / Head Throw | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-29 | Emote / Hero Jump | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-30 | Emote / Insane | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-31 | Emote / Insane Arms | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-32 | Emote / Jumping Jacks | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-33 | Emote / Levitate | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-34 | Emote / Loop Head | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-35 | Emote / Loop Slam | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-36 | Emote / Mega Insane | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-37 | Emote / Scared | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-38 | Emote / Super Faint | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-39 | Emote / Super Punch | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-40 | Emote / Sword Slam | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-41 | Emote / Sword Slice | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-42 | Emote / Weird Move | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-43 | FTAP / Crouch | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-44 | FTAP / Fire Flail | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-45 | FTAP / Flail | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
+| ANI-46 | FTAP / Type | Удалено из Visuals 2.3.4; перенос в Vortex отложен |
 
 ## ESP — новые/расширенные возможности
 
@@ -310,3 +310,7 @@ GFX-08/GFX-09 закрыты. В совокупности с прежними о
 ### Character — подтверждение 2026-10-29
 
 Пользователь отдельно подтвердил пункты CHR-01…CHR-08; круг при прыжке отметил как чёткий и плавный. CHR-09 и все ANI-01…ANI-46 пока не подтверждены. Вопрос о видимости анимаций другим игрокам не является результатом теста: код использует существующий Animator персонажа, а при его отсутствии создаёт локальный; репликация зависит от происхождения Animator и доступности анимации. Наблюдение со второго клиента ещё не выполнено. Runtime остаётся 2.3.3.
+
+### Анимации убраны — 2026-10-29, 2.3.4
+
+По просьбе пользователя удалены карточка анимаций, обработчики воспроизведения, 46 определений и три настройки. В Vortex пока не перенесены. CHR-01…CHR-08 остаются подтверждёнными. Старые ключи конфигов игнорируются.
