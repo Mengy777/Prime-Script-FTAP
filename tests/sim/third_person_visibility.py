@@ -46,6 +46,29 @@ assert(char:FindFirstChild('Torso').LocalTransparencyModifier==.3,'first-person 
 camera.Focus={Position=Vector3.new(0,0,12)}
 TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
 assert(char:FindFirstChild('Head').LocalTransparencyModifier==0,'skin did not return when zooming back out')
+-- Custom camera Focus can remain close even when the actual camera is far.
+local head=char:FindFirstChild('Head')
+head.Position=Vector3.new(0,0,0)
+camera.CFrame={Position=Vector3.new(0,0,12)} camera.Focus={Position=Vector3.new(0,0,12.5)}
+for cycle=1,150 do
+ camera.CFrame={Position=Vector3.new(0,0,.5)}
+ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+ head.LocalTransparencyModifier=1
+ camera.CFrame={Position=Vector3.new(0,0,12)}
+ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+ for _,p in ipairs(char:GetDescendants())do
+  if p:IsA('BasePart')and p.Name~='HumanoidRootPart'then
+   p.LocalTransparencyModifier=1 -- A game listener AFTER our render callback.
+   assert(p.LocalTransparencyModifier==0,'late game visibility write hid '..p.Name)
+  end
+ end
+end
+local removed=Instance.new('Part')removed.Name='Removed' removed.LocalTransparencyModifier=0 removed.Parent=char
+char.DescendantAdded:Fire(removed)
+removed.Parent=workspace TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+removed.LocalTransparencyModifier=1 assert(removed.LocalTransparencyModifier==1,'detached part still guarded')
+removed:Destroy()
+camera.Focus={Position=Vector3.new(0,0,0)} -- End stale-Focus case before legacy respawn scenarios.
 local clamps=0
 local me=TEST_SERVICES.Players.LocalPlayer
 local observer=me:GetPropertyChangedSignal('CameraMinZoomDistance'):Connect(function()

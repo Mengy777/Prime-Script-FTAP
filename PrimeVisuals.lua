@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.7"
+local VERSION="2.3.8"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1146,10 +1146,17 @@ local function buildVisualSystems()
     -- First-person transparency can survive Roblox's switch to Classic camera.
     -- Correct only the local multiplier, after the camera; preserve actual Transparency and effect layers.
     local thirdParts,thirdCharacter={},nil
+    local thirdGuard={signals={},writing=false}
     local thirdVisibilityBound=false
     local thirdZoomActive=false
     local function thirdIsClose()
         local camera=Workspace.CurrentCamera
+        local character=player.Character
+        local head=character and character:FindFirstChild("Head")
+        -- Custom game controllers can leave Focus stale after wheel zoom.
+        if camera and camera.CFrame and head and head:IsA("BasePart") and head.Position and type(head.Position.X)=="number" then
+            return (head.Position-camera.CFrame.Position).Magnitude<1
+        end
         return camera and camera.Focus and camera.CFrame
             and (camera.Focus.Position-camera.CFrame.Position).Magnitude<1
     end
@@ -1192,24 +1199,45 @@ local function buildVisualSystems()
         Run:BindToRenderStep("PrimeVisualsThirdPanMouse",Enum.RenderPriority.Camera.Value+3,updateThirdPan)
         thirdPanBound=true
     end
+    function thirdGuard.disconnect()
+        for _,connection in pairs(thirdGuard.signals) do connection:Disconnect() end
+        thirdGuard.signals={}
+    end
+    function thirdGuard.show(part)
+        if thirdGuard.writing then return end
+        thirdGuard.writing=true
+        local ok,message=pcall(patch,"thirdBody",part,"LocalTransparencyModifier",0)
+        thirdGuard.writing=false
+        if not ok then warn("Prime Visuals / third-person visibility: "..tostring(message)) end
+    end
     local function thirdPart(part)
-        if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then thirdParts[part]=true end
+        if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or thirdParts[part] then return end
+        thirdParts[part]=true
+        thirdGuard.signals[part]=part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
+            if thirdGuard.writing or not alive or not controls.camThird or controls.freeCameraEnabled or controls.spectateEnabled then return end
+            if player.Character~=thirdCharacter or not part.Parent or not part:IsDescendantOf(thirdCharacter) or thirdIsClose() then return end
+            -- A game RenderStepped listener may run after our camera callback.
+            -- patch() still respects other intentional transparency layers.
+            thirdGuard.show(part)
+        end)
     end
     local function thirdVisibility()
         if not alive or not controls.camThird then return end
-        if thirdIsClose() then unpatch("thirdBody") return end
+        if controls.freeCameraEnabled or controls.spectateEnabled then return end
         local character=player.Character
         if thirdCharacter~=character then
-            job("Third-person parts") unpatch("thirdBody") thirdParts={} thirdCharacter=character
+            job("Third-person parts") thirdGuard.disconnect() unpatch("thirdBody") thirdParts={} thirdCharacter=character
             if character then
                 for _,part in ipairs(character:GetDescendants()) do thirdPart(part) end
                 job("Third-person parts",character.DescendantAdded,thirdPart)
             end
         end
+        if thirdIsClose() then unpatch("thirdBody") return end
         for part in pairs(thirdParts) do
             if not part.Parent or not character or not part:IsDescendantOf(character) then
+                if thirdGuard.signals[part] then thirdGuard.signals[part]:Disconnect() thirdGuard.signals[part]=nil end
                 thirdParts[part]=nil unpatch("thirdBody",part)
-            else patch("thirdBody",part,"LocalTransparencyModifier",0) end
+            else thirdGuard.show(part) end
         end
     end
     clearThirdVisibility=function()
@@ -1219,6 +1247,7 @@ local function buildVisualSystems()
             Run:UnbindFromRenderStep("PrimeVisualsThirdPanMouse") thirdPanBound=false
         end
         releaseThirdPan()
+        thirdGuard.disconnect()
         job("Third-person parts") job("Third-person visibility")
         if thirdVisibilityBound then Run:UnbindFromRenderStep("PrimeVisualsThirdBody") thirdVisibilityBound=false end
         unpatch("thirdBody") thirdParts={} thirdCharacter=nil
