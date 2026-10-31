@@ -6,7 +6,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.3.8**, tag `v2.3.8`. Next normal runtime version: **2.3.9**. Consult Git for the release commit.
+- Published runtime target: **2.3.9**, tag `v2.3.9`. Next normal runtime version: **2.4.0**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -83,6 +83,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - 2.2.0 opens native wheel zoom **0.5–80**, allowing first person and back out. Distance slider clamps once to the chosen distance, then frees the range. Maintenance must not snap back every second.
 - When camera-to-Focus distance is below 1, suspend forced third-person visibility so the head/accessories do not block first person; first-person body setting may operate. Restore visibility on zoom out. Restore original camera mode/zoom limits on disable/unload.
 - 2.3.8 supersedes the Focus-only check above: use actual camera-to-Head distance, falling back to Focus if unavailable. Per-part LTM listeners repair late game writes in third person, respect patch layers and skip first person/Freecam/Spectate. Disconnect on removal, character replacement, disable and unload. 150-cycle regression passed in mocks; real user confirmation pending.
+- 2.3.9 corrects2.3.8 pitch regression: near radius2 studs and explicit thirdNear LTM=1 for Head/accessories; remove near layer on zoom out before thirdBody restoration. Guard listeners also enforce near head hiding and skip Freecam/Spectate; silence listeners during layer transitions. 60 three-direction pitch cycles added. Real game confirmation pending.
 - Freecam moves only camera, not character. Freecam/Spectate disable one another. Smooth camera was removed in 2.2.1. Freecam now uses mouse look without RMB, Space/Q and speed 10–600 with a compact branded HUD; Spectate uses the ESP-style player picker. See docs/View-2.2.1.md for the game-menu suppression scope.
 - 2.2.2 adds F3 temporary interaction mode: freezes camera movement, frees cursor and allows native game menus/keys; another F3 resumes flight. This does not change server action range or teleport the character. Read docs/Freecam-Interaction.md before extending interaction.
 - 2.2.3 adds F4 and HUD close button for standard Freecam exit. Preserve movement/camera/input restoration and disconnect old HUD handlers on recreation; wheel delta 0 is ignored and multi-step input is respected.

@@ -63,6 +63,21 @@ for cycle=1,150 do
   end
  end
 end
+-- Pitch offsets can move first-person camera >1 stud from Head centre.
+for cycle=1,60 do
+ for _,position in ipairs({Vector3.new(0,1.4,.4),Vector3.new(0,-1.4,.4),Vector3.new(1.3,0,.6)})do
+  camera.CFrame={Position=position}
+  TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+  head.LocalTransparencyModifier=0 handle.LocalTransparencyModifier=0
+  assert(head.LocalTransparencyModifier==1 and handle.LocalTransparencyModifier==1,'first-person pitch exposed head/hair')
+  TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+  assert(char:FindFirstChild('Torso').LocalTransparencyModifier==.3,'near guard hid intended first-person body')
+ end
+ camera.CFrame={Position=Vector3.new(0,0,12)}
+ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+ assert(head.LocalTransparencyModifier==0 and handle.LocalTransparencyModifier==0,'head/hair stayed hidden on zoom out')
+ assert(handle.Transparency==.2,'true accessory transparency changed')
+end
 local removed=Instance.new('Part')removed.Name='Removed' removed.LocalTransparencyModifier=0 removed.Parent=char
 char.DescendantAdded:Fire(removed)
 removed.Parent=workspace TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.8"
+local VERSION="2.3.9"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1155,7 +1155,9 @@ local function buildVisualSystems()
         local head=character and character:FindFirstChild("Head")
         -- Custom game controllers can leave Focus stale after wheel zoom.
         if camera and camera.CFrame and head and head:IsA("BasePart") and head.Position and type(head.Position.X)=="number" then
-            return (head.Position-camera.CFrame.Position).Magnitude<1
+            -- Native first-person camera is offset from the head centre when
+            -- pitching; a one-stud sphere incorrectly re-enabled hair.
+            return (head.Position-camera.CFrame.Position).Magnitude<2
         end
         return camera and camera.Focus and camera.CFrame
             and (camera.Focus.Position-camera.CFrame.Position).Magnitude<1
@@ -1203,10 +1205,22 @@ local function buildVisualSystems()
         for _,connection in pairs(thirdGuard.signals) do connection:Disconnect() end
         thirdGuard.signals={}
     end
+    function thirdGuard.isHead(part)
+        if part.Name=="Head" then return true end
+        local parent=part.Parent
+        while parent and parent~=thirdCharacter do
+            if parent:IsA("Accessory") or parent:IsA("Hat") then return true end
+            parent=parent.Parent
+        end
+        return false
+    end
     function thirdGuard.show(part)
         if thirdGuard.writing then return end
         thirdGuard.writing=true
-        local ok,message=pcall(patch,"thirdBody",part,"LocalTransparencyModifier",0)
+        local near=thirdIsClose()
+        local ok,message=true,nil
+        if not near then ok,message=pcall(patch,"thirdBody",part,"LocalTransparencyModifier",0)
+        elseif thirdGuard.isHead(part) then ok,message=pcall(patch,"thirdNear",part,"LocalTransparencyModifier",1) end
         thirdGuard.writing=false
         if not ok then warn("Prime Visuals / third-person visibility: "..tostring(message)) end
     end
@@ -1215,7 +1229,7 @@ local function buildVisualSystems()
         thirdParts[part]=true
         thirdGuard.signals[part]=part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
             if thirdGuard.writing or not alive or not controls.camThird or controls.freeCameraEnabled or controls.spectateEnabled then return end
-            if player.Character~=thirdCharacter or not part.Parent or not part:IsDescendantOf(thirdCharacter) or thirdIsClose() then return end
+            if player.Character~=thirdCharacter or not part.Parent or not part:IsDescendantOf(thirdCharacter) then return end
             -- A game RenderStepped listener may run after our camera callback.
             -- patch() still respects other intentional transparency layers.
             thirdGuard.show(part)
@@ -1226,17 +1240,19 @@ local function buildVisualSystems()
         if controls.freeCameraEnabled or controls.spectateEnabled then return end
         local character=player.Character
         if thirdCharacter~=character then
-            job("Third-person parts") thirdGuard.disconnect() unpatch("thirdBody") thirdParts={} thirdCharacter=character
+            job("Third-person parts") thirdGuard.disconnect() unpatch("thirdBody") unpatch("thirdNear") thirdParts={} thirdCharacter=character
             if character then
                 for _,part in ipairs(character:GetDescendants()) do thirdPart(part) end
                 job("Third-person parts",character.DescendantAdded,thirdPart)
             end
         end
-        if thirdIsClose() then unpatch("thirdBody") return end
+        thirdGuard.writing=true
+        if thirdIsClose() then unpatch("thirdBody") else unpatch("thirdNear") end
+        thirdGuard.writing=false
         for part in pairs(thirdParts) do
             if not part.Parent or not character or not part:IsDescendantOf(character) then
                 if thirdGuard.signals[part] then thirdGuard.signals[part]:Disconnect() thirdGuard.signals[part]=nil end
-                thirdParts[part]=nil unpatch("thirdBody",part)
+                thirdParts[part]=nil unpatch("thirdBody",part) unpatch("thirdNear",part)
             else thirdGuard.show(part) end
         end
     end
@@ -1250,7 +1266,7 @@ local function buildVisualSystems()
         thirdGuard.disconnect()
         job("Third-person parts") job("Third-person visibility")
         if thirdVisibilityBound then Run:UnbindFromRenderStep("PrimeVisualsThirdBody") thirdVisibilityBound=false end
-        unpatch("thirdBody") thirdParts={} thirdCharacter=nil
+        unpatch("thirdBody") unpatch("thirdNear") thirdParts={} thirdCharacter=nil
     end
     local function startThirdVisibility()
         unpatch("body") -- The first-person body alpha must not compete with third-person visibility.
