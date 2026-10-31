@@ -90,7 +90,7 @@ for mode in ('offline','badsyntax','artinit'):
   ''')
  lu.execute(f"TEST_FAULT('AnimatedEmblem','{mode}')")
  lu.execute(s)
- lu.execute("assert(TEST_LIBRARY.Toggled and #TEST_STARTUP_MESSAGES==0 and TEST_GROUPS['Prime Visuals'].BoxHolder.Visible==false); TEST_OPTIONS.cameraFOV:SetValue(94); assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==94)")
+ lu.execute("assert(TEST_LIBRARY.Toggled and #TEST_STARTUP_MESSAGES==0 and TEST_GROUPS['Prime Visuals'].BoxHolder.Visible~=false); TEST_OPTIONS.cameraFOV:SetValue(94); assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==94)")
  if mode=='artinit': lu.execute("assert(TEST_MODULE_CALLS.AnimatedEmblem==1 and TEST_ART_CHILD.Parent==nil and TEST_ART_HEADER.Parent==nil and TEST_NATIVE_WINDOW.IconHolder.Image=='native://diamond')")
  else: lu.execute("assert(TEST_MODULE_CALLS.AnimatedEmblem==3)")
  if mode=='badsyntax':

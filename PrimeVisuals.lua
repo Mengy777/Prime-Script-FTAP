@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.6"
+local VERSION="2.3.7"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -303,6 +303,10 @@ local ru={
     ["Autosave: unavailable"]="Автосохранение: недоступно",
 
     ["Home"]="Главная",
+    ["Quick access"]="Быстрый доступ",
+    ["Camera & sky"]="Камера и небо",
+    ["Lighting & effects"]="Освещение и эффекты",
+    ["Settings & profiles"]="Настройки и конфиги",
     ["Profile"]="Профиль",
     ["About Prime Visuals"]="О Prime Visuals",
     ["Session statistics"]="Статистика сессии",
@@ -2471,15 +2475,31 @@ local function buildVisualSystems()
         local profile=homeTab:AddLeftGroupbox("Profile","user-round")
         local avatar=profile:AddImage("homeAvatar",{
             Image=string.format("rbxthumb://type=AvatarBust&id=%d&w=180&h=180",player.UserId),
-            Height=164,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
+            Height=112,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
         })
-        local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=16})
+        local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=17})
         local identity=profile:AddLabel({Text="",DoesWrap=true})
-        local about=homeTab:AddLeftGroupbox("About Prime Visuals","diamond")
+        local about=homeTab:AddLeftGroupbox("Quick access","arrow-up-right")
         local hero=homeTab:AddRightGroupbox("Prime Visuals","sparkles")
-        local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=240,Transparency=1,
+        local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=174,Transparency=1,
             BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
-        local artwork=optionalArtwork({Parent=emblemRow.Holder,Header=nativeWindow.IconHolder,
+        local banner=make("Frame",{Name="HomeHeroBanner",Size=UDim2.fromScale(1,1),
+            BackgroundColor3=Color3.fromRGB(19,15,28),BorderSizePixel=0,ClipsDescendants=true},emblemRow.Holder)
+        make("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(33,23,49),Color3.fromRGB(11,11,16)),Rotation=15},banner)
+        make("Frame",{Name="Accent",BackgroundColor3=purple,BorderSizePixel=0,Size=UDim2.new(0,3,1,0)},banner)
+        local function bannerText(name,value,y,height,size,color)
+            return make("TextLabel",{Name=name,BackgroundTransparency=1,Position=UDim2.fromOffset(20,y),
+                Size=UDim2.new(.59,-22,0,height),Text=value,TextColor3=color,Font=Enum.Font.BuilderSans,
+                TextSize=size,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
+                TextWrapped=true,RichText=true},banner)
+        end
+        bannerText("Edition","FTAP  /  v"..VERSION,12,22,12,Color3.fromRGB(181,147,235))
+        bannerText("Title","<b>Prime Visuals</b>",40,43,30,Color3.fromRGB(247,243,255))
+        local heroSubtitle=bannerText("Subtitle","",87,42,14,Color3.fromRGB(185,177,202))
+        bannerText("Author","876osamuha",142,20,12,Color3.fromRGB(144,133,163))
+        local artworkHost=make("Frame",{Name="HomeArtworkHost",Position=UDim2.fromScale(.61,0),
+            Size=UDim2.fromScale(.39,1),BackgroundTransparency=1},banner)
+        local artwork=optionalArtwork({Parent=artworkHost,Header=nativeWindow.IconHolder,
             Name="VisualsPhoenix",Style="phoenix",Accent=purple,
             URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
             CacheFolder="PrimeVisuals/Assets",Folders={"PrimeVisuals","PrimeVisuals/Assets"},
@@ -2488,8 +2508,7 @@ local function buildVisualSystems()
             Notify=function() notify(uiLanguage=="ru" and "Не удалось загрузить PNG превью. Подробности в консоли executor." or "Preview PNG could not load. Details are in the executor console.") end,
         })
         own(artwork.Root)
-        if artwork.Unavailable then hero.BoxHolder.Visible=false
-        else job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end) end
+        if not artwork.Unavailable then job("Home emblem",Run.RenderStepped,function(dt) artwork:Step(dt) end) end
         local statistics=homeTab:AddRightGroupbox("Session statistics","chart-no-axes-combined")
         local function richEscape(value)
             return tostring(value):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;"):gsub('"',"&quot;")
@@ -2498,18 +2517,12 @@ local function buildVisualSystems()
         local function setText(widget,value)
             if widget.Text~=value then widget:SetText(value) end
         end
-        local staticText={}
-        local function localizedLabel(g,en,russian,size)
-            local widget=g:AddLabel({Text=en,DoesWrap=true,Size=size or 14})
-            table.insert(staticText,{widget=widget,en=en,ru=russian})
-            return widget
-        end
-        localizedLabel(about,"<b>Prime Visuals</b>  ·  v"..VERSION,"<b>Prime Visuals</b>  ·  v"..VERSION,15)
-        localizedLabel(about,"Author: <b>@876osamuha</b>","Автор: <b>@876osamuha</b>")
-        localizedLabel(about,"Visual customization for Fling Things and People.","Визуальная настройка Fling Things and People.")
+        action(about,"Camera & sky",function() categoryTabs.View:Show() end)
+        action(about,"Lighting & effects",function() categoryTabs.Graphics:Show() end)
+        action(about,"Settings & profiles",function() categoryTabs.Settings:Show() end)
         local rows={}
         for _,name in ipairs({"fps","frame","ping","memory","players","server","fov","effects","uptime","clock"}) do
-            rows[name]=statistics:AddLabel({Text="—",DoesWrap=true})
+            rows[name]=statistics:AddLabel({Text="—",DoesWrap=true,Size=(name=="fps" or name=="ping") and 16 or 14})
         end
         local showDetails=false
         for _,name in ipairs({"frame","memory","server","clock"}) do rows[name]:SetVisible(false) end
@@ -2522,15 +2535,15 @@ local function buildVisualSystems()
             ScrollBarImageColor3=purple,ScrollingDirection=Enum.ScrollingDirection.Y},homeTab.Container)
         make("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},scroll)
         make("UIPadding",{PaddingLeft=UDim.new(0,2),PaddingRight=UDim.new(0,7),PaddingBottom=UDim.new(0,8)},scroll)
+        hero.BoxHolder.Parent=scroll hero.BoxHolder.LayoutOrder=0
         local top=make("Frame",{Name="HomeSummary",Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,
-            BackgroundTransparency=1,LayoutOrder=0},scroll)
-        local left=make("Frame",{Size=UDim2.new(0.5,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
-        local right=make("Frame",{Position=UDim2.new(0.5,5,0,0),Size=UDim2.new(0.5,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
-        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder},column) end
+            BackgroundTransparency=1,LayoutOrder=1},scroll)
+        local left=make("Frame",{Name="HomeProfileColumn",Size=UDim2.new(0.46,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
+        local right=make("Frame",{Name="HomeSessionColumn",Position=UDim2.new(0.46,5,0,0),Size=UDim2.new(0.54,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
+        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder},column) end
         profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
         about.BoxHolder.Parent=left about.BoxHolder.LayoutOrder=1
-        hero.BoxHolder.Parent=right hero.BoxHolder.LayoutOrder=0
-        statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=1
+        statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=0
         for _,side in ipairs(homeTab.Sides) do side.Visible=false end
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
@@ -2544,7 +2557,7 @@ local function buildVisualSystems()
         refreshHome=function()
             if not alive then return end
             if lastLanguage~=uiLanguage then
-                for _,entry in ipairs(staticText) do setText(entry.widget,uiLanguage=="ru" and entry.ru or entry.en) end
+                heroSubtitle.Text=text("Camera · Sky · Lighting\nLocal visual customization", "Камера · Небо · Освещение\nЛокальные визуальные настройки")
                 lastLanguage=uiLanguage
             end
             local hour=tonumber(os.date("%H")) or 12
@@ -2553,7 +2566,9 @@ local function buildVisualSystems()
                 or hour>=17 and hour<22 and text("Good evening","Добрый вечер") or text("Good night","Доброй ночи")
             setText(greeting,greet..", <b>"..richEscape(player.DisplayName).."</b>")
             setText(identity,"@"..richEscape(player.Name))
-            local function stat(key,en,russian,value) setText(rows[key],text(en,russian)..": <b>"..tostring(value).."</b>") end
+            local function stat(key,en,russian,value)
+                setText(rows[key],'<font color="#a69bb8">'..text(en,russian)..'</font>   <b><font color="#e6d5ff">'..richEscape(value)..'</font></b>')
+            end
             stat("fps","Average FPS","Средний FPS",averageFPS and string.format("%.0f",averageFPS) or "—")
             stat("frame","Frame time","Время кадра",averageFrame and string.format("%.1f ms",averageFrame) or "—")
             local ping,memory
