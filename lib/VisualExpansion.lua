@@ -797,15 +797,31 @@ return function(c)
             if not opened then free.menuRequested=false end
         end
     end
+    local function moveFreeCharacter(character,r,destination)
+        -- A ragdoll has multiple physical assemblies: moving only HRP can leave
+        -- its visible limbs behind after another player throws it.
+        local delta=destination*r.CFrame:Inverse()
+        character:PivotTo(delta*character:GetPivot())
+        for _,part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.AssemblyLinearVelocity=Vector3.zero
+                part.AssemblyAngularVelocity=Vector3.zero
+            end
+        end
+    end
     returnApproach=function()
         local saved=free.approach
         if not saved then return end
-        free.approach=nil
         local h=humanoid(me)
-        if me.Character==saved.character and root(me)==saved.root and saved.root.Parent and not saved.root.Anchored and h and h.Health>0 and not h.SeatPart then
-            saved.root.CFrame=saved.cframe
-            saved.root.AssemblyLinearVelocity=Vector3.zero saved.root.AssemblyAngularVelocity=Vector3.zero
+        if me.Character~=saved.character or root(me)~=saved.root or not saved.root.Parent or not h or h.Health<=0 then
+            free.approach=nil
+            return
         end
+        -- Keep the return point when temporarily seated/anchored; a later RMB
+        -- can retry instead of silently forgetting the original position.
+        if saved.root.Anchored or h.SeatPart then return end
+        moveFreeCharacter(saved.character,saved.root,saved.cframe)
+        free.approach=nil
     end
     local function beginApproach()
         if not free.active then return end
@@ -813,8 +829,6 @@ return function(c)
         local character=me.Character local r=root(me) local h=humanoid(me)
         assert(character and r and h and h.Health>0,translated("Character is not ready"))
         assert(not r.Anchored and not h.SeatPart and not h.Sit,translated("Leave the seat before this test"))
-        local ragdoll=h:FindFirstChild("Ragdolled") or character:FindFirstChild("Ragdolled")
-        assert(not ragdoll or not ragdoll.Value,translated("Wait until the character stands up"))
         local camera=W.CurrentCamera assert(camera,translated("Camera is not ready"))
         local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
         params.FilterDescendantsInstances=world and {character,world} or {character}
@@ -836,8 +850,7 @@ return function(c)
         local rotation=r.CFrame-r.CFrame.Position
         free.approach={character=character,root=r,cframe=r.CFrame}
         local ok,message=pcall(function()
-            r.CFrame=CFrame.new(position)*rotation
-            r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
+            moveFreeCharacter(character,r,CFrame.new(position)*rotation)
         end)
         if not ok then returnApproach(false) error(message,0) end
     end
@@ -879,6 +892,7 @@ return function(c)
     local function endFree()
         if not free.active then return end
         returnApproach(false)
+        free.approach=nil -- Do not carry a blocked return into another session.
         free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
         job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
         free.interacting=false free.rmbNative=nil

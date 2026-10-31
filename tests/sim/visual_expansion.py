@@ -21,6 +21,8 @@ cfmt.__mul=function(a,b)
  return setmetatable({Position=a.Position+b.Position,yaw=yaw,pitch=pitch,LookVector=Vector3.new(-math.sin(yaw)*math.cos(pitch),math.sin(pitch),-math.cos(yaw)*math.cos(pitch))},cfmt)end
 cfmt.__sub=function(a,b)return CFrame.new(a.Position-b)end
 function cfmt:Lerp(b,t)return CFrame.new(self.Position:Lerp(b.Position,t))end
+function cfmt:Inverse()local c=CFrame.new(self.Position*-1)c.yaw=-(self.yaw or 0)c.pitch=-(self.pitch or 0)return c end
+cfmt.__eq=function(a,b)return (a.Position-b.Position).Magnitude<.00001 and math.abs((a.yaw or 0)-(b.yaw or 0))<.00001 and math.abs((a.pitch or 0)-(b.pitch or 0))<.00001 end
 CFrame.new=function(x,y,z)
  local v=type(x)=='table' and x or Vector3.new(x,y,z)
  return setmetatable({Position=v,LookVector=Vector3.new(0,0,-1)},cfmt)
@@ -56,6 +58,11 @@ local function character(name,x)
   part.CFrame=CFrame.new(part.Position)part.Color=Color3.new(.1,.2,.3)part.Transparency=0 part.LocalTransparencyModifier=0 part.Parent=char
  end
  char.GetBoundingBox=function()return CFrame.new(x,3,0),Vector3.new(5,6,2)end
+ char.GetPivot=function(self)return self:FindFirstChild('HumanoidRootPart').CFrame end
+ char.PivotTo=function(self,target)
+  local delta=target*self:GetPivot():Inverse()
+  for _,part in ipairs(self:GetDescendants())do if part:IsA('BasePart')then part.CFrame=delta*part.CFrame part.Position=part.CFrame.Position end end
+ end
  local h=Instance.new('Humanoid')h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.Viewer h.NameDisplayDistance=100 h.Health=100 h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7 h.AutoRotate=true h.Died=Instance.new('Folder').Changed h.Parent=char
  return char
 end
@@ -304,6 +311,26 @@ for cycle=1,10 do
  rightClick()assert(avatarRoot.CFrame~=avatarStart)
  leftClick()rightClick()assert(avatarRoot.CFrame==avatarStart)
 end
+-- Throw/ragdoll separates visible assemblies from HRP. Both directions must
+-- transform the entire model, not just its invisible root.
+local ragdoll=Instance.new('BoolValue')ragdoll.Name='Ragdolled' ragdoll.Value=true ragdoll.Parent=w
+local torso=ME.Character:FindFirstChild('Torso')
+torso.CFrame=CFrame.new(0,5,9)torso.Position=torso.CFrame.Position
+for cycle=1,12 do
+ local oldTorso=torso.CFrame.Position local oldRoot=avatarRoot.CFrame.Position
+ torso.AssemblyLinearVelocity=Vector3.new(900,800,700)
+ torso.AssemblyAngularVelocity=Vector3.new(40,30,20)
+ rightClick()
+ local displacement=avatarRoot.CFrame.Position-oldRoot
+ assert((torso.CFrame.Position-oldTorso-displacement).Magnitude<.00001,'ragdoll body left behind')
+ assert(torso.AssemblyLinearVelocity.Magnitude==0 and torso.AssemblyAngularVelocity.Magnitude==0,'throw momentum retained')
+ TICK(.05)assert(torso.LocalTransparencyModifier==0,'freecam body locally hidden')
+ rightClick()assert(avatarRoot.CFrame==avatarStart,'ragdoll return failed')
+end
+ragdoll:Destroy()
+-- Temporarily blocked return retains its original destination for a retry.
+rightClick()avatarRoot.Anchored=true rightClick()avatarRoot.Anchored=false
+rightClick()assert(avatarRoot.CFrame==avatarStart,'blocked return discarded destination')
 rightClick()TEST_OPTIONS.freeCameraEnabled:SetValue(false)
 assert(avatarRoot.CFrame==avatarStart,'disable failed to return')
 assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Viewer and otherHumanoid.NameDisplayDistance==100,'native names not restored')
