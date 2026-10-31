@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.0"
+local VERSION="2.4.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1801,7 +1801,7 @@ local function buildVisualSystems()
         end)
         g=featureSettings("mannequinEnabled")
         field(g,"mannequinName","Roblox username","",function() end,true)
-        g:AddLabel("Empty username = grey mannequin")
+
         action(g,"Spawn mannequin",function() if mannequins and controls.mannequinEnabled then mannequins:Spawn(controls.mannequinName) end end)
         action(g,"Apply avatar to last",function() if mannequins and controls.mannequinEnabled then mannequins:ApplyToLast(controls.mannequinName) end end)
         action(g,"Reset last to grey",function() if mannequins and controls.mannequinEnabled then mannequins:ApplyToLast("") end end)
@@ -2467,7 +2467,7 @@ local function buildVisualSystems()
         antiKick=loadUIModule("AntiKick")({Player=player,Workspace=Workspace,Run=Run,
             Storage=game:GetService("ReplicatedStorage"),Status=function(text) protectionStatus:SetText("Anti-Kick: "..text) end})
         toggle(g,"antiKickEnabled","Anti-Kick",true,function(on) antiKick:SetEnabled(on) end)
-        g:AddLabel("Self-attached toy protection; cannot cancel server kicks or bans.",true)
+        if protectionStatus.SetTooltip then protectionStatus:SetTooltip("Self-attached toy protection; cannot cancel server kicks or bans.") end
         antiKick:SetEnabled(true)
     end
 
@@ -2543,30 +2543,15 @@ local function buildVisualSystems()
         local profile=homeTab:AddLeftGroupbox("Profile","user-round")
         local avatar=profile:AddImage("homeAvatar",{
             Image=string.format("rbxthumb://type=AvatarBust&id=%d&w=180&h=180",player.UserId),
-            Height=112,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
+            Height=84,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
         })
         local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=17})
         local identity=profile:AddLabel({Text="",DoesWrap=true})
-        local about=homeTab:AddLeftGroupbox("Quick access","arrow-up-right")
+        profile:AddLabel({Text="<b>Prime Visuals</b>  ·  v"..VERSION,DoesWrap=true,Size=13})
         local hero=homeTab:AddRightGroupbox("Prime Visuals","sparkles")
-        local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=174,Transparency=1,
+        local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=156,Transparency=1,
             BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
-        local banner=make("Frame",{Name="HomeHeroBanner",Size=UDim2.fromScale(1,1),
-            BackgroundColor3=Color3.fromRGB(19,15,28),BorderSizePixel=0,ClipsDescendants=true},emblemRow.Holder)
-        make("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(33,23,49),Color3.fromRGB(11,11,16)),Rotation=15},banner)
-        make("Frame",{Name="Accent",BackgroundColor3=purple,BorderSizePixel=0,Size=UDim2.new(0,3,1,0)},banner)
-        local function bannerText(name,value,y,height,size,color)
-            return make("TextLabel",{Name=name,BackgroundTransparency=1,Position=UDim2.fromOffset(20,y),
-                Size=UDim2.new(.59,-22,0,height),Text=value,TextColor3=color,Font=Enum.Font.BuilderSans,
-                TextSize=size,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
-                TextWrapped=true,RichText=true},banner)
-        end
-        bannerText("Edition","FTAP  /  v"..VERSION,12,22,12,Color3.fromRGB(181,147,235))
-        bannerText("Title","<b>Prime Visuals</b>",40,43,30,Color3.fromRGB(247,243,255))
-        local heroSubtitle=bannerText("Subtitle","",87,42,14,Color3.fromRGB(185,177,202))
-        bannerText("Author","876osamuha",142,20,12,Color3.fromRGB(144,133,163))
-        local artworkHost=make("Frame",{Name="HomeArtworkHost",Position=UDim2.fromScale(.61,0),
-            Size=UDim2.fromScale(.39,1),BackgroundTransparency=1},banner)
+        local artworkHost=make("Frame",{Name="HomeArtworkHost",Size=UDim2.fromScale(1,1),BackgroundTransparency=1},emblemRow.Holder)
         local artwork=optionalArtwork({Parent=artworkHost,Header=nativeWindow.IconHolder,
             Name="VisualsPhoenix",Style="phoenix",Accent=purple,
             URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
@@ -2585,32 +2570,30 @@ local function buildVisualSystems()
         local function setText(widget,value)
             if widget.Text~=value then widget:SetText(value) end
         end
-        action(about,"Camera & sky",function() categoryTabs.View:Show() end)
-        action(about,"Lighting & effects",function() categoryTabs.Graphics:Show() end)
-        action(about,"Settings & profiles",function() categoryTabs.Settings:Show() end)
         local rows={}
-        for _,name in ipairs({"fps","frame","ping","memory","players","server","fov","effects","uptime","clock"}) do
-            rows[name]=statistics:AddLabel({Text="—",DoesWrap=true,Size=(name=="fps" or name=="ping") and 16 or 14})
-        end
+        local basic={"fps","ping","players","fov","effects","uptime"}
+        local details={"frame","memory","server","clock","health","moveSpeed","position","resolution","place","fpsMin","fpsMax","framePeak"}
+        for _,list in ipairs({basic,details}) do for _,name in ipairs(list) do
+            rows[name]=statistics:AddLabel({Text="—",DoesWrap=true,Size=(name=="fps" or name=="ping") and 16 or 13})
+        end end
         local showDetails=false
-        for _,name in ipairs({"frame","memory","server","clock"}) do rows[name]:SetVisible(false) end
+        local function showSessionRows()
+            for _,name in ipairs(basic) do rows[name]:SetVisible(not showDetails) end
+            for _,name in ipairs(details) do rows[name]:SetVisible(showDetails) end
+        end
+        showSessionRows()
         action(statistics,"Session details",function()
             showDetails=not showDetails
-            for _,name in ipairs({"frame","memory","server","clock"}) do rows[name]:SetVisible(showDetails) end
+            showSessionRows()
+            refreshHome()
         end)
-        local scroll=make("ScrollingFrame",{Name="PrimeHomeScroll",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
-            BorderSizePixel=0,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollBarThickness=3,
-            ScrollBarImageColor3=purple,ScrollingDirection=Enum.ScrollingDirection.Y},homeTab.Container)
-        make("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},scroll)
-        make("UIPadding",{PaddingLeft=UDim.new(0,2),PaddingRight=UDim.new(0,7),PaddingBottom=UDim.new(0,8)},scroll)
-        hero.BoxHolder.Parent=scroll hero.BoxHolder.LayoutOrder=0
-        local top=make("Frame",{Name="HomeSummary",Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,
-            BackgroundTransparency=1,LayoutOrder=1},scroll)
-        local left=make("Frame",{Name="HomeProfileColumn",Size=UDim2.new(0.46,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
-        local right=make("Frame",{Name="HomeSessionColumn",Position=UDim2.new(0.46,5,0,0),Size=UDim2.new(0.54,-5,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},top)
-        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder},column) end
+        -- No page ScrollingFrame: both compact columns fit the normal window.
+        local top=make("Frame",{Name="HomeSummary",Size=UDim2.fromScale(1,1),BackgroundTransparency=1},homeTab.Container)
+        local left=make("Frame",{Name="HomeProfileColumn",Size=UDim2.new(.46,-5,1,0),BackgroundTransparency=1},top)
+        local right=make("Frame",{Name="HomeSessionColumn",Position=UDim2.new(.46,5,0,0),Size=UDim2.new(.54,-5,1,0),BackgroundTransparency=1},top)
+        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},column) end
         profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
-        about.BoxHolder.Parent=left about.BoxHolder.LayoutOrder=1
+        hero.BoxHolder.Parent=left hero.BoxHolder.LayoutOrder=1
         statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=0
         for _,side in ipairs(homeTab.Sides) do side.Visible=false end
         local statsService
@@ -2620,14 +2603,9 @@ local function buildVisualSystems()
             "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
-        local lastLanguage
-        local averageFPS,averageFrame
+        local averageFPS,averageFrame,minFPS,maxFPS,peakFrame
         refreshHome=function()
             if not alive then return end
-            if lastLanguage~=uiLanguage then
-                heroSubtitle.Text=text("Camera · Sky · Lighting\nLocal visual customization", "Камера · Небо · Освещение\nЛокальные визуальные настройки")
-                lastLanguage=uiLanguage
-            end
             local hour=tonumber(os.date("%H")) or 12
             local greet=hour>=5 and hour<12 and text("Good morning","Доброе утро")
                 or hour>=12 and hour<17 and text("Good afternoon","Добрый день")
@@ -2659,14 +2637,27 @@ local function buildVisualSystems()
             local seconds=math.max(0,math.floor(os.clock()-sessionStarted))
             stat("uptime","Script uptime","Время работы",string.format("%02d:%02d:%02d",math.floor(seconds/3600),math.floor(seconds/60)%60,seconds%60))
             stat("clock","Local time","Местное время",os.date("%H:%M:%S"))
+            local character=player.Character
+            local h=character and character:FindFirstChildOfClass("Humanoid")
+            local r=character and character:FindFirstChild("HumanoidRootPart")
+            stat("health","Health","Здоровье",h and type(h.Health)=="number" and type(h.MaxHealth)=="number" and string.format("%.0f / %.0f",h.Health,h.MaxHealth) or "—")
+            stat("moveSpeed","Walk speed","Скорость ходьбы",h and type(h.WalkSpeed)=="number" and string.format("%.0f",h.WalkSpeed) or "—")
+            stat("position","Position","Позиция",r and r.Position and type(r.Position.X)=="number" and string.format("%.0f, %.0f, %.0f",r.Position.X,r.Position.Y,r.Position.Z) or "—")
+            stat("resolution","Viewport","Область игры",camera and string.format("%d × %d",camera.ViewportSize.X,camera.ViewportSize.Y) or "—")
+            stat("place","Place ID","ID игры",game.PlaceId or "—")
+            stat("fpsMin","Lowest 1s FPS","Мин. FPS за 1с",minFPS and string.format("%.0f",minFPS) or "—")
+            stat("fpsMax","Highest 1s FPS","Макс. FPS за 1с",maxFPS and string.format("%.0f",maxFPS) or "—")
+            stat("framePeak","Longest frame","Макс. время кадра",peakFrame and string.format("%.1f ms",peakFrame*1000) or "—")
         end
         refreshHome()
         local frames,elapsed=0,0
         job("Home statistics",Run.RenderStepped,function(dt)
             if dt<=0 or dt~=dt or dt==math.huge then return end
             frames=frames+1 elapsed=elapsed+dt
+            peakFrame=math.max(peakFrame or 0,dt)
             if elapsed>=1 then
                 averageFPS=frames/elapsed averageFrame=1000*elapsed/frames
+                minFPS=math.min(minFPS or averageFPS,averageFPS) maxFPS=math.max(maxFPS or averageFPS,averageFPS)
                 frames,elapsed=0,0
                 if Library.ActiveTab==homeTab then refreshHome() end
             end

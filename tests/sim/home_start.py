@@ -25,14 +25,14 @@ print('PASS Home artwork is parented into the visible custom column, not the hid
 
 lua.execute("""
 local hero=TEST_GROUPS['Prime Visuals'].BoxHolder
-assert(hero.Parent.Name=='PrimeHomeScroll' and hero.LayoutOrder==0,'hero is not full-width first row')
-local banner
-for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do if node.Name=='HomeHeroBanner' then banner=node end end
-assert(banner and banner.ClipsDescendants,'hero banner missing')
+assert(hero.Parent.Name=='HomeProfileColumn' and hero.LayoutOrder==1)
 assert(TEST_GROUPS['Profile'].BoxHolder.Parent.Name=='HomeProfileColumn')
 assert(TEST_GROUPS['Session statistics'].BoxHolder.Parent.Name=='HomeSessionColumn')
-TEST_ACTIONS['Camera & sky']() assert(TEST_ACTIVE_TAB=='View')
-TEST_ACTIONS['Lighting & effects']() assert(TEST_ACTIVE_TAB=='Graphics')
-TEST_ACTIONS['Settings & profiles']() assert(TEST_ACTIVE_TAB=='Settings')
+for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do
+ assert(node.Name~='PrimeHomeScroll' and node.Name~='HomeHeroBanner','obsolete scrolling banner survived')
+end
+assert(not TEST_GROUPS['Quick access'] and not TEST_ACTIONS['Camera & sky'])
+TEST_ACTIONS['Session details']()
+TEST_ACTIONS['Session details']()
 """)
-print('PASS full-width Home hero, profile/session composition and all three quick navigation callbacks')
+print('PASS compact non-scrolling Home, profile/phoenix composition, removed shortcuts and session detail toggle')
