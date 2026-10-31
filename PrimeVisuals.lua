@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.3.9"
+local VERSION="2.4.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1202,7 +1202,7 @@ local function buildVisualSystems()
         thirdPanBound=true
     end
     function thirdGuard.disconnect()
-        for _,connection in pairs(thirdGuard.signals) do connection:Disconnect() end
+        for _,list in pairs(thirdGuard.signals) do for _,connection in ipairs(list) do connection:Disconnect() end end
         thirdGuard.signals={}
     end
     function thirdGuard.isHead(part)
@@ -1219,40 +1219,63 @@ local function buildVisualSystems()
         thirdGuard.writing=true
         local near=thirdIsClose()
         local ok,message=true,nil
-        if not near then ok,message=pcall(patch,"thirdBody",part,"LocalTransparencyModifier",0)
+        if not near then
+            ok,message=pcall(function()
+                patch("thirdBody",part,"LocalTransparencyModifier",0)
+                local data=thirdParts[part]
+                local entry=patches[part] and patches[part].Transparency
+                local intentional=false
+                if entry then for name in pairs(entry.layers) do if name~="thirdAlpha" then intentional=true break end end end
+                if not intentional and data and data.alpha~=nil then
+                    if part.Transparency>=.999 then
+                        patch("thirdAlpha",part,"Transparency",data.alpha)
+                    elseif not (entry and entry.layers.thirdAlpha) then
+                        data.alpha=part.Transparency
+                    end
+                end
+            end)
         elseif thirdGuard.isHead(part) then ok,message=pcall(patch,"thirdNear",part,"LocalTransparencyModifier",1) end
         thirdGuard.writing=false
         if not ok then warn("Prime Visuals / third-person visibility: "..tostring(message)) end
     end
     local function thirdPart(part)
         if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or thirdParts[part] then return end
-        thirdParts[part]=true
-        thirdGuard.signals[part]=part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
+        -- Preserve intentionally invisible helpers; only known avatar body parts
+        -- have a zero-alpha fallback if this script starts after they were hidden.
+        local standard=({Head=true,Torso=true,UpperTorso=true,LowerTorso=true,["Left Arm"]=true,["Right Arm"]=true,["Left Leg"]=true,["Right Leg"]=true,
+            LeftUpperArm=true,LeftLowerArm=true,LeftHand=true,RightUpperArm=true,RightLowerArm=true,RightHand=true,
+            LeftUpperLeg=true,LeftLowerLeg=true,LeftFoot=true,RightUpperLeg=true,RightLowerLeg=true,RightFoot=true})[part.Name]
+        thirdParts[part]={alpha=part.Transparency<1 and part.Transparency or standard and 0 or nil}
+        local function repair()
             if thirdGuard.writing or not alive or not controls.camThird or controls.freeCameraEnabled or controls.spectateEnabled then return end
             if player.Character~=thirdCharacter or not part.Parent or not part:IsDescendantOf(thirdCharacter) then return end
             -- A game RenderStepped listener may run after our camera callback.
             -- patch() still respects other intentional transparency layers.
             thirdGuard.show(part)
-        end)
+        end
+        thirdGuard.signals[part]={
+            part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(repair),
+            part:GetPropertyChangedSignal("Transparency"):Connect(repair),
+        }
     end
     local function thirdVisibility()
         if not alive or not controls.camThird then return end
         if controls.freeCameraEnabled or controls.spectateEnabled then return end
         local character=player.Character
         if thirdCharacter~=character then
-            job("Third-person parts") thirdGuard.disconnect() unpatch("thirdBody") unpatch("thirdNear") thirdParts={} thirdCharacter=character
+            job("Third-person parts") thirdGuard.disconnect() unpatch("thirdBody") unpatch("thirdNear") unpatch("thirdAlpha") thirdParts={} thirdCharacter=character
             if character then
                 for _,part in ipairs(character:GetDescendants()) do thirdPart(part) end
                 job("Third-person parts",character.DescendantAdded,thirdPart)
             end
         end
         thirdGuard.writing=true
-        if thirdIsClose() then unpatch("thirdBody") else unpatch("thirdNear") end
+        if thirdIsClose() then unpatch("thirdBody") unpatch("thirdAlpha") else unpatch("thirdNear") end
         thirdGuard.writing=false
         for part in pairs(thirdParts) do
             if not part.Parent or not character or not part:IsDescendantOf(character) then
-                if thirdGuard.signals[part] then thirdGuard.signals[part]:Disconnect() thirdGuard.signals[part]=nil end
-                thirdParts[part]=nil unpatch("thirdBody",part) unpatch("thirdNear",part)
+                if thirdGuard.signals[part] then for _,connection in ipairs(thirdGuard.signals[part]) do connection:Disconnect() end thirdGuard.signals[part]=nil end
+                thirdParts[part]=nil unpatch("thirdBody",part) unpatch("thirdNear",part) unpatch("thirdAlpha",part)
             else thirdGuard.show(part) end
         end
     end
@@ -1266,7 +1289,7 @@ local function buildVisualSystems()
         thirdGuard.disconnect()
         job("Third-person parts") job("Third-person visibility")
         if thirdVisibilityBound then Run:UnbindFromRenderStep("PrimeVisualsThirdBody") thirdVisibilityBound=false end
-        unpatch("thirdBody") unpatch("thirdNear") thirdParts={} thirdCharacter=nil
+        unpatch("thirdBody") unpatch("thirdNear") unpatch("thirdAlpha") thirdParts={} thirdCharacter=nil
     end
     local function startThirdVisibility()
         unpatch("body") -- The first-person body alpha must not compete with third-person visibility.

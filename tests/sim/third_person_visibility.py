@@ -84,6 +84,32 @@ removed.Parent=workspace TEST_SERVICES.RunService._render.PrimeVisualsThirdBody(
 removed.LocalTransparencyModifier=1 assert(removed.LocalTransparencyModifier==1,'detached part still guarded')
 removed:Destroy()
 camera.Focus={Position=Vector3.new(0,0,0)} -- End stale-Focus case before legacy respawn scenarios.
+-- Ordinary Transparency (not LTM) can hide the mesh while its face decal stays.
+local helper=Instance.new('Part')helper.Name='RagdollTouchedHitbox'helper.Transparency=1 helper.LocalTransparencyModifier=1 helper.Parent=char
+char.DescendantAdded:Fire(helper)
+for cycle=1,360 do
+ TEST_CLOCK=TEST_CLOCK+2 -- More than ten simulated minutes, without respawn.
+ camera.CFrame={Position=Vector3.new(0,0,.5)}
+ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+ for _,part in ipairs(char:GetDescendants())do
+  if part:IsA('BasePart') and part.Name~='HumanoidRootPart' and part~=helper then
+   part.Transparency=1 part.LocalTransparencyModifier=1
+  end
+ end
+ camera.CFrame={Position=Vector3.new(0,0,12)}
+ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
+ for _,part in ipairs(char:GetDescendants())do
+  if part:IsA('BasePart') and part.Name~='HumanoidRootPart' and part~=helper then
+   local expected=part==handle and .2 or part==later and .4 or 0
+   assert(part.Transparency==expected,'actual alpha remained hidden: '..part.Name)
+   part.Transparency=1 -- Late ordinary-alpha write after camera visibility callback.
+   assert(part.Transparency==expected,'late ordinary alpha hide was not repaired')
+   assert(part.LocalTransparencyModifier==0)
+  end
+ end
+ assert(helper.Transparency==1,'invisible hitbox was exposed')
+end
+helper:Destroy()
 local clamps=0
 local me=TEST_SERVICES.Players.LocalPlayer
 local observer=me:GetPropertyChangedSignal('CameraMinZoomDistance'):Connect(function()
@@ -96,8 +122,10 @@ assert(clamps==1,'maintenance snapped the user zoom back to slider distance')
 observer:Disconnect()
 for i=1,12 do
  local previous=ME.Character ME.Character=CHARACTER('Respawn'..i) previous:Destroy()
+ ME.Character:FindFirstChild('Torso').Transparency=1 -- Already hidden when first observed.
  TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
  assert(ME.Character:FindFirstChild('Head').LocalTransparencyModifier==0)
+ assert(ME.Character:FindFirstChild('Torso').Transparency==0,'known body fallback did not recover hidden torso')
 end
 TEST_OPTIONS.camThird:SetValue(false)
 assert(not TEST_SERVICES.RunService._render.PrimeVisualsThirdBody)
