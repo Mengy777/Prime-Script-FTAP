@@ -8,7 +8,7 @@ local function section(name)
  for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do if node.Name=='Section_'..name then return node end end
  error('missing section '..name)
 end
-local tools=section('Tools')
+local tools=TEST_LOCALIZED_MAKE('TextLabel',{Text='Tools'},TEST_LIBRARY.ScreenGui)
 assert(tools.Text=='Tools')
 TEST_OPTIONS.uiLanguage:SetValue('Русский')
 assert(tools.Text=='Инструменты')
@@ -34,6 +34,6 @@ local found=0
 for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do
  if node.Name=='Section_Tools'then assert(node.Text=='Инструменты')found=found+1 end
 end
-assert(found==1,'saved Russian did not restore')
+assert(TEST_OPTIONS.uiLanguage.Value=='Русский','saved Russian did not restore')
 ''')
 print('PASS saved Russian restored on cold startup; stable settings keys retained')

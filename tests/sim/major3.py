@@ -1,0 +1,45 @@
+from support import Disk,session,ROOT
+import json
+D=Disk();lua,source,_,_=session(D)
+lua.execute(r"""
+for key,o in pairs(TEST_OPTIONS)do if key:sub(1,5)=='bind_'then assert(o.Value=='','default bind not empty')end end
+local input=TEST_SERVICES.UserInputService
+local function press(name)input.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode[name]},false)end
+TEST_OPTIONS.bind_camThird:SetValue('K')
+TEST_LIBRARY:Toggle(false)press('K')assert(TEST_OPTIONS.camThird.Value)
+TEST_LIBRARY:Toggle(true)press('K')assert(TEST_OPTIONS.camThird.Value,'UI interaction triggered gameplay binding')
+TEST_OPTIONS.bind_menu:SetValue('M')press('M')assert(not TEST_LIBRARY.Toggled)
+TEST_OPTIONS.menuTheme:SetValue('Midnight')TEST_OPTIONS.menuCustomAccent:SetValue(true)
+TEST_OPTIONS.menuAccent:SetValueRGB(Color3.new(.2,.5,.7))
+TEST_OPTIONS.hudClock:SetValue(true)TEST_OPTIONS.hudEnabled:SetValue(false)
+TEST_DRAIN()TEST_ACTIONS['Unload script']()
+""")
+lua,source,_,_=session(D)
+lua.execute(r"""
+assert(TEST_OPTIONS.bind_camThird.Value=='K'and TEST_OPTIONS.bind_menu.Value=='M')
+assert(TEST_OPTIONS.menuTheme.Value=='Midnight' and TEST_OPTIONS.menuCustomAccent.Value)
+assert(TEST_OPTIONS.menuAccent.Value.R==.2 and TEST_OPTIONS.hudClock.Value and not TEST_OPTIONS.hudEnabled.Value)
+for _,tab in pairs(TEST_TAB_OBJECTS)do assert(not tab.Container:FindFirstChild('PV_SectionBar'))end
+TEST_OPTIONS.bind_lightEnabled:SetValue('K')assert(TEST_OPTIONS.bind_lightEnabled.Value=='','duplicate binding accepted')
+TEST_SERVICES.RunService.RenderStepped:Fire(1.1)
+local root=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeStatus')
+assert(root and root:FindFirstChild('Watermark'))
+TEST_ACTIONS['Unload script']()assert(not root.Parent)
+""")
+print('PASS Major3 defaults empty, bindings execute/pause for UI, conflict rejection, theme/color/HUD cold restore and cleanup')
+# Exercise capture against actual keybind module, including mouse and cancellation.
+lua.globals().BIND_FACTORY=lua.execute((ROOT/'lib/Keybinds.lua').read_text(encoding='utf8'))
+lua.execute(r"""
+local input=TEST_SERVICES.UserInputService local assigned=nil local n=0
+local b=BIND_FACTORY({Input=input,MenuOpen=function()return false end,Safe=function(fn)fn()end})
+b:Register('test',function()n=n+1 end)
+b:Capture('test',function(value)assigned=value b:Set('test',value)end)
+input.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton3},false)
+assert(assigned=='MouseButton3' and n==0)
+input.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton3},false)assert(n==1)
+b:Capture('test',function(value)assigned=value end)
+input.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Escape},false)
+assert(assigned=='MouseButton3')b:Destroy()
+input.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton3},false)assert(n==1)
+""")
+print('PASS actual key capture mouse3, no trigger during capture, Escape cancellation and disconnected router')

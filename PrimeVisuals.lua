@@ -1,10 +1,14 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.7"
+local VERSION="3.0.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
 local sourceCache={}
+local factoryCache={}
 local function loadUIModule(name,state)
+    if state and not state.Alive then error("Prime Visuals module load cancelled",0) end
+    if factoryCache[name] then return factoryCache[name] end
+    if state and state.Progress then state.Progress(name) end
     local filename=name=="Library" and "Obsidian" or name
     local chunk,source,message
     for attempt=1,3 do
@@ -30,11 +34,12 @@ local function loadUIModule(name,state)
         function(library) if state then state.Library=library end end)
     if not ok then sourceCache[name]=nil error("Prime Visuals module "..filename.." failed: "..tostring(result),0) end
     sourceCache[name]=source
+    if name=="PrimeIcon" and type(result)=="function" then factoryCache[name]=result end
     return result
 end
 local function cleanupFailedStartup(state)
     state.Alive=false
-    for _,key in ipairs({"SuppressSave","Close","CleanupEffects","RestoreSky"}) do
+    for _,key in ipairs({"SuppressSave","IntroClose","Close","CleanupEffects","RestoreSky"}) do
         if type(state[key])=="function" then pcall(state[key]) end
     end
     for _,connection in ipairs(type(state.Connections)=="table" and state.Connections or {}) do pcall(function() connection:Disconnect() end) end
@@ -74,6 +79,13 @@ for _,name in ipairs({"PrimeVisuals","MengysVisual","FOVPanel"}) do
     local old=playerGui:FindFirstChild(name)
     if old then old:Destroy() end
 end
+local intro=Instance.new("ScreenGui")intro.Name="PrimeLoading"intro.IgnoreGuiInset=true intro.ResetOnSpawn=false intro.DisplayOrder=10000 intro.Parent=playerGui
+startup.IntroClose=function()if intro then intro:Destroy()intro=nil end end
+local backdrop=Instance.new("CanvasGroup")backdrop.Size=UDim2.fromScale(1,1)backdrop.BackgroundColor3=Color3.fromRGB(8,8,12)backdrop.BorderSizePixel=0 backdrop.Active=true backdrop.GroupTransparency=1 backdrop.Parent=intro
+game:GetService("TweenService"):Create(backdrop,TweenInfo.new(.2),{GroupTransparency=0}):Play()
+local introTitle=Instance.new("TextLabel")introTitle.BackgroundTransparency=1 introTitle.Size=UDim2.fromScale(1,.12)introTitle.Position=UDim2.fromScale(0,.42)introTitle.Text="Ω  PRIME VISUALS"introTitle.Font=Enum.Font.BuilderSansBold introTitle.TextSize=32 introTitle.TextColor3=Color3.fromRGB(190,140,255)introTitle.Parent=backdrop
+local introStatus=Instance.new("TextLabel")introStatus.BackgroundTransparency=1 introStatus.Size=UDim2.fromScale(1,.06)introStatus.Position=UDim2.fromScale(0,.55)introStatus.Text="Loading components…"introStatus.Font=Enum.Font.BuilderSans introStatus.TextSize=15 introStatus.TextColor3=Color3.fromRGB(185,180,200)introStatus.Parent=backdrop
+startup.Progress=function(name)if intro then introStatus.Text="Загрузка: "..name end end
 local connections={}
 local cleanupExtra=function() end
 local profileChanged=function() end
@@ -536,6 +548,27 @@ ru["Waiting for character hitbox"]="Ожидание хитбокса персо
 ru["Restoring protection"]="Восстановление защиты"
 ru["Restore protection"]="Восстановить защиту"
 ru["Freecam"]="Свободная камера"
+ru["Key"]="Клавиша"
+ru["Keybind"]="Бинд"
+ru["Keybinds"]="Бинды"
+ru["Assign key"]="Назначить клавишу"
+ru["Clear all keybinds"]="Очистить все бинды"
+ru["Menu appearance"]="Оформление меню"
+ru["Theme"]="Тема"
+ru["Menu accent"]="Акцент меню"
+ru["Menu transparency"]="Прозрачность меню"
+ru["Menu font"]="Шрифт меню"
+ru["Status panel"]="Экранная панель"
+ru["Show FPS"]="Показывать FPS"
+ru["Show time"]="Показывать время"
+ru["Show player count"]="Число игроков"
+ru["Panel transparency"]="Прозрачность панели"
+ru["Panel vertical position"]="Положение панели по высоте"
+ru["Press a key; Escape cancels, Backspace clears"]="Нажми клавишу; Escape — отмена, Backspace — очистка"
+ru["Custom accent"]="Свой акцент"
+ru["Custom background"]="Свой фон"
+ru["Menu background"]="Фон меню"
+ru["Menu text"]="Текст меню"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
@@ -608,7 +641,7 @@ local windowHeight=math.min(600,math.max(360,viewport.Y-64))
 local nativeWindow=Library:CreateWindow({
     Title="Prime Visuals",Footer="",Icon="diamond",IconSize=UDim2.fromOffset(26,26),
     Size=UDim2.fromOffset(windowWidth,windowHeight),Center=true,AutoShow=false,Resizable=false,
-    ToggleKeybind=Enum.KeyCode.RightShift,EnableSidebarResize=false,Compact=true,
+    ToggleKeybind=Enum.KeyCode.Unknown,EnableSidebarResize=false,Compact=true,
     ShowCustomCursor=true,UnlockMouseWhileOpen=true,Font=Enum.Font.BuilderSans,CornerRadius=6,
     Animations={ToggleWindow=false,TabSwitch=true,Dropdown=true,Groupbox=true,KeyPicker=true},
     TabSwipeFrom="Auto",TabButtonsStyle={Gap=3,Padding=8,CornerRadius=6,Indicator=true,IndicatorWidth=2,IndicatorHeight=20}
@@ -811,7 +844,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -824,6 +857,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if majorInterface then attempt("interface",function() majorInterface:Destroy() end) end
         if antiKick then attempt("anti-kick",function() antiKick:Destroy() end) end
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
         if visualExpansion then attempt("visual expansion",function() visualExpansion:Destroy() end) end
@@ -1027,6 +1061,7 @@ local function buildVisualSystems()
         return register(key,widget,initial,callback,false,{Kind="Toggle"})
     end
     local function featureSettings(key)
+        if featurePanels[key] then return featurePanels[key] end
         local panel=Library:AddFeatureSettings(widgets[key],{Docked=false,Window=nativeWindow.MainFrame})
         featurePanels[key]=panel
         return panel
@@ -1430,9 +1465,7 @@ local function buildVisualSystems()
             end)
         end)
         sliderControl(featureSettings("camBody"),"camBodyAlpha","Limb transparency",0,1,0.3,0.05,function() end)
-        listen(UIS.InputBegan,function(event,processed)
-            if not processed and not UIS:GetFocusedTextBox() and event.KeyCode==Enum.KeyCode.Three then setters.camThird(not controls.camThird,true) end
-        end)
+
     end
     local function applySkyData(data)
         if data.AssetId then applyCustomSky(tostring(data.AssetId)) return end
@@ -2546,7 +2579,7 @@ local function buildVisualSystems()
         local emblemRow=hero:AddImage("homeEmblem",{Image="rbxassetid://0",Height=156,Transparency=1,
             BackgroundTransparency=1,Color=Color3.new(1,1,1),ScaleType=Enum.ScaleType.Fit})
         local artworkHost=make("Frame",{Name="HomeArtworkHost",Size=UDim2.fromScale(1,1),BackgroundTransparency=1},emblemRow.Holder)
-        local artwork=optionalArtwork({Parent=artworkHost,Header=nativeWindow.IconHolder,
+        local artwork=optionalArtwork({Parent=artworkHost,
             Name="VisualsPhoenix",Style="phoenix",Accent=purple,
             URL="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/visuals-phoenix-v1.png",
             CacheFolder="PrimeVisuals/Assets",Folders={"PrimeVisuals","PrimeVisuals/Assets"},
@@ -2702,6 +2735,12 @@ local function buildVisualSystems()
         end
     end
 
+    majorInterface=loadUIModule("MajorInterface")({Controls=controls,Setters=setters,Specs=settingSpecs,Widgets=widgets,
+        Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,
+        TrackCleanup=function(fn)majorInterface={Destroy=fn}end,
+        Keybinds=loadUIModule("Keybinds"),Icon=loadUIModule("PrimeIcon"),Make=make,Safe=safe,Notify=notify,
+        Group=group,Panel=featureSettings,Field=field,Action=action,Toggle=toggle,Slider=sliderControl,Color=color,Choice=choice})
+
     -- One uniform halo color at a time, smoothly cycling through the full rainbow.
     do
         local main=nativeWindow.MainFrame
@@ -2850,6 +2889,7 @@ local function buildVisualSystems()
                     for _,position in pairs(payload.ui.panels) do readPosition(position) end
                 end
             end
+            if majorInterface then majorInterface:ValidateProfile(normalized.values) end
             return normalized
         end
         captureProfile=function()
@@ -3055,6 +3095,7 @@ local function buildVisualSystems()
         if not profileStore.Available then status:SetText("Autosave: unavailable") end
         local function applyProfile(payload)
             local profile=validateProfile(payload)
+            if majorInterface then majorInterface:PrepareProfile(profile.values) end
             -- Untouched/reset defaults follow the new session's actual game state.
             if not profile.fovApplied then profile.values.cameraFOV=settingSpecs.cameraFOV.Default end
             if not profile.applied.skyTime then profile.values.skyTime=settingSpecs.skyTime.Default end
@@ -3213,6 +3254,9 @@ if not prepared then
     error(prepareError,0)
 end
 if not closing and gui.Parent then
+    introStatus.Text="Ready"
+    game:GetService("TweenService"):Create(backdrop,TweenInfo.new(.3),{GroupTransparency=1}):Play()
+    task.delay(.32,startup.IntroClose)
     Library:Toggle(true)
     menuOpen=true
 end

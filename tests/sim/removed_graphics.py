@@ -17,13 +17,13 @@ assert(TEST_OPTIONS.lightEnabled.Value and TEST_OPTIONS.lightContrast.Value==.38
 assert(not TEST_OPTIONS.giEnabled and not TEST_OPTIONS.shaftEnabled)
 assert(not TEST_OPTIONS.animationEnabled and not TEST_OPTIONS.animationName and not TEST_OPTIONS.animationSpeed)
 local bar=TEST_TAB_OBJECTS.Graphics.Container:FindFirstChild('PV_SectionBar')
-assert(bar and not bar:FindFirstChild('Section_Experimental'))
+assert(not bar,'top section bars must be removed in Major3')
 assert(not workspace:FindFirstChild('PV_ExperimentalGraphics'))
 TEST_OPTIONS.lightContrast:SetValue(.39)TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(doc['payload']['values'])==257
+assert len(doc['payload']['values'])==395
 assert all(key not in doc['payload']['values'] for key in removed)
 assert not (ROOT/'lib/ExperimentalGraphics.lua').exists()
 assert 'ExperimentalGraphics' not in source
-print('PASS experiment UI/module removed; old 353-key settings load without reset, preserve manual lighting and resave 257 keys')
+print('PASS experiment UI/module removed; old 353-key settings load without reset, preserve manual lighting and resave 395 keys')

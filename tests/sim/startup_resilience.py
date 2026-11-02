@@ -91,7 +91,7 @@ for mode in ('offline','badsyntax','artinit'):
  lu.execute(f"TEST_FAULT('AnimatedEmblem','{mode}')")
  lu.execute(s)
  lu.execute("assert(TEST_LIBRARY.Toggled and #TEST_STARTUP_MESSAGES==0 and TEST_GROUPS['Prime Visuals'].BoxHolder.Visible~=false); TEST_OPTIONS.cameraFOV:SetValue(94); assert(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView==94)")
- if mode=='artinit': lu.execute("assert(TEST_MODULE_CALLS.AnimatedEmblem==1 and TEST_ART_CHILD.Parent==nil and TEST_ART_HEADER.Parent==nil and TEST_NATIVE_WINDOW.IconHolder.Image=='native://diamond')")
+ if mode=='artinit': lu.execute("assert(TEST_MODULE_CALLS.AnimatedEmblem==1 and TEST_ART_CHILD.Parent==nil and TEST_ART_HEADER.Parent==nil and TEST_NATIVE_WINDOW.IconHolder:FindFirstChild('PrimeOmega')~=nil)")
  else: lu.execute("assert(TEST_MODULE_CALLS.AnimatedEmblem==3)")
  if mode=='badsyntax':
   lu.execute("TEST_MODE='ok'; TEST_ACTIONS['Reset all settings'](); assert(TEST_MODULE_CALLS.AnimatedEmblem==4 and TEST_GROUPS['Prime Visuals'].BoxHolder.Visible~=false)")
@@ -164,3 +164,16 @@ lu,s=setup();lu.execute("TEST_FAULT('LightingEditor','offline')")
 lu.execute(s)
 lu.execute("assert(TEST_MODULE_CALLS.LightingEditor==3 and #TEST_STARTUP_MESSAGES==1); TEST_NO_LEAKS()")
 print('PASS advanced lighting module HTTP failure cleans partial startup without changing the game')
+
+for module in ('Keybinds','MajorInterface'):
+ lu,s=setup();lu.execute(f"TEST_FAULT('{module}','offline')")
+ lu.execute(s)
+ lu.execute("TEST_NO_LEAKS(); local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'); assert(not pg:FindFirstChild('PrimeStatus') and not pg:FindFirstChild('PrimeLoading'))")
+print('PASS Major3 required UI/input module failures clean status panel and fullscreen loading')
+
+lu,s=setup()
+lu.globals().TEST_MAJOR_PARTIAL=(ROOT/'lib/MajorInterface.lua').read_text(encoding='utf-8').replace(' return api\nend',' error("injected partial interface failure")\nend')
+lu.execute("local old=game.HttpGet; game.HttpGet=function(self,url)if url:find('MajorInterface.lua',1,true)then return TEST_MAJOR_PARTIAL end return old(self,url)end")
+lu.execute(s)
+lu.execute("TEST_NO_LEAKS(); local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'); assert(not pg:FindFirstChild('PrimeStatus') and not pg:FindFirstChild('PrimeLoading'))")
+print('PASS partial Major3 constructor failure tears down input router, HUD and loading screen')

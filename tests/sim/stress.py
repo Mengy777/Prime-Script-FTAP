@@ -13,6 +13,7 @@ for iteration in range(8):
    low,high=info['Min'],info['Max'];payload['values'][key]=round(low+(high-low)*rng.random(),3)
   elif isinstance(value,str):
    if kind=='Dropdown': vals=info['Values'];payload['values'][key]=vals[rng.randint(1,len(vals))]
+   elif key.startswith('bind_'): payload['values'][key]=''
    elif key=='mannequinName': payload['values'][key]='Builderman'
    else: payload['values'][key]='123456789'
   elif isinstance(value,dict) and value.get('kind')=='color':

@@ -666,7 +666,7 @@ return function(c)
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
         hudHint.Text=translated(free.approach and "RMB: throw / return" or (free.interacting and "E: toy menu" or "RMB: approach · wheel: speed"))
-        hudControls.Text=translated(free.interacting and "E: flight · F4: exit" or "E: objects · F4: exit")
+        hudControls.Text=translated(free.interacting and "E: flight" or "E: objects")
     end
     local function visibleFreeBody()
         local char=me.Character
@@ -888,7 +888,7 @@ return function(c)
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space,Enum.UserInputType.MouseButton2)
         job("Freecam interaction",I.InputBegan,function(input,processed)
             if processed or I:GetFocusedTextBox() then return end
-            if input.KeyCode==Enum.KeyCode.F4 then c.Setters.freeCameraEnabled(false,true) return end
+            -- Exit uses the HUD button or a user-assigned bind in Major3.
         end)
         job("Freecam focus lost",I.WindowFocusReleased,function() returnApproach(false) free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
@@ -965,7 +965,7 @@ return function(c)
         end)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
         panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
-        panel("freeCameraEnabled"):AddLabel("RMB: approach / return · E: objects · F4: exit")
+        panel("freeCameraEnabled"):AddLabel("RMB: approach / return · E: objects")
         g=group("Camera","Cinematic camera",2)
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end

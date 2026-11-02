@@ -10369,9 +10369,9 @@ function Library:AddFeatureSettings(Toggle, Info)
     local function DisplayOwner(self)
         if OriginalDisplay then OriginalDisplay(self) end
         if not Settings.Destroyed then
-            SettingsIcon.ImageTransparency = Toggle.Value and 0.1 or 0.75
+            SettingsIcon.ImageTransparency = (Toggle.Value or Toggle.SettingsWhenDisabled) and 0.1 or 0.75
             SettingsIcon.ImageColor3 = Toggle.Value and Library.Scheme.AccentColor or Library.Scheme.FontColor
-            SettingsTooltip.Disabled = not Toggle.Value
+            SettingsTooltip.Disabled = not Toggle.Value and not Toggle.SettingsWhenDisabled
         end
     end
     Toggle.Display = DisplayOwner
@@ -10469,7 +10469,7 @@ function Library:AddFeatureSettings(Toggle, Info)
         return Parent == ScreenGui
     end
     function Settings:Open()
-        if Settings.Destroyed or not Library.Toggled or not Toggle.Value or not OwnerVisible() then return end
+        if Settings.Destroyed or not Library.Toggled or (not Toggle.Value and not Toggle.SettingsWhenDisabled) or not OwnerVisible() then return end
         if ActiveFeatureSettings == Settings then Settings:Close() return end
         if ActiveFeatureSettings then ActiveFeatureSettings:Close() end
         if CurrentMenu then CurrentMenu:Close() end
@@ -10499,7 +10499,7 @@ function Library:AddFeatureSettings(Toggle, Info)
                 if Settings.OpenTween then Settings.OpenTween:Cancel() Settings.OpenTween = nil end
                 Scale.Scale = LastDPI Settings:Resize() PositionPanel()
             end
-            if not Library.Toggled or not Toggle.Value or not OwnerVisible() then Settings:Close()
+            if not Library.Toggled or (not Toggle.Value and not Toggle.SettingsWhenDisabled) or not OwnerVisible() then Settings:Close()
             end
         end)
     end
@@ -11273,7 +11273,8 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
             Text = WindowInfo.Title,
-            TextSize = 16,
+            TextSize = 19,
+            FontFace = Font.fromEnum(Enum.Font.BuilderSansBold),
             Parent = TitleHolder,
         })
 
@@ -14361,7 +14362,7 @@ function Library:CreateWindow(WindowInfo)
             return
         end
 
-        if Input.KeyCode == Library.ToggleKeybind then
+        if Library.ToggleKeybind ~= Enum.KeyCode.Unknown and Input.KeyCode == Library.ToggleKeybind then
             Library:Toggle()
         end
     end))

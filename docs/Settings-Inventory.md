@@ -1,8 +1,8 @@
-# Инвентарь настроек Prime Visuals 2.4.4
+# Инвентарь Prime Visuals3.0.0
 
-Снимок2026-11-02: **257 сохраняемых настроек**. Объекты и предметы ESP удалены по просьбе пользователя; удалено94 ключа. Старые профили игнорируют удалённые параметры.
+Снимок2026-11-02: **395 сохраняемых настроек**. Ключи2.4.7 сохранены, добавлены пустые назначения bind_* и оформление/HUD.
 
-| Ключ | Подпись контрола |
+| Ключ | Подпись |
 | --- | --- |
 | `antiKickEnabled` | Anti-Kick |
 | `bhColor` | — |
@@ -13,6 +13,127 @@
 | `bhSoundEnabled` | Custom sound |
 | `bhStay` | Keep visual blackholes |
 | `bhTintEnabled` | Custom color |
+| `bind_antiKickEnabled` | Key |
+| `bind_bhColorRainbow` | Key |
+| `bind_bhImageEnabled` | Key |
+| `bind_bhSoundEnabled` | Key |
+| `bind_bhStay` | Key |
+| `bind_bhTintEnabled` | Key |
+| `bind_bodyAppearance` | Key |
+| `bind_bodyHeadColorRainbow` | Key |
+| `bind_bodyHideAccessories` | Key |
+| `bind_bodyHideFace` | Key |
+| `bind_bodyLeftArmColorRainbow` | Key |
+| `bind_bodyLeftLegColorRainbow` | Key |
+| `bind_bodyRightArmColorRainbow` | Key |
+| `bind_bodyRightLegColorRainbow` | Key |
+| `bind_bodyTorsoColorRainbow` | Key |
+| `bind_bodyTrailColorRainbow` | Key |
+| `bind_bodyTrailEnabled` | Key |
+| `bind_bodyTrailEndRainbow` | Key |
+| `bind_bodyTrailGradient` | Key |
+| `bind_bodyTrailStartRainbow` | Key |
+| `bind_boxColorRainbow` | Key |
+| `bind_boxEnabled` | Key |
+| `bind_camBlur` | Key |
+| `bind_camBody` | Key |
+| `bind_camNoclip` | Key |
+| `bind_camThird` | Key |
+| `bind_characterAntiKick` | Key |
+| `bind_characterBody` | Key |
+| `bind_characterCoconuts` | Key |
+| `bind_characterEnabled` | Key |
+| `bind_characterHat` | Key |
+| `bind_characterRainbow` | Key |
+| `bind_crossColorRainbow` | Key |
+| `bind_crossEnabled` | Key |
+| `bind_deathDustEnabled` | Key |
+| `bind_espAllPlayers` | Key |
+| `bind_espPlayers` | Key |
+| `bind_espPlayersBackground` | Key |
+| `bind_espPlayersBold` | Key |
+| `bind_espPlayersHealth` | Key |
+| `bind_espPlayersHighlight` | Key |
+| `bind_espPlayersIcon` | Key |
+| `bind_espPlayersNames` | Key |
+| `bind_espPlayersOutlineRainbow` | Key |
+| `bind_espPlayersRainbow` | Key |
+| `bind_espPlayersShowDistance` | Key |
+| `bind_espPlayersTextOutlineRainbow` | Key |
+| `bind_espPlayersTextRainbow` | Key |
+| `bind_fpsEnabled` | Key |
+| `bind_fpsMaterials` | Key |
+| `bind_fpsReflections` | Key |
+| `bind_fpsShadows` | Key |
+| `bind_fpsTextures` | Key |
+| `bind_freeCameraEnabled` | Key |
+| `bind_fullbrightEnabled` | Key |
+| `bind_grabInfo` | Key |
+| `bind_hatEnabled` | Key |
+| `bind_hatRainbow` | Key |
+| `bind_holeColorRainbow` | Key |
+| `bind_holeHideOrigin` | Key |
+| `bind_holeHideOriginal` | Key |
+| `bind_holeSprite` | Key |
+| `bind_jumpCircleColorRainbow` | Key |
+| `bind_jumpCircleEnabled` | Key |
+| `bind_lightAirColorRainbow` | Key |
+| `bind_lightAirDecayRainbow` | Key |
+| `bind_lightAmbientRainbow` | Key |
+| `bind_lightAtmosphere` | Key |
+| `bind_lightDepth` | Key |
+| `bind_lightEnabled` | Key |
+| `bind_lightEnvironment` | Key |
+| `bind_lightFogColorRainbow` | Key |
+| `bind_lightLowerRainbow` | Key |
+| `bind_lightOutdoorRainbow` | Key |
+| `bind_lightReplaceEffects` | Key |
+| `bind_lightShadows` | Key |
+| `bind_lightTintRainbow` | Key |
+| `bind_lightUpperRainbow` | Key |
+| `bind_lineEnabled` | Key |
+| `bind_lineGradient` | Key |
+| `bind_lineGradientEndRainbow` | Key |
+| `bind_lineGradientStartRainbow` | Key |
+| `bind_lineRainbow` | Key |
+| `bind_mannequinEnabled` | Key |
+| `bind_mannequinGrab` | Key |
+| `bind_mannequinPhysics` | Key |
+| `bind_mannequinSounds` | Key |
+| `bind_menu` | Key |
+| `bind_muteAmbience` | Key |
+| `bind_muteBoomboxes` | Key |
+| `bind_muteExplosions` | Key |
+| `bind_muteInstruments` | Key |
+| `bind_muteRhythm` | Key |
+| `bind_muteScreams` | Key |
+| `bind_muteSoundwaves` | Key |
+| `bind_oceanAppearance` | Key |
+| `bind_oceanColorRainbow` | Key |
+| `bind_oceanTint` | Key |
+| `bind_particleColorRainbow` | Key |
+| `bind_particleEnabled` | Key |
+| `bind_revealInvisible` | Key |
+| `bind_selfESP` | Key |
+| `bind_selfESPColorRainbow` | Key |
+| `bind_serverGhostColorRainbow` | Key |
+| `bind_serverGhostEnabled` | Key |
+| `bind_skeletonColorRainbow` | Key |
+| `bind_skeletonEnabled` | Key |
+| `bind_skyCloudColorRainbow` | Key |
+| `bind_skyClouds` | Key |
+| `bind_skyHaze` | Key |
+| `bind_skySunVisible` | Key |
+| `bind_snowColorRainbow` | Key |
+| `bind_snowEnabled` | Key |
+| `bind_spectateEnabled` | Key |
+| `bind_traceColorRainbow` | Key |
+| `bind_traceEnabled` | Key |
+| `bind_traceMarker` | Key |
+| `bind_visualPresetEnabled` | Key |
+| `bind_waterColorRainbow` | Key |
+| `bind_waterEnabled` | Key |
+| `bind_waterSolid` | Key |
 | `bodyAppearance` | Body colors |
 | `bodyHeadAlpha` | Head transparency |
 | `bodyHeadColor` | — |
@@ -118,6 +239,12 @@
 | `holeImage` | Image |
 | `holeSize` | Size |
 | `holeSprite` | Blackhole animation |
+| `hudClock` | Show time |
+| `hudEnabled` | Status panel |
+| `hudFPS` | Show FPS |
+| `hudOffsetY` | Panel vertical position |
+| `hudOpacity` | Panel transparency |
+| `hudPlayers` | Show player count |
 | `jumpCircleColor` | — |
 | `jumpCircleColorRainbow` | Rainbow: Color |
 | `jumpCircleEnabled` | Jump circle |
@@ -188,6 +315,17 @@
 | `mannequinName` | Roblox username |
 | `mannequinPhysics` | Ragdoll physics |
 | `mannequinSounds` | Ragdoll sounds |
+| `menuAccent` | — |
+| `menuAccentRainbow` | Rainbow: Menu accent |
+| `menuBackground` | — |
+| `menuBackgroundRainbow` | Rainbow: Menu background |
+| `menuCustomAccent` | Custom accent |
+| `menuCustomBackground` | Custom background |
+| `menuFont` | Menu font |
+| `menuTextColor` | — |
+| `menuTextColorRainbow` | Rainbow: Menu text |
+| `menuTheme` | Theme |
+| `menuTransparency` | Menu transparency |
 | `muteAmbience` | Ambience |
 | `muteBoomboxes` | Boomboxes / jukeboxes |
 | `muteExplosions` | Explosions |

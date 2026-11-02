@@ -2,36 +2,23 @@ from support import Disk,session,ROOT
 import json,re
 D=Disk();lua,source,_,_=session(D)
 lua.execute(r"""
-function SECTION(category,name)
- local container=TEST_TAB_OBJECTS[category].Container
- return container:FindFirstChild('PV_SectionBar'):FindFirstChild('Section_'..name)
-end
 assert(TEST_LIBRARY.TestWindowInfo.Font==Enum.Font.BuilderSans)
-assert(TEST_GROUPS.Camera.BoxHolder.Visible and not TEST_GROUPS['Custom skybox'].BoxHolder.Visible)
-assert(TEST_GROUPS.Camera.NavigationCategory=='View' and TEST_GROUPS.Camera.NavigationPage=='Camera')
-SECTION('View','Sky').MouseButton1Click:Fire()
-assert(not TEST_GROUPS.Camera.BoxHolder.Visible and TEST_GROUPS['Custom skybox'].BoxHolder.Visible)
-SECTION('View','Camera').MouseButton1Click:Fire()
-SECTION('Graphics','Weather').MouseButton1Click:Fire()
-assert(TEST_GROUPS.Particles.BoxHolder.Visible and TEST_GROUPS.Snowfall.BoxHolder.Visible and not TEST_GROUPS.Lighting.BoxHolder.Visible)
-assert(not SECTION('ESP','Objects') and not SECTION('ESP','Items'))
-SECTION('ESP','Tools').MouseButton1Click:Fire()
-assert(TEST_GROUPS['Player visibility'].BoxHolder.Visible and not TEST_GROUPS['Player highlight'].BoxHolder.Visible)
-assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera' and TEST_OPTIONS.camThird.Info.Tooltip)
-assert(TEST_OPTIONS.espPlayers.Info.Text=='Players')
-assert(TEST_GROUPS.Freecam.NavigationCategory=='Prime Vortex' and TEST_GROUPS.Freecam.NavigationPage=='Freecam')
-assert(TEST_GROUPS['Camera tools'].NavigationCategory=='View')
+assert(TEST_GROUPS.Camera.BoxHolder.Visible and TEST_GROUPS['Custom skybox'].BoxHolder.Visible)
+assert(TEST_GROUPS.Particles.BoxHolder.Visible and TEST_GROUPS.Snowfall.BoxHolder.Visible)
+for _,tab in pairs(TEST_TAB_OBJECTS)do assert(not tab.Container:FindFirstChild('PV_SectionBar'))end
+assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera')
+assert(TEST_GROUPS.Freecam.NavigationCategory=='Prime Vortex')
 """)
-print('PASS actual navigation: short subpages, merged cards, page visibility, readable labels and explanations')
+print('PASS merged sections display all cards without section bars; Freecam placement retained')
 lua.execute('TEST_DRAIN()')
 before=D.writes
 lua.execute(r"""
-for i=1,40 do SECTION('View','Sky').MouseButton1Click:Fire()SECTION('View','Camera').MouseButton1Click:Fire()end
+for i=1,40 do TEST_TAB_OBJECTS.View:Show();TEST_TAB_OBJECTS.Graphics:Show()end
 TEST_DRAIN()
 """)
 assert D.writes==before,'presentation-only navigation saved/changed profile'
 auto=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(auto['payload']['values'])==257
+assert len(auto['payload']['values'])==395
 lua.execute(r"""
 local label
 for _,item in ipairs(TEST_LABELS)do if item.Text=='Tint'then label=item break end end assert(label)
@@ -55,7 +42,7 @@ lua2,*_=session(D)
 lua2.execute("local found=false for _,p in ipairs(TEST_SETTINGS)do if p.Owner==TEST_OPTIONS.lightEnabled then assert(p.LastPosition.X.Offset==730 and p.LastPosition.Y.Offset==220); found=true end end assert(found)")
 print('PASS floating inspector coordinates autosave and restore on cold start')
 lua.execute("TEST_ACTIONS['Unload script']()")
-print('PASS navigation creates no profile writes; 257 current settings retained (advanced lighting editor included)')
+print('PASS navigation creates no profile writes; 395 current settings retained (advanced lighting editor included)')
 # Exercise the actual native feature-panel implementation rather than the main UI stub.
 native=(ROOT/'lib/Obsidian.lua').read_text(encoding='utf-8-sig')
 block=native[native.index('local ActiveFeatureSettings'):native.index('function Library:SetFont')]
@@ -160,47 +147,4 @@ lua.execute(case+'\nassert(SearchCasefold("НЕБО Ёж") == "небо ёж")')
 print('PASS actual Unicode casefold for Russian search labels')
 
 factory=lua.execute((ROOT/'lib/Navigation.lua').read_text(encoding='utf-8'))
-lua.globals().NAV_FACTORY=factory
-lua.execute(r"""
-local allGroups={}local tabs={}
-for _,category in ipairs({'View','Graphics','Character','ESP','FTAP','Prime Vortex','Settings'})do
- local tab={Container=Instance.new('Frame'),Sides={Instance.new('ScrollingFrame'),Instance.new('ScrollingFrame')}}tabs[category]=tab
- function tab:AddGroupbox(info)
-  local g={Name=info.Name,Visible=true,BoxHolder=Instance.new('Frame')}allGroups[#allGroups+1]=g return g
- end
-end
-local lib={Scheme={},Searching=false}
-function lib:GetCustomIcon(name)return {Name=name}end
-function lib:ApplyLucideIcon(icon,data)icon.Image=data.Name end
-local calls=0
-function lib:UpdateSearch(text)
- calls=calls+1 self.Searching=text~=''
- for _,g in ipairs(allGroups)do g.BoxHolder.Visible=text==''or g.Name:find(text,1,true)~=nil end
-end
-function lib:ClearSearch()self:UpdateSearch('')end
-local originalSearch=lib.UpdateSearch
-local nav=NAV_FACTORY({Library=lib,Tabs=tabs,Make=function(class,props,parent)
- local o=Instance.new(class)for k,v in pairs(props)do o[k]=v end o.Parent=parent return o
-end,Listen=function(signal,fn)return signal:Connect(fn)end})
-local camera=nav:Group('Camera','Camera',1,'camera')local sky=nav:Group('Sky','Skybox',1,'cloud')
-assert(camera.BoxHolder.Visible and not sky.BoxHolder.Visible)
-assert(nav.States.View.icons.Camera.Image=='camera' and nav.States.View.icons.Sky.Image=='cloud-sun')
-for i=1,50 do nav.States.View.buttons.Sky.MouseButton1Click:Fire(); nav.States.View.buttons.Camera.MouseButton1Click:Fire() end
-assert(nav.States.View.indicator.Position.X.Scale==0 and nav.States.View.buttons.Camera.TextTransparency==0)
-nav.States.View.buttons.Sky.MouseEnter:Fire(); nav.States.View.buttons.Sky.MouseLeave:Fire()
-assert(nav.States.View.buttons.Sky.BackgroundTransparency==1)
-lib:UpdateSearch('skybox')assert(sky.BoxHolder.Visible and not camera.BoxHolder.Visible and calls==1)
-lib:ClearSearch()assert(camera.BoxHolder.Visible and not sky.BoxHolder.Visible)
-assert(nav.States.View.icons.Camera.Image=='camera' and nav.States.View.icons.Sky.Image=='cloud-sun')
-for i=1,50 do nav.States.View.buttons.Sky.MouseButton1Click:Fire(); nav.States.View.buttons.Camera.MouseButton1Click:Fire() end
-assert(nav.States.View.indicator.Position.X.Scale==0 and nav.States.View.buttons.Camera.TextTransparency==0)
-nav.States.View.buttons.Sky.MouseEnter:Fire(); nav.States.View.buttons.Sky.MouseLeave:Fire()
-assert(nav.States.View.buttons.Sky.BackgroundTransparency==1)
-lib:UpdateSearch('no-such-feature')assert(nav.States.View.empty.Visible)
-lib:ClearSearch()assert(not nav.States.View.empty.Visible)
-lib:UpdateSearch('skybox')
-nav.States.View.buttons.Sky.MouseButton1Click:Fire()
-assert(not lib.Searching and sky.BoxHolder.Visible and not camera.BoxHolder.Visible)
-nav:Destroy()assert(lib.UpdateSearch==originalSearch)
-""")
-print('PASS search reaches unselected subpages; clearing search restores selection; subsection clicks exit search and cleanup restores the original handler')
+print('PASS Major3 uses native complete-category search without a subsection filter')

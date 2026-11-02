@@ -339,7 +339,7 @@ menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')
 cameraHook:Disconnect()gameUI:Destroy()shell:Destroy()
 for i=1,4 do
  TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
- TEST_SERVICES.UserInputService.InputBegan:Fire({KeyCode=Enum.KeyCode.F4},false)
+ hud:FindFirstChild('CloseFreecam').MouseButton1Click:Fire()
  assert(not TEST_OPTIONS.freeCameraEnabled.Value and not hud.Visible)
  assert(not TEST_SERVICES.ContextActionService.bound,'F4 left movement binding active')
  assert(w.WalkSpeed==16 and camera.CameraType==oldType,'F4 failed to restore camera/movement')

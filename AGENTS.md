@@ -4,11 +4,14 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 ## Current checkpoint
 
+- **Major3 override:**3.0.0 implements docs/Major-3.0.md. All categories use native merged cards without upper section bars; Home layout preserved. Omega replaces header mark. Keybinds/MajorInterface own input/UI with early cleanup.395 settings,121 bind_* keys default empty (no RightShift/3/F4 defaults), mouse1–3 supported. Movement/E/native mannequin controls remain. HUD click or fallback launcher opens menu. Appearance/HUD autosave. Validate bindings before profile mutation and clear router before applying. Tests run via tools/compile.mjs (absolute luau-web path) and tests/run_simulations.py. Prior explicit no-loading/no-new-theme rules are superseded by this user Major3 request. Actual visual/live3.0 approval remains pending; standalone Vortex unchanged.
+
+
 - **Acceptance override 2026-11-02:** user explicitly accepted ALL current Prime Visuals2.4.4 sections/functions as checked and confirmed. No pending user acceptance items remain for this version. This supersedes older pending/next-ESP/FTAP/UI/system notes below. Record broad acceptance only, not invented per-scenario live evidence. Removed features remain removed. No Vortex/Infinity acceptance implied. Next work follows a new concrete request; future changes get new checks. See docs/Acceptance-2.4.4.md and current header in Testing-Checklist.md. Documentation-only, no runtime bump.
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.4.7**, tag `v2.4.7`. Next normal runtime version: **2.4.8**. Consult Git for the release commit.
+- Published runtime target: **3.0.0**, tag `v3.0.0`. Next normal runtime version: **3.0.1**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
