@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.4"
+local VERSION="2.4.5"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2530,7 +2530,7 @@ local function buildVisualSystems()
         local homeTab=categoryTabs.Home
         local profile=homeTab:AddLeftGroupbox("Profile","user-round")
         local avatar=profile:AddImage("homeAvatar",{
-            Image=string.format("rbxthumb://type=AvatarBust&id=%d&w=180&h=180",player.UserId),
+            Image=string.format("rbxthumb://type=AvatarBust&id=%d&w=420&h=420",player.UserId),
             Height=84,Color=Color3.new(1,1,1),Transparency=0,BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit
         })
         local greeting=profile:AddLabel({Text="",DoesWrap=true,Size=17})
@@ -2565,6 +2565,7 @@ local function buildVisualSystems()
             rows[name]=statistics:AddLabel({Text="—",DoesWrap=true,Size=(name=="fps" or name=="ping") and 16 or 13})
         end end
         local showDetails=false
+        local fitHome=function() end
         local function showSessionRows()
             for _,name in ipairs(basic) do rows[name]:SetVisible(not showDetails) end
             for _,name in ipairs(details) do rows[name]:SetVisible(showDetails) end
@@ -2573,16 +2574,46 @@ local function buildVisualSystems()
         action(statistics,"Session details",function()
             showDetails=not showDetails
             showSessionRows()
+            fitHome()
             refreshHome()
         end)
         -- No page ScrollingFrame: both compact columns fit the normal window.
         local top=make("Frame",{Name="HomeSummary",Size=UDim2.fromScale(1,1),BackgroundTransparency=1},homeTab.Container)
         local left=make("Frame",{Name="HomeProfileColumn",Size=UDim2.new(.46,-5,1,0),BackgroundTransparency=1},top)
         local right=make("Frame",{Name="HomeSessionColumn",Position=UDim2.new(.46,5,0,0),Size=UDim2.new(.54,-5,1,0),BackgroundTransparency=1},top)
-        for _,column in ipairs({left,right}) do make("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},column) end
         profile.BoxHolder.Parent=left profile.BoxHolder.LayoutOrder=0
-        hero.BoxHolder.Parent=left hero.BoxHolder.LayoutOrder=1
-        statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=0
+        hero.BoxHolder.Parent=right hero.BoxHolder.LayoutOrder=0
+        statistics.BoxHolder.Parent=right statistics.BoxHolder.LayoutOrder=1
+        fitHome=function()
+            if not alive then return end
+            local dpi=Library.DPIScale or 1
+            local height=top.AbsoluteSize.Y/dpi
+            if height<100 then return end -- Hidden/not yet laid out; retry on size change.
+            local statsHeight=math.min(showDetails and 344 or 226,height-104)
+            local layout=statistics.Container and statistics.Container:FindFirstChildOfClass("UIListLayout")
+            if layout then statsHeight=math.min(math.max(statsHeight,layout.AbsoluteContentSize.Y/dpi+48),height-104) end
+            local artHeight=math.max(96,height-statsHeight-8)
+            profile.FixedHeight=height
+            hero.FixedHeight=artHeight
+            statistics.FixedHeight=statsHeight
+            profile.BoxHolder.Size=UDim2.new(1,0,0,height)
+            hero.BoxHolder.Size=UDim2.new(1,0,0,artHeight)
+            hero.BoxHolder.Position=UDim2.fromOffset(0,0)
+            statistics.BoxHolder.Position=UDim2.fromOffset(0,artHeight+8)
+            statistics.BoxHolder.Size=UDim2.new(1,0,0,statsHeight)
+            avatar.Height=math.max(60,height-132)
+            emblemRow.Height=math.max(40,artHeight-42)
+            avatar.Holder.Size=UDim2.new(1,0,0,avatar.Height)
+            emblemRow.Holder.Size=UDim2.new(1,0,0,emblemRow.Height)
+            if profile.Resize then profile:Resize() hero:Resize() statistics:Resize() end
+        end
+        listen(top:GetPropertyChangedSignal("AbsoluteSize"),fitHome)
+        listen(homeTab.Container:GetPropertyChangedSignal("Visible"),fitHome)
+        if statistics.Container then
+            local layout=statistics.Container:FindFirstChildOfClass("UIListLayout")
+            if layout then listen(layout:GetPropertyChangedSignal("AbsoluteContentSize"),fitHome) end
+        end
+        fitHome()
         for _,side in ipairs(homeTab.Sides) do side.Visible=false end
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
@@ -2655,7 +2686,7 @@ local function buildVisualSystems()
                 for attempt=1,4 do
                     if not alive or avatar.Destroyed then return end
                     local ok,url,ready=pcall(function()
-                        return Players:GetUserThumbnailAsync(player.UserId,Enum.ThumbnailType.AvatarBust,Enum.ThumbnailSize.Size180x180)
+                        return Players:GetUserThumbnailAsync(player.UserId,Enum.ThumbnailType.AvatarBust,Enum.ThumbnailSize.Size420x420)
                     end)
                     if not alive or avatar.Destroyed then return end
                     if ok and ready and type(url)=="string" and url~="" then avatar:SetImage(url) return end

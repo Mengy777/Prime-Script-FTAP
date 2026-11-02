@@ -25,7 +25,7 @@ print('PASS Home artwork is parented into the visible custom column, not the hid
 
 lua.execute("""
 local hero=TEST_GROUPS['Prime Visuals'].BoxHolder
-assert(hero.Parent.Name=='HomeProfileColumn' and hero.LayoutOrder==1)
+assert(hero.Parent.Name=='HomeSessionColumn' and hero.LayoutOrder==0)
 assert(TEST_GROUPS['Profile'].BoxHolder.Parent.Name=='HomeProfileColumn')
 assert(TEST_GROUPS['Session statistics'].BoxHolder.Parent.Name=='HomeSessionColumn')
 for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do
@@ -34,5 +34,23 @@ end
 assert(not TEST_GROUPS['Quick access'] and not TEST_ACTIONS['Camera & sky'])
 TEST_ACTIONS['Session details']()
 TEST_ACTIONS['Session details']()
+local root=hero.Parent.Parent
+for _,dpi in ipairs({1,1.5,2})do
+ TEST_LIBRARY.DPIScale=dpi
+ for _,height in ipairs({420,480,540})do
+  root.Size=UDim2.fromOffset(620*dpi,height*dpi)
+  root:GetPropertyChangedSignal('AbsoluteSize'):Fire() -- Mock layout notification.
+  local profile=TEST_GROUPS['Profile'].BoxHolder
+  local stats=TEST_GROUPS['Session statistics'].BoxHolder
+  assert(profile.Size.Y.Offset==height,'profile does not fill height')
+  assert(hero.Position.Y.Offset==0,'phoenix not above stats')
+  assert(math.abs(stats.Position.Y.Offset+stats.Size.Y.Offset-height)<.01,'cards do not meet lower window edge')
+  assert(stats.Position.Y.Offset==hero.Size.Y.Offset+8,'card gap differs')
+  TEST_ACTIONS['Session details']()
+  assert(math.abs(stats.Position.Y.Offset+stats.Size.Y.Offset-height)<.01,'details overflow')
+  TEST_ACTIONS['Session details']()
+ end
+end
+TEST_LIBRARY.DPIScale=1
 """)
 print('PASS compact non-scrolling Home, profile/phoenix composition, removed shortcuts and session detail toggle')

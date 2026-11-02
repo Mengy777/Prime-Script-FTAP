@@ -12796,6 +12796,10 @@ function Library:CreateWindow(WindowInfo)
 
                 local TopSize = (GroupboxTop.AbsoluteSize.Y / Library.DPIScale)
                 local ContainerSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                -- Optional dashboard card height; normal feature cards remain content-sized.
+                if type(Groupbox.FixedHeight) == "number" and not Groupbox.PoppedOut then
+                    ContainerSize = math.max(0, Groupbox.FixedHeight - TopSize - 1)
+                end
                 if Groupbox.PoppedOut then
                     ContainerSize = math.min(ContainerSize, GetPopOutBodyMaxHeight(Groupbox, TopSize + 1))
                 end

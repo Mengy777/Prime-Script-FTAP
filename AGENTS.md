@@ -8,7 +8,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.4.4**, tag `v2.4.4`. Next normal runtime version: **2.4.5**. Consult Git for the release commit.
+- Published runtime target: **2.4.5**, tag `v2.4.5`. Next normal runtime version: **2.4.6**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -76,6 +76,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - Feature parameters open via visible settings button or RMB on an enabled feature. Panels stay docked within main; outside click/Escape closes them, inside/child popup interactions do not.
 - Compact Rainbow toggles sit by their color. Default rainbow behavior is one smoothly changing hue.
 - No filler instructions (Right Shift/Drag header), permanent asset IDs, license/test-status clutter or fake session statistics.
+- 2.4.5 Home layout supersedes2.4.1 placement: full-height profile LEFT, phoenix TOP RIGHT, session statistics BELOW phoenix, common lower edge. Fit on parent size/detail-content changes, no per-frame layout job. Portrait420px. Obsidian optional Groupbox.FixedHeight is used only for Home cards. HOME-245 pending visual acceptance; all preexisting2.4.4 functionality remains broadly user-approved.
 - 2.4.1 Home supersedes2.3.7 banner/quick links: compact profile with version below, phoenix card in left column, basic session metrics right. No page scrolling/hero slogans/quick access. Session details replace6 basic rows with12 diagnostic rows; never append all to the page. Fits intended normal window; real DPI/visual acceptance pending.
 - Subpages: View Camera/Sky; Graphics Lighting/Weather/Water & FPS; Character Appearance/Movement/Mannequins; ESP Players/Objects/Tools; FTAP Grab line/Crosshair/Blackholes/Audio; Settings General/Profiles. Protection is in Settings General.
 
