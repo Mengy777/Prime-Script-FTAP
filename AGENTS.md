@@ -4,6 +4,8 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 ## Current checkpoint
 
+- **Acceptance override 2026-11-02:** user explicitly accepted ALL current Prime Visuals2.4.4 sections/functions as checked and confirmed. No pending user acceptance items remain for this version. This supersedes older pending/next-ESP/FTAP/UI/system notes below. Record broad acceptance only, not invented per-scenario live evidence. Removed features remain removed. No Vortex/Infinity acceptance implied. Next work follows a new concrete request; future changes get new checks. See docs/Acceptance-2.4.4.md and current header in Testing-Checklist.md. Documentation-only, no runtime bump.
+
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
 - Published runtime target: **2.4.4**, tag `v2.4.4`. Next normal runtime version: **2.4.5**. Consult Git for the release commit.
