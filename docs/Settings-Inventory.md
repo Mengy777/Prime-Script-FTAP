@@ -1,14 +1,14 @@
-# Инвентарь настроек Prime Visuals 2.3.5
+# Инвентарь настроек Prime Visuals 2.4.3
 
-Снимок 2026-10-28: **336 сохраняемых настроек** извлечены из реального реестра в симуляции. Экспериментальная графика и её 14 ключей удалены по просьбе пользователя. Старые конфиги с этими ключами продолжают загружаться; остальные значения сохраняются. Статусы: [Testing-Checklist.md](Testing-Checklist.md).
+Снимок 2026-11-02: **351 сохраняемая настройка**, извлечено из реального реестра в симуляции. Добавлены15 настроек общей системы предметов; прежние ключи сохранены. Статусы: [Testing-Checklist.md](Testing-Checklist.md).
 
 | Ключ | Подпись контрола |
 | --- | --- |
 | `antiKickColor` | — |
-| `antiKickColorRainbow` | Rainbow: Color |
+| `antiKickColorRainbow` | Rainbow: Protection item color |
 | `antiKickESP` | Anti-kick items |
 | `antiKickEnabled` | Anti-Kick |
-| `antiKickFill` | Fill transparency |
+| `antiKickFill` | Protection item fill |
 | `antiKickOthers` | Other players only |
 | `bhColor` | — |
 | `bhColorRainbow` | Rainbow: Color |
@@ -20,7 +20,7 @@
 | `bhTintEnabled` | Custom color |
 | `blobESP` | Blobman / Gucci ESP |
 | `blobESPColor` | — |
-| `blobESPColorRainbow` | Rainbow: Color |
+| `blobESPColorRainbow` | Rainbow: Blobman color |
 | `bodyAppearance` | Body colors |
 | `bodyHeadAlpha` | Head transparency |
 | `bodyHeadColor` | — |
@@ -73,10 +73,10 @@
 | `collectionSky` | Skybox |
 | `combatBanana` | Banana |
 | `combatESP` | Combat items |
-| `combatFill` | Fill transparency |
+| `combatFill` | Item fill transparency |
 | `combatIconSize` | Icon size |
 | `combatKunai` | Kunai |
-| `combatNames` | Item names |
+| `combatNames` | Combat item names |
 | `combatPickaxe` | Pickaxe |
 | `combatShuriken` | Shuriken |
 | `combatSnowball` | Snowball |
@@ -274,6 +274,21 @@
 | `muteRhythm` | Rhythm makers |
 | `muteScreams` | Screams |
 | `muteSoundwaves` | Soundwaves |
+| `objectBlobman` | Blobman |
+| `objectESPDistance` | Maximum distance |
+| `objectESPEnabled` | Object markers |
+| `objectESPHighlight` | Highlight |
+| `objectESPIcons` | Item icons |
+| `objectESPNames` | Object names |
+| `objectGucci` | Gucci |
+| `objectItemColor` | — |
+| `objectItemColorRainbow` | Rainbow: Item color |
+| `objectKunai` | Kunai |
+| `objectNaturalColors` | Original item colors |
+| `objectPallet` | Pallet |
+| `objectPickaxe` | Pickaxe |
+| `objectPlate` | Plate |
+| `objectShuriken` | Shuriken |
 | `oceanAppearance` | Ocean material and color |
 | `oceanColor` | — |
 | `oceanColorRainbow` | Rainbow: Color |

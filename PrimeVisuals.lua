@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.2"
+local VERSION="2.4.3"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -516,6 +516,22 @@ ru["Waiting: attachment not confirmed"]="Ожидание: крепление н
 ru["Waiting: protection error"]="Ожидание: ошибка защиты"
 ru["Attached"]="Закреплено"
 ru["RMB: approach / return · E: objects · F4: exit"]="ПКМ: перейти / вернуться · E: предметы · F4: выход"
+ru["Items"]="Предметы"
+ru["Types"]="Типы"
+ru["Colors"]="Цвета"
+ru["Object markers"]="Метки предметов"
+ru["Object names"]="Названия объектов"
+ru["Item icons"]="Иконки предметов"
+ru["Combat item names"]="Названия боевых предметов"
+ru["Item fill transparency"]="Заливка боевых предметов"
+ru["Protection item fill"]="Заливка предметов защиты"
+ru["Blobman color"]="Цвет блобманов"
+ru["Protection item color"]="Цвет предметов защиты"
+ru["Player visibility"]="Видимость игроков"
+ru["Plate"]="Тарелка"
+ru["Pallet"]="Паллета"
+ru["Original item colors"]="Исходные цвета предметов"
+ru["Item color"]="Цвет предметов"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
@@ -2636,7 +2652,7 @@ local function buildVisualSystems()
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
             "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
-            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","blobESP","antiKickESP","combatESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
+            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","objectESPEnabled","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local averageFPS,averageFrame,minFPS,maxFPS,peakFrame
@@ -3066,6 +3082,10 @@ local function buildVisualSystems()
         if not profileStore.Available then status:SetText("Autosave: unavailable") end
         local function applyProfile(payload)
             local profile=validateProfile(payload)
+            -- Old profiles had three independent item masters, no umbrella.
+            if payload.values and payload.values.objectESPEnabled==nil then
+                profile.values.objectESPEnabled=profile.values.blobESP or profile.values.antiKickESP or profile.values.combatESP or false
+            end
             -- Untouched/reset defaults follow the new session's actual game state.
             if not profile.fovApplied then profile.values.cameraFOV=settingSpecs.cameraFOV.Default end
             if not profile.applied.skyTime then profile.values.skyTime=settingSpecs.skyTime.Default end
