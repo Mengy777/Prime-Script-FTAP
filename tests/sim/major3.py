@@ -2,9 +2,11 @@ from support import Disk,session,ROOT
 import json
 D=Disk();lua,source,_,_=session(D)
 lua.execute(r"""
-for key,o in pairs(TEST_OPTIONS)do if key:sub(1,5)=='bind_'then assert(o.Value=='','default bind not empty')end end
+for key,o in pairs(TEST_OPTIONS)do if key:sub(1,5)=='bind_'then assert(o.Value==(key=='bind_menu' and 'RightControl' or ''),'incorrect default bind')end end
 local input=TEST_SERVICES.UserInputService
 local function press(name)input.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode[name]},false)end
+assert(TEST_LIBRARY.Toggled)press('RightControl')assert(not TEST_LIBRARY.Toggled)
+press('RightControl')assert(TEST_LIBRARY.Toggled)
 TEST_OPTIONS.bind_camThird:SetValue('K')
 TEST_LIBRARY:Toggle(false)press('K')assert(TEST_OPTIONS.camThird.Value)
 TEST_LIBRARY:Toggle(true)press('K')assert(TEST_OPTIONS.camThird.Value,'UI interaction triggered gameplay binding')
@@ -26,7 +28,7 @@ local root=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFir
 assert(root and root:FindFirstChild('Watermark'))
 TEST_ACTIONS['Unload script']()assert(not root.Parent)
 """)
-print('PASS Major3 defaults empty, bindings execute/pause for UI, conflict rejection, theme/color/HUD cold restore and cleanup')
+print('PASS Major3 default RightControl menu / other binds empty, bindings execute/pause for UI, conflict rejection, theme/color/HUD cold restore and cleanup')
 # Exercise capture against actual keybind module, including mouse and cancellation.
 lua.globals().BIND_FACTORY=lua.execute((ROOT/'lib/Keybinds.lua').read_text(encoding='utf8'))
 lua.execute(r"""
@@ -43,3 +45,17 @@ assert(assigned=='MouseButton3')b:Destroy()
 input.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton3},false)assert(n==1)
 """)
 print('PASS actual key capture mouse3, no trigger during capture, Escape cancellation and disconnected router')
+
+for kind in ('untouched','explicit_clear','occupied','rebound'):
+ d=Disk();l,_,_,_=session(d);l.execute("TEST_OPTIONS.cameraFOV:SetValue(91); TEST_DRAIN(); TEST_ACTIONS['Unload script']()")
+ for path in list(d.files):
+  if path.endswith(('autosave.json','autosave.backup.json')):
+   doc=json.loads(d.files[path]);p=doc['payload'];p['values']['bind_menu']='';p['applied'].pop('bind_menu',None)
+   if kind=='explicit_clear':p['applied']['bind_menu']=True
+   if kind=='occupied':p['values']['bind_camThird']='RightControl';p['applied']['bind_camThird']=True
+   if kind=='rebound':p['values']['bind_menu']='M';p['applied']['bind_menu']=True
+   d.files[path]=json.dumps(doc)
+ l,_,_,_=session(d)
+ expected='RightControl' if kind=='untouched' else 'M' if kind=='rebound' else ''
+ assert l.globals().TEST_OPTIONS.bind_menu.Value==expected,kind
+print('PASS menu default migration: untouched empty, explicit clear, occupied RightControl and custom rebind')

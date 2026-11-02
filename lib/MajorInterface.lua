@@ -10,7 +10,9 @@ return function(c)
  if c.Header then connections[#connections+1]=c.Icon(c.Header,c.Main,c.Run)end
  local function binding(key,fn,panel)
   input:Register(key,fn)
-  c.Field(panel,"bind_"..key,"Key","",function(value)input:Set(key,value)end)
+  local initial=key=="menu" and "RightControl" or ""
+  input:Set(key,initial)
+  c.Field(panel,"bind_"..key,"Key",initial,function(value)input:Set(key,value)end)
   c.Action(panel,"Assign key",function()
    c.Notify("Press a key; Escape cancels, Backspace clears")
    input:Capture(key,function(value)c.Safe(function()c.Setters["bind_"..key](value,true)end)end)

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.0.0"
+local VERSION="3.0.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2888,6 +2888,15 @@ local function buildVisualSystems()
                     assert(type(payload.ui.panels)=="table","Invalid panel positions")
                     for _,position in pairs(payload.ui.panels) do readPosition(position) end
                 end
+            end
+            -- Upgrade the untouched empty menu assignment from3.0.0; preserve
+            -- explicit rebind/clear and never steal RightControl from another feature.
+            if not payload.applied.bind_menu and (payload.values.bind_menu==nil or payload.values.bind_menu=="") then
+                local occupied=false
+                for key,value in pairs(normalized.values) do
+                    if key~="bind_menu" and key:sub(1,5)=="bind_" and value=="RightControl" then occupied=true break end
+                end
+                normalized.values.bind_menu=occupied and "" or "RightControl"
             end
             if majorInterface then majorInterface:ValidateProfile(normalized.values) end
             return normalized

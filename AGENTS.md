@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.0.0**, tag `v3.0.0`. Next normal runtime version: **3.0.1**. Consult Git for the release commit.
+- Published runtime target: **3.0.1**, tag `v3.0.1`. Next normal runtime version: **3.0.2**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -271,3 +271,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Acceptance2026-11-02: user explicitly confirmed all10 ESP Players checks (Box/Skeleton/independent highlight, HP/distance/range, font/background, selected2 vs all, behind-camera safety, respawn and disable cleanup). ESP-01…04 accepted on2.4.2; do not invent separate R6/R15 tests. Next pending ESP Objects05…09, then Tools10…13 and FTAP/system. Documentation only.
 
 - Acceptance2026-11-02: user explicitly approved Home2.4.5 composition. HOME-245 accepted by overall visual approval, without invented per-DPI testing. Earlier broad2.4.4 acceptance retained; no pending requested acceptance items. Runtime unchanged.
+
+- 3.0.1 overrides empty menu default: bind_menu=RightControl; other activation bindings empty. Migrate untouched empty/missing old menu assignment only, preserve explicit clears/rebinds and occupied RightControl. Four migration cases tested.
