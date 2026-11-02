@@ -6,6 +6,8 @@ return function(c)
     local toy,pending,operation,phase,deadline,nextAttempt=nil,nil,0,"idle",0,0
     local lastOwnerRequest=-math.huge
     local links={}
+    local spawnTask
+    local boundCharacter,boundRoot,boundHumanoid,boundHitbox
     local lastStatus
     local function status(text)
         if text~=lastStatus then lastStatus=text if c.Status then c.Status(text) end end
@@ -25,6 +27,8 @@ return function(c)
     end
     local function clear()
         operation=operation+1 detachLinks()
+        if spawnTask and task.cancel then pcall(task.cancel,spawnTask) end
+        spawnTask=nil busy=false
         local old=toy toy=nil pending=nil phase="idle"
         destroy(old)
     end
@@ -32,7 +36,10 @@ return function(c)
         local char=player.Character
         local root=char and char:FindFirstChild("HumanoidRootPart")
         local humanoid=char and char:FindFirstChildWhichIsA("Humanoid")
-        return root and root:FindFirstChild("RagdollTouchedHitbox"),root,humanoid
+        local hitbox=root and root:FindFirstChild("RagdollTouchedHitbox")
+        if not hitbox and char then hitbox=char:FindFirstChild("RagdollTouchedHitbox",true) end
+        if hitbox and not hitbox:IsA("BasePart") then hitbox=nil end
+        return hitbox,root,humanoid,char
     end
     local function folders()
         local result={}
@@ -79,14 +86,13 @@ return function(c)
             local link=folder.ChildAdded:Connect(capture) table.insert(links,link)
         end
         busy=true status("Preparing protection")
-        task.spawn(function()
-            if dead or not enabled or token~=operation then busy=false return end
+        spawnTask=task.spawn(function()
+            if dead or not enabled or token~=operation then return end
             local ok,message=pcall(function() spawn:InvokeServer("NinjaShuriken",root.CFrame+Vector3.new(0,15,0),Vector3.zero) end)
-            busy=false
             if token~=operation or dead or not enabled then
-                if pending then destroy(pending) end
                 return
             end
+            spawnTask=nil busy=false
             if not ok then
                 warn("Prime Visuals Anti-Kick: "..tostring(message))
                 retry(os.clock(),"Waiting: toy spawn failed")
@@ -103,13 +109,21 @@ return function(c)
     local function step()
         if dead or not enabled then return end
         local now=os.clock()
-        local hitbox,root,humanoid=character()
-        if not hitbox or not humanoid or humanoid.Health<=0 then
-            if toy or phase~="idle" then clear() end status("Waiting for character") return
+        local hitbox,root,humanoid,char=character()
+        if char~=boundCharacter or root~=boundRoot or humanoid~=boundHumanoid or hitbox~=boundHitbox then
+            clear() nextAttempt=0
+            boundCharacter,boundRoot,boundHumanoid,boundHitbox=char,root,humanoid,hitbox
+        end
+        if not root or not humanoid or humanoid.Health<=0 or not root.Parent then
+            if toy or phase~="idle" or busy then clear() end status("Waiting for character") return
+        end
+        if not hitbox then
+            if toy or phase~="idle" or busy then clear() end
+            status("Waiting for character hitbox") return
         end
         local inPlot=player:FindFirstChild("InPlot") local ownPlot=player:FindFirstChild("InOwnedPlot")
         if inPlot and inPlot.Value and (not ownPlot or not ownPlot.Value) then
-            if toy then clear() end status("Paused in another player's plot") return
+            if toy or phase~="idle" or busy then clear() end status("Paused in another player's plot") return
         end
         if phase=="idle" then
             if not busy and now>=nextAttempt then beginSpawn(now,root) end
@@ -118,7 +132,7 @@ return function(c)
         if phase=="spawn" then
             if pending and pending.Parent then
                 toy=pending detachLinks() phase="owner" deadline=now+2 lastOwnerRequest=-math.huge
-            elseif now>=deadline and not busy then retry(now,"Waiting: toy did not appear") end
+            elseif now>=deadline then retry(now,"Waiting: toy did not appear") end
             return
         end
         if not toy or not toy.Parent then retry(now,"Restoring protection") return end
@@ -150,7 +164,15 @@ return function(c)
             if weld.Part1==hitbox then phase="active" status("Attached")
             elseif now>=deadline then retry(now,"Waiting: attachment not confirmed") end
         elseif phase=="active" then
-            if weld.Part1~=hitbox then retry(now,"Restoring protection") else hideToy() end
+            if weld.Part1~=hitbox then
+                -- Reattach the surviving owned toy before paying another spawn cooldown.
+                local owner=sticky:FindFirstChild("PartOwner")
+                local event=remote("PlayerEvents","StickyPartEvent")
+                if event and owner and tostring(owner.Value)==player.Name then
+                    event:FireServer(sticky,hitbox,CFrame.new(0,-.3,0)*CFrame.Angles(math.pi/2,0,0))
+                    phase="attach" deadline=now+.75 status("Restoring protection")
+                else retry(now,"Restoring protection") end
+            else hideToy() end
         end
     end
     local elapsed=0
@@ -162,6 +184,11 @@ return function(c)
     local api={}
     function api:SetEnabled(on)
         enabled=on==true if not enabled then clear() status("Off") else nextAttempt=0 status("Waiting for character") end
+    end
+    function api:Restart()
+        if dead then return end
+        clear() nextAttempt=0
+        status(enabled and "Restoring protection" or "Off")
     end
     function api:Destroy()
         if dead then return end dead=true enabled=false connection:Disconnect() clear()

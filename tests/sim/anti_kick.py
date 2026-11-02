@@ -61,6 +61,48 @@ assert(#toys:GetChildren()==0,'queued spawn executed after disable')
 protector:SetEnabled(true)build()
 human.Health=0 tick()assert(status=='Waiting for character'and #toys:GetChildren()==0)
 human.Health=100 build()
+-- Reattach existing owned protection without creating another toy.
+local before=spawned
+toys:GetChildren()[1]:FindFirstChild('StickyPart'):FindFirstChild('StickyWeld').Part1=nil
+tick()tick()assert(status=='Attached' and spawned==before,'lost weld did not reattach existing toy')
+-- Thirty full character replacements, including late/nested hitboxes.
+for cycle=1,30 do
+ human.Health=0 tick()
+ char=make('Model','Respawn'..cycle,world)player.Character=char
+ root=make('Part','HumanoidRootPart',char)root.CFrame=cf
+ human=make('Humanoid','Humanoid',char)human.Health=100
+ tick()assert(status=='Waiting for character hitbox')
+ local container=cycle%2==0 and make('Folder','RagdollParts',char) or root
+ hitbox=make('Part','RagdollTouchedHitbox',container)
+ build()assert(#toys:GetChildren()==1,'respawn leaked or duplicated own toys')
+end
+-- A never-returning local InvokeServer coroutine must not hold busy forever.
+protector:SetEnabled(false)
+local originalSpawn,originalCancel,originalInvoke=task.spawn,task.cancel,spawn.InvokeServer
+local hang=true
+task.spawn=function(fn)local co=coroutine.create(fn)local ok,err=coroutine.resume(co)assert(ok,err)return co end
+task.cancel=function(co)if coroutine.status(co)~='dead'then coroutine.close(co)end end
+spawn.InvokeServer=function(self,...)if hang then coroutine.yield()else return originalInvoke(self,...)end end
+protector:SetEnabled(true)tick()
+for i=1,25 do tick()end
+assert(status=='Waiting: toy did not appear','spawn timeout did not release stuck request')
+hang=false
+for i=1,25 do tick()end
+assert(status=='Attached','timed-out spawn permanently held busy')
+task.spawn,task.cancel,spawn.InvokeServer=originalSpawn,originalCancel,originalInvoke
+-- The old InvokeServer completion must not touch the new generation's pending toy.
+protector:SetEnabled(false)
+local first=true
+spawn.InvokeServer=function(self,...)
+ originalInvoke(self,...)
+ if first then
+  first=false human.Health=0 tick()human.Health=100 tick()TEST_DRAIN()
+ end
+end
+protector:SetEnabled(true)build()
+assert(#toys:GetChildren()==1,'stale completion destroyed or duplicated current protection')
+spawn.InvokeServer=originalInvoke
+protector:Restart()build()assert(#toys:GetChildren()==1)
 protector:Destroy()assert(#toys:GetChildren()==0)
 local count=spawned for i=1,20 do tick()end assert(spawned==count)
 CFrame.new,CFrame.Angles=oldNew,oldAngles

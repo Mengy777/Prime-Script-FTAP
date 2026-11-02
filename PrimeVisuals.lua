@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.5"
+local VERSION="2.4.6"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -532,6 +532,9 @@ ru["Plate"]="Тарелка"
 ru["Pallet"]="Паллета"
 ru["Original item colors"]="Исходные цвета предметов"
 ru["Item color"]="Цвет предметов"
+ru["Waiting for character hitbox"]="Ожидание хитбокса персонажа"
+ru["Restoring protection"]="Восстановление защиты"
+ru["Restore protection"]="Восстановить защиту"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
@@ -2455,6 +2458,7 @@ local function buildVisualSystems()
         antiKick=loadUIModule("AntiKick")({Player=player,Workspace=Workspace,Run=Run,
             Storage=game:GetService("ReplicatedStorage"),Status=function(text) protectionStatus:SetText("Anti-Kick: "..text) end})
         toggle(g,"antiKickEnabled","Anti-Kick",true,function(on) antiKick:SetEnabled(on) end)
+        action(g,"Restore protection",function() antiKick:Restart() end)
         if protectionStatus.SetTooltip then protectionStatus:SetTooltip("Self-attached toy protection; cannot cancel server kicks or bans.") end
         antiKick:SetEnabled(true)
     end

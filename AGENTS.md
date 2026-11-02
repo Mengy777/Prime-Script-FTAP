@@ -8,7 +8,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.4.5**, tag `v2.4.5`. Next normal runtime version: **2.4.6**. Consult Git for the release commit.
+- Published runtime target: **2.4.6**, tag `v2.4.6`. Next normal runtime version: **2.4.7**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -108,6 +108,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - v2.1.5 UI fix: MouseIsOverFrame guards pass coordinates; retain nil-safe helper. Docked panels remain interaction surfaces. Finished inputs commit on blur/Enter, Escape cancels. SetValue-only mocks missed the native click regression; preserve actual-handler tests.
 
 ### Anti-Kick 2.1.8 / 2.1.9
+
+- 2.4.6 lifecycle fix: detect Character/HRP/Humanoid/hitbox identity changes, recursive exact-name BasePart hitbox lookup; distinct missing-hitbox status. clear cancels local spawn coroutine when supported, resets busy; stale completion checks token before touching shared state. Spawn deadline no longer waits for busy=false. Active owned toy gets one reattach attempt before respawn. API Restart exposed through Settings/Restore protection; respects enabled=false. Tests30 replacements/late nested hitboxes/hung coroutine/stale response/restart. Cannot revoke already-dispatched server requests; no general immunity claim. New live AK-246 check pending.
 
 - Default-on `antiKickEnabled` is persisted; currently **339 settings** overall (Smooth camera removed in 2.2.1).
 - Own NinjaShuriken attaches to own HumanoidRootPart.RagdollTouchedHitbox. Require PartOwner and StickyWeld.Part1 confirmation, own-toy cleanup, retry backoff, death recovery and foreign-plot pause.

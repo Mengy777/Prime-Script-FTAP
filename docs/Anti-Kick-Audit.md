@@ -1,5 +1,11 @@
 # FTAP Anti-Kick source review
 
+## Lifecycle revision2.4.6 — 2026-11-02
+
+User reports protection stops after repeated deaths/movement, often with a character-wait status. Code inspection found a spawn deadline conditioned on not-busy (hung InvokeServer could block forever), stale completion writing shared busy/pending, and hitbox lookup restricted to direct children of HRP. Current code cancels the local task when possible, invalidates generations, checks token before touching shared operation state, detects replaced character components, and uses recursive exact-name BasePart lookup. Missing hitbox has its own status; no invented fallback attachment is used. Lost active weld can reattach the existing owned toy before recreating it. Settings button calls Restart and does not enable a disabled function.
+
+Real module tests cover30 complete character replacements, delayed/nested hitboxes, lost weld without new spawn, a suspended InvokeServer coroutine followed by successful retry, stale completion during a newer generation and manual restart. Existing tests cover hide/cleanup and ownership/weld confirmation. This is simulated lifecycle evidence, not a real FTAP attack-resistance test. Cancelling a local coroutine does not revoke an already-dispatched request or guarantee no late server object appears. Live AK-246 remains pending; no broader immunity/anti-ban claim.
+
 Reviewed 2026-10-26. Source files were read as text, never executed.
 
 ## Resonance
