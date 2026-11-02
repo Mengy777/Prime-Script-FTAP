@@ -8,7 +8,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **2.4.6**, tag `v2.4.6`. Next normal runtime version: **2.4.7**. Consult Git for the release commit.
+- Published runtime target: **2.4.7**, tag `v2.4.7`. Next normal runtime version: **2.4.8**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -57,6 +57,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 ### Lifecycle / compatibility
 
 - Keep stable `controls`, `setters` and setting specification keys: visible label changes must not rename persisted identifiers.
+- 2.4.7 user requested temporary Prime Vortex category INSIDE Visuals, before Settings. Freecam moved there (Vortex/Freecam route), Spectate remains View; behavior/keys/binds unchanged. This is not a transfer into standalone PrimeVortex.lua, which remains unchanged. New location pending user acceptance.
 - 2.4.4 supersedes2.4.3 Objects/Items: user explicitly removed BOTH entire ESP tabs and all their runtime handlers/settings. Removed detectors/PCLD/Sticky/Blackhole ESP + Blob/Gucci/antiKick-item/combat markers; 94 keys removed,257 remain. ESP Players/Tools, self highlight, actual AntiKick protection and FTAP blackhole visuals remain. Old configs ignore removed keys; no object-master migration remains. object_profiles.py now verifies absence/legacy compatibility. Do not restore removed functions from older notes.
 - 2.4.3 ESP Items subpage: objectESPEnabled gates existing Blob/AntiKick/Combat managers; types/appearance/colors are pages in one settings window. Existing category keys retained. 15 new persisted keys (351 total): master, category/type options, shared style/distance, item color/rainbow/natural palette. Master-off preserves selections; applyProfile infers master from old category flags ONLY if absent in source payload. object_profiles.py covers legacy migration and off-state persistence. Server detectors remain Objects, Reveal invisible moved Tools. User approved old ESP05…09 on2026-11-02; new UI/options await fresh confirmation.
 - 2.4.2 localization: initial bind translates immediately (late-created controls), retains original English source for reversible RU/EN switching. Missing Objects/Tools/parameter/protection labels and Anti-Kick status composition added. tests/sim/localization.py covers actual nav labels, dynamic creation/status and saved Russian; keep identifiers/usernames unchanged.

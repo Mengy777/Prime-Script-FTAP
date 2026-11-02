@@ -959,13 +959,14 @@ return function(c)
 
     end
     do
-        local g=group("Camera","Cinematic camera",2)
+        local g=group("Vortex","Freecam",1)
         toggle(g,"freeCameraEnabled","Free camera",false,function(on)
             if on then if v.spectateEnabled then c.Setters.spectateEnabled(false,true) end startFree() else endFree() end
         end)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
         panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
         panel("freeCameraEnabled"):AddLabel("RMB: approach / return · E: objects · F4: exit")
+        g=group("Camera","Cinematic camera",2)
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end
         end)

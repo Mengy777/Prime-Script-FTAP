@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.6"
+local VERSION="2.4.7"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -535,6 +535,7 @@ ru["Item color"]="Цвет предметов"
 ru["Waiting for character hitbox"]="Ожидание хитбокса персонажа"
 ru["Restoring protection"]="Восстановление защиты"
 ru["Restore protection"]="Восстановить защиту"
+ru["Freecam"]="Свободная камера"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
@@ -917,6 +918,7 @@ local function buildVisualSystems()
         {"Character","user-round",{"Character"}},
         {"ESP","scan-eye",{"ESP"}},
         {"FTAP","orbit",{"Tweaks","Audio"}},
+        {"Prime Vortex","flame",{"Vortex"}},
         {"Settings","settings",{"Settings"}}
     }
     for _,category in ipairs(categories) do

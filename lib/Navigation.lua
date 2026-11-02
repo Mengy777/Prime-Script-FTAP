@@ -4,11 +4,12 @@ return function(c)
     local pages={
         View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
-        FTAP={"Grab line","Crosshair","Blackholes","Audio"},Settings={"General","Profiles"},
+        FTAP={"Grab line","Crosshair","Blackholes","Audio"},["Prime Vortex"]={"Freecam"},Settings={"General","Profiles"},
     }
     -- Input group -> short subpage, shared card, column. Adjacent single-toggle cards merge.
     local routes={
         Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},["Cinematic camera"]={"Camera","Camera tools",2}},
+        Vortex={Freecam={"Freecam","Freecam",1}},
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
         Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
         Particles={Particles={"Weather","Particles",1},Snowfall={"Weather","Snowfall",2}},
@@ -28,7 +29,7 @@ return function(c)
         Audio={["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
         Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
     }
-    local categoryFor={Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="FTAP",Settings="Settings"}
+    local categoryFor={Vortex="Prime Vortex",Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="FTAP",Settings="Settings"}
     local states={}
     local cache={}
     local searching=false

@@ -19,6 +19,8 @@ SECTION('ESP','Tools').MouseButton1Click:Fire()
 assert(TEST_GROUPS['Player visibility'].BoxHolder.Visible and not TEST_GROUPS['Player highlight'].BoxHolder.Visible)
 assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera' and TEST_OPTIONS.camThird.Info.Tooltip)
 assert(TEST_OPTIONS.espPlayers.Info.Text=='Players')
+assert(TEST_GROUPS.Freecam.NavigationCategory=='Prime Vortex' and TEST_GROUPS.Freecam.NavigationPage=='Freecam')
+assert(TEST_GROUPS['Camera tools'].NavigationCategory=='View')
 """)
 print('PASS actual navigation: short subpages, merged cards, page visibility, readable labels and explanations')
 lua.execute('TEST_DRAIN()')
@@ -161,7 +163,7 @@ factory=lua.execute((ROOT/'lib/Navigation.lua').read_text(encoding='utf-8'))
 lua.globals().NAV_FACTORY=factory
 lua.execute(r"""
 local allGroups={}local tabs={}
-for _,category in ipairs({'View','Graphics','Character','ESP','FTAP','Settings'})do
+for _,category in ipairs({'View','Graphics','Character','ESP','FTAP','Prime Vortex','Settings'})do
  local tab={Container=Instance.new('Frame'),Sides={Instance.new('ScrollingFrame'),Instance.new('ScrollingFrame')}}tabs[category]=tab
  function tab:AddGroupbox(info)
   local g={Name=info.Name,Visible=true,BoxHolder=Instance.new('Frame')}allGroups[#allGroups+1]=g return g
