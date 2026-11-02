@@ -671,13 +671,14 @@ return function(c)
     local function visibleFreeBody()
         local char=me.Character
         if free.character~=char then
-            job("Freecam parts") unpatch("freeBody") free.parts={} free.character=char
+            job("Freecam parts") unpatch("freeBody") unpatch("freeAlpha") free.parts={} free.character=char
             local function add(part) if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then free.parts[part]=true end end
             if char then
                 for _,part in ipairs(char:GetDescendants()) do add(part) end
                 job("Freecam parts",char.DescendantAdded,add)
             end
         end
+        if c.RevealAvatar then c.RevealAvatar()end
         for part in pairs(free.parts) do
             if not part.Parent or not char or not part:IsDescendantOf(char) then free.parts[part]=nil unpatch("freeBody",part)
             else patch("freeBody",part,"LocalTransparencyModifier",0) end
@@ -845,7 +846,7 @@ return function(c)
         job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
         free.interacting=false free.rmbNative=nil
         unpatch("freeNames") free.names={}
-        unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
+        unpatch("freeBody") unpatch("freeAlpha") unpatch("freeToyMenu") free.parts={} free.character=nil
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
         if hud then hud.Visible=false end
         pcall(function() game:GetService("ContextActionService"):UnbindAction("PrimeVisualsFreecam") end)
