@@ -3,7 +3,7 @@ return function(c)
     local lib,make,listen=c.Library,c.Make,c.Listen
     local pages={
         View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
-        Character={"Appearance","Movement","Mannequins"},ESP={"Players","Objects","Items","Tools"},
+        Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
         FTAP={"Grab line","Crosshair","Blackholes","Audio"},Settings={"General","Profiles"},
     }
     -- Input group -> short subpage, shared card, column. Adjacent single-toggle cards merge.
@@ -20,8 +20,8 @@ return function(c)
             Mannequins={"Mannequins","Local mannequins",1},
         },
         ESP={Visibility={"Players","Player highlight",1},["Player markers"]={"Players","Player highlight",1},
-            Geometry={"Players","Player overlays",2},["World markers"]={"Objects","World markers",1},
-            ["Object highlights"]={"Items","Item highlights",1},["Player visibility"]={"Tools","Player visibility",1},["Target trace"]={"Tools","Player tracker",1},
+            Geometry={"Players","Player overlays",2},
+            ["Player visibility"]={"Tools","Player visibility",1},["Target trace"]={"Tools","Player tracker",1},
             ["Local position history"]={"Tools","Position history",2}},
         Tweaks={["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
             Blackholes={"Blackholes","Blackholes",1},["Animated blackholes"]={"Blackholes","Blackhole animation",2}},

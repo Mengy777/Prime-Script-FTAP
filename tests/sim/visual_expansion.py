@@ -162,32 +162,6 @@ TEST_OPTIONS.espPlayers:SetValue(false)
 """)
 print('PASS R6/R15 projected box/skeleton, near-plane clipping, target marker with absent-target hiding, own highlight, existing ESP health/distance integration')
 lua.execute(r"""
-local toys=Instance.new('Folder')toys.Name='EnemySpawnedInToys'toys.Parent=workspace
-local function toy(name)
- local m=Instance.new('Model')m.Name=name m.Parent=toys
- local p=Instance.new('Part')p.Name='Body'p.Position=Vector3.new(10,2,1)p.CFrame=CFrame.new(p.Position)p.Size=Vector3.new(2,2,2)p.Parent=m return m
-end
-local blob=toy('CreatureBlobman')local kunai=toy('Kunai')local peel=toy('BananaPeel')
-TEST_OPTIONS.objectESPEnabled:SetValue(true)TEST_OPTIONS.blobESP:SetValue(true)TEST_OPTIONS.combatESP:SetValue(true)TEST_OPTIONS.antiKickESP:SetValue(true)TICK(.51)
-assert(FIND('PV_BlobESP')and FIND('PV_CombatESP')and FIND('PV_AntiKickESP'))
-TEST_OPTIONS.objectESPEnabled:SetValue(false)
-assert(not FIND('PV_BlobESP')and not FIND('PV_CombatESP')and not FIND('PV_AntiKickESP'))
-assert(TEST_OPTIONS.blobESP.Value and TEST_OPTIONS.combatESP.Value,'umbrella erased type choices')
-TEST_OPTIONS.objectESPEnabled:SetValue(true)
-TEST_OPTIONS.objectBlobman:SetValue(false)assert(not FIND('PV_BlobESP'))
-TEST_OPTIONS.objectBlobman:SetValue(true)assert(FIND('PV_BlobESP'))
-TEST_OPTIONS.objectKunai:SetValue(false)assert(not FIND('PV_AntiKickESP'))
-TEST_OPTIONS.objectKunai:SetValue(true)assert(FIND('PV_AntiKickESP'))
-TEST_OPTIONS.objectESPHighlight:SetValue(false)
-assert(not FIND('PV_BlobESP'):FindFirstChildWhichIsA('Highlight').Enabled)
-TEST_OPTIONS.objectESPNames:SetValue(true)
-TEST_OPTIONS.objectESPHighlight:SetValue(true)
-TEST_OPTIONS.objectNaturalColors:SetValue(false)
-TEST_OPTIONS.objectItemColor:SetValueRGB(Color3.new(.1,.3,.9))TICK(.51)
-assert(FIND('PV_CombatESP'):FindFirstChildWhichIsA('Highlight').FillColor==TEST_OPTIONS.objectItemColor.Value)
-local n=0 for _,o in ipairs(workspace:GetDescendants())do if o.Name=='PV_CombatESP'then n=n+1 end end assert(n==1,'duplicate or wrong item match')
-TEST_OPTIONS.blobESP:SetValue(false)TEST_OPTIONS.combatESP:SetValue(false)TEST_OPTIONS.antiKickESP:SetValue(false)
-assert(not FIND('PV_BlobESP')and not FIND('PV_CombatESP')and not FIND('PV_AntiKickESP'))
 local head=ENEMY.Character:FindFirstChild('Head');head.Transparency=1
 TEST_OPTIONS.revealInvisible:SetValue(true)assert(head.Transparency==.55)
 TEST_OPTIONS.revealInvisible:SetValue(false)assert(head.Transparency==1)head.Transparency=0
@@ -206,7 +180,7 @@ local n=0 for _,o in ipairs(workspace:GetDescendants())do if o.Name=='PV_Estimat
 TEST_OPTIONS.serverGhostEnabled:SetValue(false)assert(not FIND('PV_EstimatedServerPosition'))
 assert(not TEST_OPTIONS.animationEnabled and not TEST_OPTIONS.animationName and not TEST_OPTIONS.animationSpeed)
 """)
-print('PASS source object matching/icon deduplication, invisibility restore, animated blackhole repair/expiry/live controls, 32-part position ghost; animation controls removed')
+print('PASS player invisibility restore, animated blackhole repair/expiry/live controls, 32-part position ghost; animation controls removed')
 lua.execute(r"""
 local w=ME.Character:FindFirstChildOfClass('Humanoid')local originalSubject=workspace.CurrentCamera.CameraSubject
 local camera=workspace.CurrentCamera local originalCF=camera.CFrame

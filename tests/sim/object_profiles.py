@@ -1,17 +1,11 @@
 from support import Disk,session
 import json
 D=Disk();lua,_,_,_=session(D)
-lua.execute("TEST_OPTIONS.objectBlobman:SetValue(false); TEST_OPTIONS.blobESP:SetValue(true); TEST_OPTIONS.objectESPEnabled:SetValue(false); TEST_DRAIN(); TEST_ACTIONS['Unload script']()")
-lua,_,_,_=session(D)
-lua.execute("assert(TEST_OPTIONS.blobESP.Value and not TEST_OPTIONS.objectBlobman.Value and not TEST_OPTIONS.objectESPEnabled.Value); TEST_ACTIONS['Unload script']()")
+lua.execute("assert(not TEST_OPTIONS.objectESPEnabled and not TEST_OPTIONS.blobESP and not TEST_OPTIONS.espServer and not TEST_OPTIONS.espSticky and not TEST_OPTIONS.espBlackholes); TEST_OPTIONS.cameraFOV:SetValue(91); TEST_DRAIN(); TEST_ACTIONS['Unload script']()")
 for path in list(D.files):
  if path.endswith(('autosave.json','autosave.backup.json')):
-  doc=json.loads(D.files[path]); payload=doc['payload']
-  for key in list(payload['values']):
-   if key.startswith('object'):
-    payload['values'].pop(key);payload.get('applied',{}).pop(key,None)
-  payload['values']['blobESP']=True
+  doc=json.loads(D.files[path]);doc['payload']['values'].update({'objectESPEnabled':True,'blobESP':True,'espServer':True,'espSticky':True,'espBlackholes':True})
   D.files[path]=json.dumps(doc)
 lua,_,_,_=session(D)
-lua.execute("assert(TEST_OPTIONS.objectESPEnabled.Value and TEST_OPTIONS.blobESP.Value and TEST_OPTIONS.objectBlobman.Value)")
-print('PASS object master-off preserves subtype settings across restart; legacy item profiles infer umbrella enabled')
+lua.execute("assert(TEST_OPTIONS.cameraFOV.Value==91 and not TEST_OPTIONS.objectESPEnabled and not TEST_OPTIONS.espServer); for _,o in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do assert(o.Name~='Section_Objects' and o.Name~='Section_Items')end; TEST_ACTIONS['Unload script']()")
+print('PASS removed object/item tabs and controls absent; legacy object keys ignored while FOV preserved')

@@ -14,8 +14,9 @@ assert(not TEST_GROUPS.Camera.BoxHolder.Visible and TEST_GROUPS['Custom skybox']
 SECTION('View','Camera').MouseButton1Click:Fire()
 SECTION('Graphics','Weather').MouseButton1Click:Fire()
 assert(TEST_GROUPS.Particles.BoxHolder.Visible and TEST_GROUPS.Snowfall.BoxHolder.Visible and not TEST_GROUPS.Lighting.BoxHolder.Visible)
-SECTION('ESP','Objects').MouseButton1Click:Fire()
-assert(TEST_GROUPS['World markers'].BoxHolder.Visible and not TEST_GROUPS['Player highlight'].BoxHolder.Visible)
+assert(not SECTION('ESP','Objects') and not SECTION('ESP','Items'))
+SECTION('ESP','Tools').MouseButton1Click:Fire()
+assert(TEST_GROUPS['Player visibility'].BoxHolder.Visible and not TEST_GROUPS['Player highlight'].BoxHolder.Visible)
 assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera' and TEST_OPTIONS.camThird.Info.Tooltip)
 assert(TEST_OPTIONS.espPlayers.Info.Text=='Players')
 """)
@@ -28,7 +29,7 @@ TEST_DRAIN()
 """)
 assert D.writes==before,'presentation-only navigation saved/changed profile'
 auto=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(auto['payload']['values'])==351
+assert len(auto['payload']['values'])==257
 lua.execute(r"""
 local label
 for _,item in ipairs(TEST_LABELS)do if item.Text=='Tint'then label=item break end end assert(label)
@@ -52,7 +53,7 @@ lua2,*_=session(D)
 lua2.execute("local found=false for _,p in ipairs(TEST_SETTINGS)do if p.Owner==TEST_OPTIONS.lightEnabled then assert(p.LastPosition.X.Offset==730 and p.LastPosition.Y.Offset==220); found=true end end assert(found)")
 print('PASS floating inspector coordinates autosave and restore on cold start')
 lua.execute("TEST_ACTIONS['Unload script']()")
-print('PASS navigation creates no profile writes; 351 current settings retained (advanced lighting editor included)')
+print('PASS navigation creates no profile writes; 257 current settings retained (advanced lighting editor included)')
 # Exercise the actual native feature-panel implementation rather than the main UI stub.
 native=(ROOT/'lib/Obsidian.lua').read_text(encoding='utf-8-sig')
 block=native[native.index('local ActiveFeatureSettings'):native.index('function Library:SetFont')]

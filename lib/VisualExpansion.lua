@@ -7,8 +7,8 @@ return function(c)
     local group,toggle,slider,color,field,choice,panel=c.Group,c.Toggle,c.Slider,c.Color,c.Field,c.Choice,c.Panel
     local make,patch,unpatch=c.Make,c.Patch,c.Unpatch
     for key,owner in pairs({jumpCircleColor="jumpCircleEnabled",bodyTrailColor="bodyTrailEnabled",bodyTrailStart="bodyTrailEnabled",bodyTrailEnd="bodyTrailEnabled",
-        snowColor="snowEnabled",boxColor="boxEnabled",skeletonColor="skeletonEnabled",traceColor="traceEnabled",selfESPColor="selfESP",blobESPColor="blobESP",
-        antiKickColor="antiKickESP",objectItemColor="objectESPEnabled",oceanColor="oceanAppearance",holeColor="holeSprite"}) do c.ColorOwners[key]=owner end
+        snowColor="snowEnabled",boxColor="boxEnabled",skeletonColor="skeletonEnabled",traceColor="traceEnabled",selfESPColor="selfESP",
+        oceanColor="oceanAppearance",holeColor="holeSprite"}) do c.ColorOwners[key]=owner end
     for _,part in ipairs({"Head","Torso","LeftArm","RightArm","LeftLeg","RightLeg"}) do c.ColorOwners["body"..part.."Color"]="bodyAppearance" end
     local dead=false
     local objects,links={},{}
@@ -335,72 +335,24 @@ return function(c)
         slider(g,"traceMarkerSize","Marker size",10,200,42,1,function() end)
         field(g,"traceMarkerImage","Marker image","124302285576089",function(value) id(value,"") end)
     end
-    -- Cosmetic object ESP: actual source name rules and item icon IDs.
-    local itemDefs={
-        {"Banana",18383839594,{255,221,51},"banana","peel"},{"Snowball",13681767492,{255,255,255},"snowball"},
-        {"Shuriken",106219288648232,{205,210,215},"shuriken"},{"Kunai",13626208096,{125,130,135},"kunai"},{"Pickaxe",4503278233,{140,95,55},"pickaxe"},
-    }
+    -- Local self highlight and reveal-invisible player highlights.
     local markers={}
-    local function marker(o,key,tint,alpha,icon,name)
+    local function marker(o,key,tint,alpha)
         local part=o:IsA("BasePart") and o or o.PrimaryPart or o:FindFirstChildWhichIsA("BasePart",true) if not part then return end
-        local object=key=="BlobESP" or key=="AntiKickESP" or key=="CombatESP"
-        if object then
-            if not v.objectESPEnabled then return end
-            local camera=W.CurrentCamera
-            if camera and (part.Position-camera.CFrame.Position).Magnitude>(v.objectESPDistance or 5000) then return end
-        end
         local entry=markers[key] and markers[key][o]
         markers[key]=markers[key] or {}
         if not entry or not entry.folder.Parent or not entry.hi.Parent or (entry.bill and not entry.bill.Parent) then
             if entry then destroy(entry.folder) end
             local f=create("Folder",{Name="PV_"..key},worldRoot())
             entry={folder=f,hi=make("Highlight",{Adornee=o,DepthMode=Enum.HighlightDepthMode.AlwaysOnTop,OutlineTransparency=0},f)} markers[key][o]=entry
-            if icon or object then
-                entry.bill=make("BillboardGui",{Adornee=part,AlwaysOnTop=true,StudsOffset=Vector3.new(0,2.2,0)},f)
-                entry.image=make("ImageLabel",{BackgroundTransparency=1,Size=UDim2.fromScale(1,1)},entry.bill)
-                entry.nameBill=make("BillboardGui",{Adornee=part,AlwaysOnTop=true,Size=UDim2.fromOffset(130,20),StudsOffset=Vector3.new(0,3.6,0)},f)
-                entry.text=make("TextLabel",{BackgroundTransparency=1,Size=UDim2.fromScale(1,1),Font=Enum.Font.GothamBold,TextSize=14,TextStrokeTransparency=0.4},entry.nameBill)
-            end
+
         end
-        entry.seen=true entry.hi.Enabled=not object or v.objectESPHighlight entry.hi.FillColor=tint entry.hi.OutlineColor=tint entry.hi.FillTransparency=alpha
-        if entry.bill then
-            entry.bill.Size=UDim2.fromOffset(v.combatIconSize,v.combatIconSize) entry.image.Image=icon and "rbxassetid://"..icon or ""
-            entry.bill.Enabled=v.objectESPIcons and icon~=nil
-            entry.nameBill.Enabled=v.objectESPNames or (key=="CombatESP" and v.combatNames) entry.text.Text=name or o.Name entry.text.TextColor3=tint
-        end
+        entry.seen=true entry.hi.FillColor=tint entry.hi.OutlineColor=tint entry.hi.FillTransparency=alpha
+
     end
     local function updateMarkers()
         for _,set in pairs(markers) do for _,e in pairs(set) do e.seen=false end end
         if v.selfESP and me.Character then marker(me.Character,"SelfESP",v.selfESPColor,0.45) end
-        if v.objectESPEnabled and (v.blobESP or v.antiKickESP or v.combatESP) then
-            for _,container in ipairs(W:GetChildren()) do
-                local toys=container.Name:find("SpawnedInToys",1,true)
-                local own=container.Name==me.Name.."SpawnedInToys"
-                if toys then for _,o in ipairs(container:GetChildren()) do
-                    if v.blobESP and ((v.objectBlobman and o.Name=="CreatureBlobman") or (v.objectGucci and o.Name=="Gucci")) then marker(o,"BlobESP",v.blobESPColor,0.4) end
-                    if v.antiKickESP and not (v.antiKickOthers and own) then
-                        for _,needle in ipairs({"Shuriken","Kunai","Plate","Pickaxe","Pallet"}) do
-                            if v["object"..needle] and o.Name:find(needle,1,true) then marker(o,"AntiKickESP",v.antiKickColor,v.antiKickFill) break end
-                        end
-                    end
-                end end
-                if v.combatESP then
-                    local candidates=(toys or container.Name=="PlotItems" or container.Name=="Debris") and container:GetDescendants() or {container}
-                    for _,o in ipairs(candidates) do if o:IsA("Model") or o:IsA("BasePart") then
-                        local name=o.Name:lower():gsub("%s+","")
-                        for _,d in ipairs(itemDefs) do
-                            if v["combat"..d[1]] and name:find(d[4],1,true) and not (d[5] and name:find(d[5],1,true)) then
-                                -- Prefer the enclosing matched Model to avoid duplicate icons on its parts.
-                                local ancestor=o.Parent local nested=false
-                                while ancestor and ancestor~=container do if ancestor:IsA("Model") and ancestor.Name:lower():gsub("%s+",""):find(d[4],1,true) then nested=true break end ancestor=ancestor.Parent end
-                                if not nested then marker(o,"CombatESP",v.objectNaturalColors and Color3.fromRGB(d[3][1],d[3][2],d[3][3]) or v.objectItemColor,v.combatFill,d[2],d[1]) end
-                                break
-                            end
-                        end
-                    end end
-                end
-            end
-        end
         if v.revealInvisible then
             for _,p in ipairs(P:GetPlayers()) do if p~=me and p.Character then
                 local invisible=false
@@ -422,34 +374,6 @@ return function(c)
         local g=group("Character","Self ESP",1)
         toggle(g,"selfESP","Self highlight",false,updateMarkers) g=panel("selfESP")
         color(g,"selfESPColor","Color",Color3.fromRGB(96,76,214),updateMarkers,markerColor("SelfESP"))
-        g=group("ESP","Object highlights",2)
-        toggle(g,"objectESPEnabled","Object markers",false,updateMarkers)
-        local settings=panel("objectESPEnabled")
-        local types=settings:AddPage("Types")
-        local appearance=settings:AddPage("Appearance")
-        local colors=settings:AddPage("Colors")
-        toggle(types,"blobESP","Blobman / Gucci ESP",false,updateMarkers)
-        toggle(types,"objectBlobman","Blobman",true,updateMarkers)
-        toggle(types,"objectGucci","Gucci",true,updateMarkers)
-        toggle(types,"antiKickESP","Anti-kick objects ESP",false,updateMarkers)
-        for _,name in ipairs({"Shuriken","Kunai","Plate","Pickaxe","Pallet"}) do
-            toggle(types,"object"..name,name,true,updateMarkers)
-        end
-        toggle(types,"combatESP","Combat items ESP",false,updateMarkers)
-        for _,d in ipairs(itemDefs) do toggle(types,"combat"..d[1],d[1],d[1]=="Shuriken" or d[1]=="Kunai",updateMarkers) end
-        toggle(appearance,"objectESPHighlight","Highlight",true,updateMarkers)
-        toggle(appearance,"objectESPNames","Object names",false,updateMarkers)
-        toggle(appearance,"objectESPIcons","Item icons",true,updateMarkers)
-        toggle(appearance,"combatNames","Combat item names",false,updateMarkers)
-        toggle(appearance,"antiKickOthers","Other players only",true,updateMarkers)
-        slider(appearance,"objectESPDistance","Maximum distance",50,5000,5000,1,updateMarkers)
-        slider(appearance,"combatIconSize","Icon size",16,80,36,1,updateMarkers)
-        slider(appearance,"combatFill","Item fill transparency",0,1,0.55,0.01,updateMarkers)
-        slider(appearance,"antiKickFill","Protection item fill",0,1,0.55,0.01,updateMarkers)
-        toggle(colors,"objectNaturalColors","Original item colors",true,updateMarkers)
-        color(colors,"objectItemColor","Item color",Color3.fromRGB(168,85,247),updateMarkers,markerColor("CombatESP"))
-        color(colors,"blobESPColor","Blobman color",Color3.fromRGB(96,76,214),updateMarkers,markerColor("BlobESP"))
-        color(colors,"antiKickColor","Protection item color",Color3.fromRGB(255,80,80),updateMarkers,markerColor("AntiKickESP"))
         g=group("ESP","Player visibility",1)
         toggle(g,"revealInvisible","Reveal invisible characters",false,updateMarkers)
     end

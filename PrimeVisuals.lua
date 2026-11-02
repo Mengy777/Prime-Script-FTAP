@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.3"
+local VERSION="2.4.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1865,9 +1865,9 @@ local function buildVisualSystems()
         g:AddLabel("LMB: grab/drop | RMB: throw")
         g:AddLabel("Wheel: distance | Hold R: rotate")
     end
-    -- ESP: four independent categories, with event-based discovery and capped updates.
+    -- Player ESP with event-based character discovery and capped updates.
     local espRoot=own(make("Folder",{Name="PV_ESP"},Workspace))
-    local categories={Players={},Server={},Sticky={},Blackholes={}}
+    local categories={Players={}}
     local espEntries={}
     local playerSelector
     local playerLabels,playerImages={},{}
@@ -1894,17 +1894,6 @@ local function buildVisualSystems()
     end
     local function defaultESP() return {rainbow=false,smooth=true,fill=purple,outline=white,fillAlpha=0.75,outlineAlpha=0.1,names=true,text=white,textOutline=black,textStroke=0,size=14,offset=3,font="Builder Sans",bold=false,thickness=0.03,nameDistance=0,highlight=true,icon=false} end
     for name in pairs(categories) do categories[name]=defaultESP() end
-    local function nearestOwner(part)
-        local best,distance,second=nil,math.huge,math.huge
-        for _,p in ipairs(Players:GetPlayers()) do
-            local root=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                local d=(root.Position-part.Position).Magnitude
-                if d<distance then second=distance best,distance=p,d elseif d<second then second=d end
-            end
-        end
-        if distance<15 and second-distance>2 then return best end
-    end
     local function removeESP(target)
         local entry=espEntries[target]
         if not entry then return end
@@ -1921,34 +1910,7 @@ local function buildVisualSystems()
         local bill=own(make("BillboardGui",{Name="PV_Name",Adornee=part,AlwaysOnTop=true,Size=UDim2.fromOffset(240,38),StudsOffsetWorldSpace=Vector3.new(0,3,0)},espRoot))
         local text=make("TextLabel",{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,TextColor3=white,TextStrokeTransparency=0,Font=Enum.Font.BuilderSans,TextSize=14},bill)
         local entry={target=target,category=category,owner=owner,part=part,hi=hi,bill=bill,text=text,objects={hi,bill}}
-        if category=="Server" or category=="Sticky" then
-            local selection=own(make("SelectionBox",{Adornee=part,Color3=white,SurfaceTransparency=1,LineThickness=0.03},espRoot))
-            entry.selection=selection table.insert(entry.objects,selection)
-        end
-        if category=="Server" then
-            local proxy=own(make("Part",{Name="PV_ServerMarker",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1,Size=part.Size,CFrame=part.CFrame},espRoot))
-            local fill=own(make("BoxHandleAdornment",{Adornee=proxy,Size=part.Size,Color3=purple,Transparency=0.75,AlwaysOnTop=true,ZIndex=4},espRoot))
-            entry.proxy=proxy entry.boxFill=fill
-            entry.bill.Adornee=proxy
-            if entry.selection then entry.selection.Adornee=proxy end
-            table.insert(entry.objects,proxy) table.insert(entry.objects,fill)
-        end
         espEntries[target]=entry
-    end
-    local function espCandidate(o)
-        if o:IsDescendantOf(espRoot) then return end
-        if controls.espServer and o:IsA("BasePart") and (o.Name=="PlayerCharacterLocationDetector" or o.Name:lower()=="partesp") then addESP(o,"Server",nearestOwner(o)) end
-        if controls.espSticky and o:IsA("BasePart") and o.Name=="StickyPart" then addESP(o.Parent,"Sticky") end
-        if controls.espBlackholes then
-            if o.Name=="BlackHoleKick" or o.Name=="StayedBH" then addESP(o,"Blackholes")
-            elseif o:IsA("BasePart") then
-                local ancestor=o.Parent
-                while ancestor and ancestor~=Workspace do
-                    if ancestor.Name=="BlackHoleKick" or ancestor.Name=="StayedBH" then addESP(ancestor,"Blackholes") break end
-                    ancestor=ancestor.Parent
-                end
-            end
-        end
     end
     local function refreshESP()
         if espRoot.Parent~=Workspace then
@@ -1957,23 +1919,12 @@ local function buildVisualSystems()
             espRoot=own(make("Folder",{Name="PV_ESP"},Workspace))
         end
         espNeedsRefresh=false
-        local enabled=controls.espPlayers or controls.espServer or controls.espSticky or controls.espBlackholes
+        local enabled=controls.espPlayers
         job("ESP world") job("ESP render") job("ESP smooth")
-        local active={Players=controls.espPlayers,Server=controls.espServer,Sticky=controls.espSticky,Blackholes=controls.espBlackholes}
+        local active={Players=controls.espPlayers}
         for target,entry in pairs(espEntries) do if not active[entry.category] or (entry.category=="Players" and not playerSelected(entry.owner)) then removeESP(target) end end
         if not enabled then return end
         if controls.espPlayers then for _,p in ipairs(Players:GetPlayers()) do if playerSelected(p) and p.Character then addESP(p.Character,"Players",p) end end end
-        scan(Workspace,espCandidate)
-        job("ESP world",Workspace.DescendantAdded,espCandidate)
-        job("ESP smooth",Run.RenderStepped,function(dt)
-            for _,entry in pairs(espEntries) do
-                if entry.proxy and entry.part.Parent then
-                    local target=entry.part.CFrame
-                    entry.proxy.CFrame=categories.Server.smooth and entry.proxy.CFrame:Lerp(target,1-math.exp(-18*dt)) or target
-                    entry.proxy.Size=entry.part.Size
-                end
-            end
-        end)
         local elapsed=0
         job("ESP render",Run.Heartbeat,function(dt)
             elapsed=elapsed+dt if elapsed<0.1 then return end elapsed=0
@@ -1984,8 +1935,7 @@ local function buildVisualSystems()
                     local fillColor=cfg.rainbow and Color3.fromHSV((os.clock()*0.12)%1,0.8,1) or cfg.fill
                     local hi=e.hi hi.Enabled=cfg.highlight and not e.proxy hi.FillColor=fillColor hi.OutlineColor=cfg.outline hi.FillTransparency=cfg.fillAlpha hi.OutlineTransparency=cfg.outlineAlpha
                     e.bill.Enabled=cfg.names e.bill.StudsOffsetWorldSpace=Vector3.new(0,cfg.offset,0)
-                    if e.category=="Server" then e.owner=nearestOwner(e.part) end
-                    local title=e.owner and e.owner.DisplayName or e.category=="Sticky" and "Sticky" or e.category=="Blackholes" and "Blackhole" or "Server detector"
+                    local title=e.owner and e.owner.DisplayName or ""
                     local inRange=true
                     if e.category=="Players" then
                         local camera=Workspace.CurrentCamera
@@ -2007,18 +1957,13 @@ local function buildVisualSystems()
                     e.text.Text=title e.text.TextSize=cfg.size e.text.TextColor3=cfg.text e.text.TextStrokeColor3=cfg.textOutline e.text.TextStrokeTransparency=cfg.textStroke
                     local font=cfg.font=="Code" and Enum.Font.Code or cfg.font=="Roboto" and Enum.Font.Roboto or cfg.font=="Rounded" and Enum.Font.FredokaOne or cfg.font=="Arcade" and Enum.Font.Arcade or cfg.font=="Source" and Enum.Font.SourceSansBold or cfg.font=="Gotham" and Enum.Font.GothamBold or cfg.bold and Enum.Font.BuilderSansBold or Enum.Font.BuilderSans
                     e.text.Font=font
-                    if e.owner and e.category=="Server" and e.owner.Character then
-                        local root=e.owner.Character:FindFirstChild("HumanoidRootPart")
-                        if root then e.bill.Enabled=cfg.names and (root.Position-e.part.Position).Magnitude>=cfg.nameDistance end
-                    end
-                    if e.boxFill then e.boxFill.Visible=cfg.highlight and (e.part.Position-(Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame.Position or e.part.Position)).Magnitude<=(controls.espServerMaxDistance or 5000) e.boxFill.Color3=fillColor e.boxFill.Transparency=cfg.fillAlpha e.boxFill.Size=e.part.Size end
-                    if e.selection then e.selection.Visible=cfg.highlight and (e.category~="Server" or (e.part.Position-(Workspace.CurrentCamera and Workspace.CurrentCamera.CFrame.Position or e.part.Position)).Magnitude<=(controls.espServerMaxDistance or 5000)) e.selection.Color3=cfg.outline e.selection.Transparency=cfg.outlineAlpha e.selection.LineThickness=cfg.thickness end
+
                 end
             end
         end)
     end
     maintenance.ESP=function()
-        if not (controls.espPlayers or controls.espServer or controls.espSticky or controls.espBlackholes) then return end
+        if not (controls.espPlayers) then return end
         local refresh=espNeedsRefresh or espRoot.Parent~=Workspace
         for target,entry in pairs(espEntries) do
             if not entry.hi.Parent or not entry.bill.Parent or (entry.proxy and not entry.proxy.Parent) then removeESP(target) refresh=true end
@@ -2054,13 +1999,10 @@ local function buildVisualSystems()
     end)
     do
         local playersGroup=group("ESP","Player markers",1)
-        local objectsGroup=group("ESP","World markers",1)
-        for _,entry in ipairs({{"espPlayers","Players"},{"espServer","Server detectors"},{"espSticky","Stickies"},{"espBlackholes","Blackholes"}}) do
-            toggle(entry[1]=="espPlayers" and playersGroup or objectsGroup,entry[1],entry[2],false,refreshESP)
-        end
+        toggle(playersGroup,"espPlayers","Players",false,refreshESP)
         local function config(category,side)
             local cfg=categories[category]
-            local masterKeys={Players="espPlayers",Server="espServer",Sticky="espSticky",Blackholes="espBlackholes"}
+            local masterKeys={Players="espPlayers"}
             local settings=featureSettings(masterKeys[category])
             local general=settings:AddPage("General")
             local appearance=settings:AddPage("Appearance")
@@ -2082,7 +2024,6 @@ local function buildVisualSystems()
                 })
                 register("espSelectedPlayers",playerSelector,{},rememberPlayerSelection,false,{Kind="Dropdown",Multi=true})
             end
-            if category=="Server" then toggle(g,"espServerSmooth","Smooth movement",true,function(v) cfg.smooth=v end) end
             toggle(g,"esp"..category.."Highlight","Highlight",true,function(v) cfg.highlight=v end)
             g=appearance
             color(g,"esp"..category.."Fill","Fill",cfg.fill,function(v) cfg.fill=v end)
@@ -2090,7 +2031,6 @@ local function buildVisualSystems()
             color(g,"esp"..category.."Outline","Outline",cfg.outline,function(v) cfg.outline=v end)
             sliderControl(g,"esp"..category.."FillAlpha","Fill transparency",0,1,cfg.fillAlpha,0.05,function(v) cfg.fillAlpha=v end)
             sliderControl(g,"esp"..category.."OutlineAlpha","Outline transparency",0,1,cfg.outlineAlpha,0.05,function(v) cfg.outlineAlpha=v end)
-            if category=="Server" or category=="Sticky" then sliderControl(g,"esp"..category.."Thickness","Outline thickness",0.01,0.2,0.03,0.01,function(v) cfg.thickness=v end) end
             toggle(general,"esp"..category.."Names","Name",true,function(v) cfg.names=v end)
             choice(g,"esp"..category.."Font","Font",{"Builder Sans","Code","Roboto","Rounded","Gotham","Arcade","Source"},"Builder Sans",function(v) cfg.font=v end)
             toggle(g,"esp"..category.."Bold","Bold",false,function(v) cfg.bold=v end)
@@ -2100,10 +2040,6 @@ local function buildVisualSystems()
             sliderControl(g,"esp"..category.."TextAlpha","Text outline transparency",0,1,0,0.05,function(v) cfg.textStroke=v end)
             sliderControl(g,"esp"..category.."Size","Text size",8,30,14,1,function(v) cfg.size=v end)
             sliderControl(g,"esp"..category.."Offset","Vertical offset",0,15,3,0.25,function(v) cfg.offset=v end)
-            if category=="Server" then
-                sliderControl(general,"espServerDistance","Show owner when apart",0,50,0,1,function(v) cfg.nameDistance=v end)
-                sliderControl(general,"espServerMaxDistance","Maximum distance",50,5000,5000,1,function() end)
-            end
             if category=="Players" then
                 toggle(general,"espPlayersHealth","Show health",false,function() end)
                 toggle(general,"espPlayersShowDistance","Show distance",false,function() end)
@@ -2111,7 +2047,7 @@ local function buildVisualSystems()
                 sliderControl(general,"espPlayersMaxDistance","Maximum distance",50,5000,5000,1,function() end)
             end
         end
-        config("Players",1) config("Server",2) config("Sticky",1) config("Blackholes",2)
+        config("Players",1)
     end
     -- TWEAKS: game-owned instances are edited locally and restored on disable.
     local crossGui,crossImage
@@ -2651,8 +2587,8 @@ local function buildVisualSystems()
         local statsService
         pcall(function() statsService=game:GetService("Stats") end)
         local masterEffects={"camThird","camNoclip","camBlur","camBody","lightEnabled","skyClouds","particleEnabled",
-            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers","espServer","espSticky","espBlackholes",
-            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","objectESPEnabled","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
+            "waterEnabled","fpsEnabled","characterEnabled","hatEnabled","mannequinEnabled","espPlayers",
+            "jumpCircleEnabled","bodyTrailEnabled","deathDustEnabled","snowEnabled","boxEnabled","skeletonEnabled","traceEnabled","selfESP","revealInvisible","visualPresetEnabled","fullbrightEnabled","freeCameraEnabled","spectateEnabled","oceanAppearance","bodyAppearance","holeSprite","serverGhostEnabled",
             "lineEnabled","grabInfo","crossEnabled","bhImageEnabled","bhTintEnabled","bhStay","bhSoundEnabled",
             "muteAmbience","muteBoomboxes","muteScreams","muteExplosions","muteSoundwaves","muteRhythm","muteInstruments"}
         local averageFPS,averageFrame,minFPS,maxFPS,peakFrame
@@ -3082,10 +3018,6 @@ local function buildVisualSystems()
         if not profileStore.Available then status:SetText("Autosave: unavailable") end
         local function applyProfile(payload)
             local profile=validateProfile(payload)
-            -- Old profiles had three independent item masters, no umbrella.
-            if payload.values and payload.values.objectESPEnabled==nil then
-                profile.values.objectESPEnabled=profile.values.blobESP or profile.values.antiKickESP or profile.values.combatESP or false
-            end
             -- Untouched/reset defaults follow the new session's actual game state.
             if not profile.fovApplied then profile.values.cameraFOV=settingSpecs.cameraFOV.Default end
             if not profile.applied.skyTime then profile.values.skyTime=settingSpecs.skyTime.Default end

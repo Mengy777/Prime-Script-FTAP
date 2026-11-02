@@ -8,10 +8,10 @@ local function section(name)
  for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do if node.Name=='Section_'..name then return node end end
  error('missing section '..name)
 end
-local objects,tools=section('Objects'),section('Tools')
-assert(objects.Text=='Objects' and tools.Text=='Tools')
+local tools=section('Tools')
+assert(tools.Text=='Tools')
 TEST_OPTIONS.uiLanguage:SetValue('Русский')
-assert(objects.Text=='Объекты' and tools.Text=='Инструменты')
+assert(tools.Text=='Инструменты')
 local status=TEST_LOCALIZED_MAKE('TextLabel',{Text='Anti-Kick: Attached'},TEST_LIBRARY.ScreenGui)
 assert(status.Text=='Защита от кика: Закреплено','late-created label not translated')
 status.Text='Anti-Kick: Waiting for character'
@@ -20,21 +20,20 @@ local label=TEST_LOCALIZED_MAKE('TextLabel',{Text='Material'},TEST_LIBRARY.Scree
 assert(label.Text=='Материал')
 for i=1,10 do
  TEST_OPTIONS.uiLanguage:SetValue('English')
- assert(objects.Text=='Objects' and tools.Text=='Tools' and label.Text=='Material')
+ assert(tools.Text=='Tools' and label.Text=='Material')
  assert(status.Text=='Anti-Kick: Waiting for character')
  TEST_OPTIONS.uiLanguage:SetValue('Русский')
- assert(objects.Text=='Объекты' and tools.Text=='Инструменты' and label.Text=='Материал')
+ assert(tools.Text=='Инструменты' and label.Text=='Материал')
 end
 TEST_ACTIONS['Unload script']()
 ''')
-print('PASS actual Objects/Tools labels, late-created controls, dynamic protection statuses and ten RU/EN round-trips')
+print('PASS actual Tools label, late-created controls, dynamic protection statuses and ten RU/EN round-trips')
 lua,_,_,_=session(D)
 lua.execute(r'''
 local found=0
 for _,node in ipairs(TEST_LIBRARY.ScreenGui:GetDescendants())do
- if node.Name=='Section_Objects'then assert(node.Text=='Объекты')found=found+1 end
  if node.Name=='Section_Tools'then assert(node.Text=='Инструменты')found=found+1 end
 end
-assert(found==2,'saved Russian did not restore')
+assert(found==1,'saved Russian did not restore')
 ''')
 print('PASS saved Russian restored on cold startup; stable settings keys retained')

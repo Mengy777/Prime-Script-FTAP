@@ -91,8 +91,11 @@ lu.execute(s)
 lu.execute(r'''
 TEST_OPTIONS.cameraFOV:SetValue(93)
 TEST_OPTIONS.camDistance:SetValue(23);TEST_OPTIONS.camThird:SetValue(true)
-local detector=Instance.new('Part');detector.Name='PlayerCharacterLocationDetector';detector.Size=Vector3.new(1,1,1);detector.Position=Vector3.new(20,0,0);detector.CFrame=CFrame.new();detector.Parent=workspace
-TEST_OPTIONS.espServerSmooth:SetValue(false);TEST_OPTIONS.espServer:SetValue(true)
+local enemy=Instance.new('Player');enemy.Name='RecoveryEnemy';enemy.DisplayName='Enemy';enemy.UserId=101
+local char=Instance.new('Model');char.Parent=workspace;enemy.Character=char
+local head=Instance.new('Part');head.Name='Head';head.Position=Vector3.new(20,0,0);head.Parent=char
+TEST_SERVICES.Players.GetPlayers=function()return {TEST_SERVICES.Players.LocalPlayer,enemy}end
+TEST_OPTIONS.espPlayers:SetValue(true)
 TEST_OPTIONS.lightEnabled:SetValue(true)
 TEST_OPTIONS.particleEnabled:SetValue(true)
 TEST_OPTIONS.hatEnabled:SetValue(true)

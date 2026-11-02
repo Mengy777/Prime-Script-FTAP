@@ -1,15 +1,10 @@
-# Инвентарь настроек Prime Visuals 2.4.3
+# Инвентарь настроек Prime Visuals 2.4.4
 
-Снимок 2026-11-02: **351 сохраняемая настройка**, извлечено из реального реестра в симуляции. Добавлены15 настроек общей системы предметов; прежние ключи сохранены. Статусы: [Testing-Checklist.md](Testing-Checklist.md).
+Снимок2026-11-02: **257 сохраняемых настроек**. Объекты и предметы ESP удалены по просьбе пользователя; удалено94 ключа. Старые профили игнорируют удалённые параметры.
 
 | Ключ | Подпись контрола |
 | --- | --- |
-| `antiKickColor` | — |
-| `antiKickColorRainbow` | Rainbow: Protection item color |
-| `antiKickESP` | Anti-kick items |
 | `antiKickEnabled` | Anti-Kick |
-| `antiKickFill` | Protection item fill |
-| `antiKickOthers` | Other players only |
 | `bhColor` | — |
 | `bhColorRainbow` | Rainbow: Color |
 | `bhImage` | Image |
@@ -18,9 +13,6 @@
 | `bhSoundEnabled` | Custom sound |
 | `bhStay` | Keep visual blackholes |
 | `bhTintEnabled` | Custom color |
-| `blobESP` | Blobman / Gucci ESP |
-| `blobESPColor` | — |
-| `blobESPColorRainbow` | Rainbow: Blobman color |
 | `bodyAppearance` | Body colors |
 | `bodyHeadAlpha` | Head transparency |
 | `bodyHeadColor` | — |
@@ -71,15 +63,6 @@
 | `characterHat` | Affect hat |
 | `characterRainbow` | Rainbow |
 | `collectionSky` | Skybox |
-| `combatBanana` | Banana |
-| `combatESP` | Combat items |
-| `combatFill` | Item fill transparency |
-| `combatIconSize` | Icon size |
-| `combatKunai` | Kunai |
-| `combatNames` | Combat item names |
-| `combatPickaxe` | Pickaxe |
-| `combatShuriken` | Shuriken |
-| `combatSnowball` | Snowball |
 | `crossColor` | — |
 | `crossColorRainbow` | Rainbow: Color |
 | `crossEnabled` | Custom crosshair |
@@ -87,25 +70,6 @@
 | `crossSize` | Size |
 | `deathDustEnabled` | Disintegration dust |
 | `espAllPlayers` | All players |
-| `espBlackholes` | Blackholes |
-| `espBlackholesBold` | Bold |
-| `espBlackholesFill` | — |
-| `espBlackholesFillAlpha` | Fill transparency |
-| `espBlackholesFont` | Font |
-| `espBlackholesHighlight` | Highlight |
-| `espBlackholesIcon` | Name icon |
-| `espBlackholesNames` | Name |
-| `espBlackholesOffset` | Vertical offset |
-| `espBlackholesOutline` | — |
-| `espBlackholesOutlineAlpha` | Outline transparency |
-| `espBlackholesOutlineRainbow` | Rainbow: Outline |
-| `espBlackholesRainbow` | Rainbow fill |
-| `espBlackholesSize` | Text size |
-| `espBlackholesText` | — |
-| `espBlackholesTextAlpha` | Text outline transparency |
-| `espBlackholesTextOutline` | — |
-| `espBlackholesTextOutlineRainbow` | Rainbow: Text outline |
-| `espBlackholesTextRainbow` | Rainbow: Text color |
 | `espPlayers` | Players |
 | `espPlayersBackground` | Name background |
 | `espPlayersBold` | Bold |
@@ -130,49 +94,6 @@
 | `espPlayersTextOutlineRainbow` | Rainbow: Text outline |
 | `espPlayersTextRainbow` | Rainbow: Text color |
 | `espSelectedPlayers` | Selected players |
-| `espServer` | Server markers |
-| `espServerBold` | Bold |
-| `espServerDistance` | Show owner when apart |
-| `espServerFill` | — |
-| `espServerFillAlpha` | Fill transparency |
-| `espServerFont` | Font |
-| `espServerHighlight` | Highlight |
-| `espServerIcon` | Name icon |
-| `espServerMaxDistance` | Maximum distance |
-| `espServerNames` | Name |
-| `espServerOffset` | Vertical offset |
-| `espServerOutline` | — |
-| `espServerOutlineAlpha` | Outline transparency |
-| `espServerOutlineRainbow` | Rainbow: Outline |
-| `espServerRainbow` | Rainbow fill |
-| `espServerSize` | Text size |
-| `espServerSmooth` | Smooth movement |
-| `espServerText` | — |
-| `espServerTextAlpha` | Text outline transparency |
-| `espServerTextOutline` | — |
-| `espServerTextOutlineRainbow` | Rainbow: Text outline |
-| `espServerTextRainbow` | Rainbow: Text color |
-| `espServerThickness` | Outline thickness |
-| `espSticky` | Stickies |
-| `espStickyBold` | Bold |
-| `espStickyFill` | — |
-| `espStickyFillAlpha` | Fill transparency |
-| `espStickyFont` | Font |
-| `espStickyHighlight` | Highlight |
-| `espStickyIcon` | Name icon |
-| `espStickyNames` | Name |
-| `espStickyOffset` | Vertical offset |
-| `espStickyOutline` | — |
-| `espStickyOutlineAlpha` | Outline transparency |
-| `espStickyOutlineRainbow` | Rainbow: Outline |
-| `espStickyRainbow` | Rainbow fill |
-| `espStickySize` | Text size |
-| `espStickyText` | — |
-| `espStickyTextAlpha` | Text outline transparency |
-| `espStickyTextOutline` | — |
-| `espStickyTextOutlineRainbow` | Rainbow: Text outline |
-| `espStickyTextRainbow` | Rainbow: Text color |
-| `espStickyThickness` | Outline thickness |
 | `fpsEnabled` | Boost FPS |
 | `fpsMaterials` | Simplify materials |
 | `fpsReflections` | Remove reflections |
@@ -274,21 +195,6 @@
 | `muteRhythm` | Rhythm makers |
 | `muteScreams` | Screams |
 | `muteSoundwaves` | Soundwaves |
-| `objectBlobman` | Blobman |
-| `objectESPDistance` | Maximum distance |
-| `objectESPEnabled` | Object markers |
-| `objectESPHighlight` | Highlight |
-| `objectESPIcons` | Item icons |
-| `objectESPNames` | Object names |
-| `objectGucci` | Gucci |
-| `objectItemColor` | — |
-| `objectItemColorRainbow` | Rainbow: Item color |
-| `objectKunai` | Kunai |
-| `objectNaturalColors` | Original item colors |
-| `objectPallet` | Pallet |
-| `objectPickaxe` | Pickaxe |
-| `objectPlate` | Plate |
-| `objectShuriken` | Shuriken |
 | `oceanAppearance` | Ocean material and color |
 | `oceanColor` | — |
 | `oceanColorRainbow` | Rainbow: Color |
