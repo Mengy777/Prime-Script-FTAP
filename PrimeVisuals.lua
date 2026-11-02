@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="2.4.1"
+local VERSION="2.4.2"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -487,10 +487,41 @@ local ru={
     ["Audio file is larger than 15 MB"]="Звуковой файл больше 15 МБ.",
     ["Water region is too large for safe conversion; terrain water settings still apply."]="Область воды слишком большая для преобразования. Настройки существующей воды применены.",
 }
+
+-- Supplementary labels and dynamic status messages; setting identifiers stay unchanged.
+ru["Objects"]="Объекты"
+ru["Tools"]="Инструменты"
+ru["Edit selected preset"]="Редактировать выбранный пресет"
+ru["Height"]="Высота"
+ru["Material"]="Материал"
+ru["Particle"]="Частица"
+ru["Player markers"]="Метки игроков"
+ru["Protection"]="Защита"
+ru["Skybox ID or link"]="ID или ссылка на небо"
+ru["Speed"]="Скорость"
+ru["Thickness"]="Толщина"
+ru["Anti-Kick"]="Защита от кика"
+ru["waiting"]="ожидание"
+ru["Unavailable: FTAP remotes missing"]="Недоступно: игровые события FTAP не найдены"
+ru["Waiting for toy folder"]="Ожидание папки предметов"
+ru["Waiting for toy cooldown"]="Ожидание восстановления предмета"
+ru["Preparing protection"]="Подготовка защиты"
+ru["Waiting: toy spawn failed"]="Ожидание: не удалось создать предмет"
+ru["Waiting for character"]="Ожидание персонажа"
+ru["Paused in another player's plot"]="Приостановлено на чужом участке"
+ru["Waiting: toy did not appear"]="Ожидание: предмет не появился"
+ru["Waiting: toy incomplete"]="Ожидание: предмет загружен не полностью"
+ru["Waiting: toy ownership denied"]="Ожидание: владение предметом не подтверждено"
+ru["Waiting: attachment not confirmed"]="Ожидание: крепление не подтверждено"
+ru["Waiting: protection error"]="Ожидание: ошибка защиты"
+ru["Attached"]="Закреплено"
+ru["RMB: approach / return · E: objects · F4: exit"]="ПКМ: перейти / вернуться · E: предметы · F4: выход"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
     if ru[text] then return ru[text] end
+    local status=text:match("^Anti%-Kick: (.+)$")
+    if status then return ru["Anti-Kick"]..": "..(ru[status] or status) end
     local body,suffix=text:match("^(.-)(%s+>)$")
     if body and ru[body] then return ru[body]..suffix end
     return text
@@ -511,6 +542,11 @@ local function bindLocalization(o)
             o[property]=translateText(record.base[property])
             record.writing=false
         end)
+        -- Controls/popups created after selecting Russian need translation now,
+        -- not only on the next property edit or language switch.
+        record.writing=true
+        o[property]=translateText(record.base[property])
+        record.writing=false
     end
 end
 local function setLanguage(language)
