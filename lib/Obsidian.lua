@@ -14377,6 +14377,7 @@ function Library:CreateWindow(WindowInfo)
     Window.MainFrame = MainFrame
     Window.SearchBox = SearchBox
     Window.IconHolder = WindowIcon
+    Window.TitleLabel = WindowTitle
     Library.Window = Window
 
     return Window

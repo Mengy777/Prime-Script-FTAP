@@ -1,12 +1,14 @@
 -- Major 3 presentation/input coordinator. Gameplay stays behind existing setters.
 return function(c)
  local v,lib=c.Controls,c.Library
+ local wordmark=c.Wordmark({Make=c.Make,Library=lib})
  local input=c.Keybinds({Input=c.Input,MenuOpen=function()return lib.Toggled end,Safe=c.Safe})
  local roots,connections={},{} local dead=false
  local api={}
  function api:Destroy()if dead then return end dead=true input:Destroy()for _,link in ipairs(connections)do if link then link:Disconnect()end end for _,root in ipairs(roots)do root:Destroy()end end
  if c.TrackCleanup then c.TrackCleanup(function()api:Destroy()end)end
  local function own(o)roots[#roots+1]=o return o end
+ if c.HeaderTitle then wordmark:Apply(c.HeaderTitle,18,172)end
  if c.Header then connections[#connections+1]=c.Icon(c.Header,c.Main,c.Run)end
  local function binding(key,fn,panel)
   input:Register(key,fn)
@@ -62,10 +64,12 @@ return function(c)
  local panel=c.Make("TextButton",{Name="Watermark",Text="",Position=UDim2.fromOffset(14,78),Size=UDim2.fromOffset(224,30),BackgroundColor3=Color3.fromRGB(12,12,17),BorderSizePixel=0,AutoButtonColor=false},screen)
  c.Make("UICorner",{CornerRadius=UDim.new(0,9)},panel)
  c.Make("UIStroke",{Color=Color3.fromRGB(160,106,255),Thickness=1,Transparency=.4},panel)
- local icon=c.Make("ImageLabel",{Name="Omega",Image="",BackgroundTransparency=1,Position=UDim2.fromOffset(7,5),Size=UDim2.fromOffset(20,20)},panel)
+ local icon=c.Make("ImageLabel",{Name="Omega",Image="",BackgroundTransparency=1,Position=UDim2.fromOffset(4,2),Size=UDim2.fromOffset(26,26)},panel)
  connections[#connections+1]=c.Icon(icon,panel,c.Run)
- local title=c.Make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(35,0),Size=UDim2.fromOffset(124,30),Text="PRIME VISUALS",Font=Enum.Font.BuilderSansBold,TextSize=14,TextColor3=Color3.new(1,1,1),TextXAlignment=Enum.TextXAlignment.Left},panel)
- local metrics=c.Make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(163,0),Size=UDim2.fromOffset(55,30),Text="",Font=Enum.Font.BuilderSans,TextSize=11,TextColor3=Color3.fromRGB(195,180,220)},panel)
+ local title=c.Make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(36,0),Size=UDim2.fromOffset(124,30),Text="PRIME VISUALS",Font=Enum.Font.BuilderSansBold,TextSize=14,TextColor3=Color3.new(1,1,1),TextXAlignment=Enum.TextXAlignment.Left},panel)
+ local brandWidth=wordmark:Apply(title,13,150)
+ local metrics=c.Make("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(36+brandWidth+7,0),Size=UDim2.fromOffset(48,30),Text="",Font=Enum.Font.BuilderSans,TextSize=11,TextColor3=Color3.fromRGB(195,180,220)},panel)
+ panel.Size=UDim2.fromOffset(36+brandWidth+7+48+8,30)
  local launcher=c.Make("TextButton",{Name="OpenPrime",Text="Ω",Position=UDim2.fromOffset(14,78),Size=UDim2.fromOffset(36,36),Font=Enum.Font.BuilderSansBold,TextSize=25,BackgroundColor3=Color3.fromRGB(15,15,21),TextColor3=Color3.fromRGB(180,130,255)},screen)
  connections[#connections+1]=launcher.MouseButton1Click:Connect(function()lib:Toggle(true)end)
  local drag,suppressClickUntil=nil,0
@@ -124,7 +128,8 @@ return function(c)
   if v.hudClock then items[#items+1]=os.date("%H:%M")end
   if v.hudPlayers then items[#items+1]=tostring(#c.Players:GetPlayers()).." players"end
   metrics.Text=table.concat(items," · ")
-  local width=math.max(55,#metrics.Text*6+10)panel.Size=UDim2.fromOffset(169+width,30)metrics.Size=UDim2.fromOffset(width,30)
+  local width=metrics.Text~="" and wordmark:Measure(metrics.Text,11,Enum.Font.BuilderSans)+2 or 0
+  panel.Size=UDim2.fromOffset(36+brandWidth+(width>0 and 7 or 0)+width+8,30)metrics.Size=UDim2.fromOffset(width,30)
   restorePosition()
   elapsed=0 frames=0
  end)

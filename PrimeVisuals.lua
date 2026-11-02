@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.0.3"
+local VERSION="3.0.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2735,7 +2735,7 @@ local function buildVisualSystems()
     end
 
     majorInterface=loadUIModule("MajorInterface")({Controls=controls,Setters=setters,Specs=settingSpecs,Widgets=widgets,
-        Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,
+        Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,HeaderTitle=nativeWindow.TitleLabel,Wordmark=loadUIModule("Wordmark"),
         TrackCleanup=function(fn)majorInterface={Destroy=fn}end,
         Keybinds=loadUIModule("Keybinds"),Icon=loadUIModule("PrimeIcon"),Make=make,Safe=safe,Notify=notify,
         Group=group,Panel=featureSettings,Field=field,Action=action,Toggle=toggle,Slider=sliderControl,Color=color,Choice=choice})
