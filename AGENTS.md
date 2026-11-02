@@ -263,3 +263,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Acceptance 2026-10-29: user approved the 2.3.5 UI update after the release checklist. UI-06…UI-09 accepted as a section-level report; do not invent individual observations or extend to untested ESP/FTAP/system items. Next pending batch: new/improved ESP. Documentation only; runtime remains2.3.5.
 
 - Acceptance2026-11-02: user explicitly confirmed all10 ESP Players checks (Box/Skeleton/independent highlight, HP/distance/range, font/background, selected2 vs all, behind-camera safety, respawn and disable cleanup). ESP-01…04 accepted on2.4.2; do not invent separate R6/R15 tests. Next pending ESP Objects05…09, then Tools10…13 and FTAP/system. Documentation only.
+
+- Acceptance2026-11-02: user explicitly approved Home2.4.5 composition. HOME-245 accepted by overall visual approval, without invented per-DPI testing. Earlier broad2.4.4 acceptance retained; no pending requested acceptance items. Runtime unchanged.
