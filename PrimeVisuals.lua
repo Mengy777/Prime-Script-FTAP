@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.0.1"
+local VERSION="3.0.2"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -569,6 +569,7 @@ ru["Custom accent"]="Свой акцент"
 ru["Custom background"]="Свой фон"
 ru["Menu background"]="Фон меню"
 ru["Menu text"]="Текст меню"
+ru["Panel horizontal position"]="Положение панели по горизонтали"
 local localized=setmetatable({}, {__mode="k"})
 local function translateText(text)
     if uiLanguage~="ru" or type(text)~="string" then return text end
