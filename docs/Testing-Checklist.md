@@ -1,7 +1,8 @@
-## 3.1.2 — pending live confirmation
+## 3.1.2 — partial user acceptance (2026-11-03)
 
 - Freecam RMB never teleports character, including exit/focus loss and while holding objects. Native throw still works.
-- Hair/custom face appear in Freecam and third person, including script started while cosmetics already hidden. Native reference loading may take time.
+- CONFIRMED by user: hair remains visible in third person and Freecam even after playing for some time.
+- Pending separately: custom face; recovery when cosmetics are already hidden at script startup. No respawn/reload or exact duration inferred.
 - Close wheel zoom still hides head/hair; zoom out restores them.
 - No keyboard/gray torso overlay; repeat after death and reload.
 
