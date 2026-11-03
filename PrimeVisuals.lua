@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.3"
+local VERSION="3.1.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -112,6 +112,15 @@ local ru={
     ["Movement"]="Движение",
     ["General"]="Основное",
     ["Profiles"]="Конфиги",
+    ["Custom toy collection"]="Своя коллекция игрушек",
+    ["Position"]="Позиция",
+    ["Toy name"]="Название игрушки",
+    ["Assign toy to position"]="Поставить на выбранное место",
+    ["Restore starter collection"]="Вернуть начальный набор",
+    ["Open E and Your Toys"]="Открой E и Your Toys",
+    ["Collection ready"]="Коллекция применена",
+    ["Menu not recognized"]="Не удалось распознать список игрушек",
+    ["Disabled"]="Выключено",
     ["Camera tools"]="Инструменты камеры",
     ["Custom skybox"]="Своё небо",
     ["Sun and clouds"]="Солнце и облака",
@@ -846,7 +855,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility,toyCollection
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -859,6 +868,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if toyCollection then attempt("toy collection",function()toyCollection:Destroy()end)end
         if avatarVisibility then attempt("avatar visibility",function()avatarVisibility:Destroy()end)end
         if majorInterface then attempt("interface",function() majorInterface:Destroy() end) end
         if antiKick then attempt("anti-kick",function() antiKick:Destroy() end) end
@@ -2361,6 +2371,27 @@ local function buildVisualSystems()
         choice(g,"uiLanguage","Language",{"English","Русский"},"English",function(value)
             setLanguage(value=="Русский" and "ru" or "en")
         end)
+        local collectionStatus
+        toyCollection=loadUIModule("ToyCollection")({PlayerGui=playerGui,Run=Run,Patches=patches,Patch=patch,Unpatch=unpatch,
+            TrackCleanup=function(fn)toyCollection={Destroy=fn}end,
+            Warn=function(message)warn("Prime Visuals / toy collection: "..tostring(message))end,
+            Status=function(code)
+                if collectionStatus then collectionStatus:SetText(({off="Disabled",missing="Open E and Your Toys",ready="Collection ready",error="Menu not recognized"})[code]or "")end
+            end})
+        toggle(g,"toyCollectionEnabled","Custom toy collection",false,function(on)toyCollection:SetEnabled(on)end)
+        local collectionPanel=featureSettings("toyCollectionEnabled")
+        local defaultToyOrder=toyCollection:DefaultOrder()
+        field(collectionPanel,"toyCollectionOrder","Collection data",defaultToyOrder,function(value)toyCollection:SetOrder(value)end)
+        if widgets.toyCollectionOrder.SetVisible then widgets.toyCollectionOrder:SetVisible(false)end
+        toyCollection:SetOrder(defaultToyOrder)
+        sliderControl(collectionPanel,"toyCollectionSlot","Position",1,28,1,1,function()end)
+        field(collectionPanel,"toyCollectionToy","Toy name","Rocket",function()end)
+        action(collectionPanel,"Assign toy to position",function()
+            local value=toyCollection:Assign(controls.toyCollectionOrder,controls.toyCollectionSlot,controls.toyCollectionToy)
+            setters.toyCollectionOrder(value,true)
+        end)
+        action(collectionPanel,"Restore starter collection",function()setters.toyCollectionOrder(defaultToyOrder,true)end)
+        collectionStatus=collectionPanel:AddLabel("Open E and Your Toys")
         local resetting=false
         action(g,"Reset all settings",function()
             if resetting then return end

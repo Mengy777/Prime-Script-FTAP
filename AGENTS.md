@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.1.3**, tag `v3.1.3`. Next normal runtime version: **3.1.4**. Consult Git for the release commit.
+- Published runtime target: **3.1.4**, tag `v3.1.4`. Next normal runtime version: **3.1.5**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -299,3 +299,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - Acceptance2026-11-03 on3.1.2: user explicitly confirmed hair stays visible in BOTH third person and Freecam even after time spent playing. Do not reopen this as unconfirmed. This does not separately confirm custom face, initial-hidden startup, wheel near/far, teleport removal/native throw, death/reload or other remaining3.1.2 checks. Documentation only; runtime remains3.1.2.
 
 - 3.1.3 user requested Prime Vortex category EMPTY. Freecam moved back to View/Camera tools, shared card with Spectate. Preserve stable freeCameraEnabled/freeCameraSpeed/bind keys, config/lifecycle/visibility. Empty Vortex sidebar entry retained. Standalone Vortex unchanged. Supersedes2.4.7 temporary placement. Removed duplicate Wheel-speed label. Navigation tests cover empty Vortex and View tools; live placement pending.
+
+- 3.1.4 local ToyCollection module reorders native Your Toys UIGridLayout children, never reparent/clone cards or invoke toy/favorite remotes. Settings Interface toggle defaultOFF; parameter editor slot1..28/toy name/assign/reset; hidden serialized28-slot order + enable/editor state autosave.401 total settings (+4 plus toggle bind). Starter Rocket1/BlackCrystal2/Blobman3/TetracubL4/Cake5/Cube6/Trumpet7/Ocarina8, PalletLightBrown26 per latest explicit user correction (not24). Missing preferred items filled from remaining native order without consuming reserved pallet. Name/label/model/attribute aliases; scope YourToys/owned-toys paths or toy-menu with8 known cards; excludes store/shop and Prime UI. Dirty-event coalescing .2s; no continuous scans. Preserve native favorite/order writes for disable, observe replacement menus; unload restores SortOrder/LayoutOrder. Actual native FTAP hierarchy not available: adaptive detection and aliases require live confirmation. Do not claim pixel cursor alignment verified.

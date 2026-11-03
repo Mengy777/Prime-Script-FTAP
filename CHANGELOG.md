@@ -1,3 +1,10 @@
+# 3.1.4 — 2026-11-04
+
+- Added optional custom28-slot ordering inside the native Your Toys grid. Starter priorities include Rocket, black crystal, Blobman, Tetracub L, cake, cube, trumpet and ocarina; standard pallet reserved at26. Missing choices are filled from available native cards.
+- Settings → Interface switch with position/name editor, assignment and starter reset. Order and editor settings persist in autosave/profiles. Off by default.
+- Preserve native cards, callbacks and favorite values; restore native ordering on disable/unload, handle menu recreation and favorite-order writes.
+- Adaptive GUI detection still needs live FTAP verification; tests use representative native UI fixtures.
+
 # 3.1.3 — 2026-11-03
 
 - Moved Freecam into View → Camera tools alongside Spectate; Prime Vortex category stays present and empty.

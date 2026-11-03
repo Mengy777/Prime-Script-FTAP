@@ -80,7 +80,8 @@ function methods:FindFirstChildOfClass(class) for _,o in ipairs(self._children) 
 function methods:FindFirstChildWhichIsA(class,recursive) for _,o in ipairs(recursive and self:GetDescendants() or self._children) do if o:IsA(class) then return o end end end
 function methods:IsA(class)
  if class==self._class or class=='Instance' then return true end
- if class=='GuiObject' then return ({Frame=true,CanvasGroup=true,ScrollingFrame=true,TextButton=true,TextBox=true,TextLabel=true,ImageLabel=true})[self._class] or false end
+ if class=='GuiObject' then return ({Frame=true,CanvasGroup=true,ScrollingFrame=true,TextButton=true,TextBox=true,TextLabel=true,ImageLabel=true,ImageButton=true,ViewportFrame=true})[self._class] or false end
+ if class=='GuiButton' then return self._class=='ImageButton' or self._class=='TextButton' end
  if class=='BasePart' then return self._class=='Part' or self._class=='MeshPart' end
  if class=='PostEffect' then return ({ColorCorrectionEffect=true,BloomEffect=true,BlurEffect=true,DepthOfFieldEffect=true,SunRaysEffect=true})[self._class] or false end
  return false
@@ -176,6 +177,6 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
+for module in ("ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
  lua.globals().TEST_VISUAL_SOURCE=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  lua.execute("local source=TEST_VISUAL_SOURCE; local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('"+module+".lua',1,true) then return source end return previous(self,url) end")
