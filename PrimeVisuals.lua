@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.0.7"
+local VERSION="3.0.8"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -845,7 +845,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarAppearance
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -858,7 +858,6 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
-        if avatarAppearance then attempt("avatar appearance",function()avatarAppearance:Destroy()end)end
         if majorInterface then attempt("interface",function() majorInterface:Destroy() end) end
         if antiKick then attempt("anti-kick",function() antiKick:Destroy() end) end
         if mannequins then attempt("mannequins",function() mannequins:Destroy() end) end
@@ -1236,7 +1235,6 @@ local function buildVisualSystems()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
         for _,key in ipairs({"skySunVisible","skySun","skyClouds"}) do appliedSettings[key]=nil end
     end)
-    avatarAppearance=loadUIModule("AvatarAppearance")({Player=player,Patches=patches,Patch=patch,TrackCleanup=function(fn)avatarAppearance={Destroy=fn}end,FreecamActive=function()return alive and controls.freeCameraEnabled end})
     -- CAMERA
     -- First-person transparency can survive Roblox's switch to Classic camera.
     -- Correct only the local multiplier, after the camera; preserve actual Transparency and effect layers.
@@ -1334,8 +1332,13 @@ local function buildVisualSystems()
         if not ok then warn("Prime Visuals / third-person visibility: "..tostring(message)) end
     end
     local function thirdPart(part)
-        if not avatarAppearance:IsPart(part) or thirdParts[part] then return end
-        thirdParts[part]={alpha=avatarAppearance:Alpha(part)}
+        if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or thirdParts[part] then return end
+        -- Preserve intentionally invisible helpers; only known avatar body parts
+        -- have a zero-alpha fallback if this script starts after they were hidden.
+        local standard=({Head=true,Torso=true,UpperTorso=true,LowerTorso=true,["Left Arm"]=true,["Right Arm"]=true,["Left Leg"]=true,["Right Leg"]=true,
+            LeftUpperArm=true,LeftLowerArm=true,LeftHand=true,RightUpperArm=true,RightLowerArm=true,RightHand=true,
+            LeftUpperLeg=true,LeftLowerLeg=true,LeftFoot=true,RightUpperLeg=true,RightLowerLeg=true,RightFoot=true})[part.Name]
+        thirdParts[part]={alpha=part.Transparency<1 and part.Transparency or standard and 0 or nil}
         local function repair()
             if thirdGuard.writing or not alive or not controls.camThird or controls.freeCameraEnabled or controls.spectateEnabled then return end
             if player.Character~=thirdCharacter or not part.Parent or not part:IsDescendantOf(thirdCharacter) then return end
@@ -1360,7 +1363,7 @@ local function buildVisualSystems()
             end
         end
         thirdGuard.writing=true
-        if thirdIsClose() then unpatch("thirdBody") unpatch("thirdAlpha") else unpatch("thirdNear") avatarAppearance:Reveal("thirdAlpha") end
+        if thirdIsClose() then unpatch("thirdBody") unpatch("thirdAlpha") else unpatch("thirdNear") end
         thirdGuard.writing=false
         for part in pairs(thirdParts) do
             if not part.Parent or not character or not part:IsDescendantOf(character) then
@@ -2545,8 +2548,6 @@ local function buildVisualSystems()
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
             PlayerPicker=addPlayerPicker,
-            IsAvatarPart=function(part)return avatarAppearance:IsPart(part)end,
-            RevealAvatar=function()avatarAppearance:Reveal("freeAlpha")end,
             Notify=notify,
             IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,
             Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,

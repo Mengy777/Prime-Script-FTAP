@@ -1,3 +1,9 @@
+# 3.0.8 — 2026-11-03
+
+- Restored thirdPart and Freecam visibleFreeBody implementations from v2.4.7; removed newer shared appearance-alpha reconstruction and its module.
+- Invisible accessory handles no longer receive the zero-alpha fallback introduced in3.0.3. Existing camera controls/UI retained.
+- Regression includes genuinely invisible Accessory Handles, not only tools/helpers. Live acceptance pending.
+
 # 3.0.7 — 2026-11-03
 
 - Third-person/Freecam visibility repairs now target canonical avatar body and accessory handles only. Tools and helper geometry retain game visibility.
