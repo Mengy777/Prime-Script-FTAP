@@ -252,103 +252,29 @@ KEYS.W=true for i=1,20 do TICK(.05)end KEYS.W=false
 assert(camera.CFrame.Position.Z<originalCF.Position.Z and ME.Character:FindFirstChild('HumanoidRootPart').Position==position)
 local avatarRoot=ME.Character:FindFirstChild('HumanoidRootPart')
 local avatarStart=avatarRoot.CFrame
-local previousRay=workspace.Raycast
-TEST_GRAB_TARGET=Instance.new('Part')TEST_GRAB_TARGET.Anchored=false TEST_GRAB_TARGET.Parent=workspace
-local ground=Instance.new('Part')ground.Name='ExperimentalGround'ground.Anchored=true ground.Parent=workspace
-workspace.Raycast=function(_,origin,direction,params)
- return {Instance=(direction and direction.Y==-88) and ground or TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}
-end
+local otherHumanoid=ENEMY.Character:FindFirstChildOfClass('Humanoid')
 local function rightClick(state)
  return TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',state or Enum.UserInputState.Begin,{UserInputType=Enum.UserInputType.MouseButton2})
 end
-local function leftClick()
- TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton1},false)
- TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
+for i=1,15 do
+ assert(rightClick()==Enum.ContextActionResult.Pass,'RMB should remain native')
+ TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.MouseButton2},false)
+ TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton2})
+ rightClick(Enum.UserInputState.End)TICK(.05)
+ assert(avatarRoot.CFrame==avatarStart,'Freecam RMB moved character')
 end
-leftClick()assert(avatarRoot.CFrame==avatarStart,'LMB unexpectedly approached')
--- UIS-only delivery when another CAS action consumes the press.
-local mouseInput={UserInputType=Enum.UserInputType.MouseButton2}
-TEST_SERVICES.UserInputService.InputBegan:Fire(mouseInput,true)
-assert(avatarRoot.CFrame~=avatarStart,'UIS fallback failed to approach')
-local afterFallback=avatarRoot.CFrame
-TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,mouseInput)
-assert(avatarRoot.CFrame==afterFallback,'CAS and UIS double-toggled one press')
-TEST_SERVICES.UserInputService.InputEnded:Fire(mouseInput)
-mouseInput={UserInputType=Enum.UserInputType.MouseButton2}
-TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,mouseInput)
-assert(avatarRoot.CFrame==avatarStart,'CAS press failed to return')
-TEST_SERVICES.UserInputService.InputBegan:Fire(mouseInput,true)
-assert(avatarRoot.CFrame==avatarStart,'UIS duplicated the CAS return')
-TEST_SERVICES.UserInputService.InputEnded:Fire(mouseInput)
-
-assert(rightClick()==Enum.ContextActionResult.Sink)TICK(.05)
-assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'RMB did not approach')
-local atTarget=avatarRoot.CFrame
-local otherHumanoid=ENEMY.Character:FindFirstChildOfClass('Humanoid')
-assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Subject and otherHumanoid.NameDisplayDistance==1000000,'native freecam names not enabled')
 local holding=Instance.new('Folder')holding.Name='GrabParts'holding.Parent=workspace
 local grabPart=Instance.new('Part')grabPart.Name='GrabPart'grabPart.Parent=holding
-local weld=Instance.new('WeldConstraint')weld.Part1=TEST_GRAB_TARGET weld.Parent=grabPart
-assert(rightClick()==Enum.ContextActionResult.Pass,'throw RMB blocked')
-assert(avatarRoot.CFrame==atTarget,'throw returned avatar')
-weld.Part1=nil
-assert(rightClick(Enum.UserInputState.End)==Enum.ContextActionResult.Pass,'throw release was swallowed after weld removed')
-assert(avatarRoot.CFrame==atTarget)
+local weld=Instance.new('WeldConstraint')weld.Part1=avatarRoot weld.Parent=grabPart
+assert(rightClick()==Enum.ContextActionResult.Pass,'native throw was blocked')
+assert(avatarRoot.CFrame==avatarStart)
 holding:Destroy()
-
-rightClick(Enum.UserInputState.End)
-leftClick()TEST_DRAIN()TICK(.05)
-assert(avatarRoot.CFrame==atTarget,'mouse release or LMB unexpectedly returned avatar')
-assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'approach stopped camera look')
-local hitPoint=Vector3.new(camera.CFrame.Position.X,0,camera.CFrame.Position.Z)
-local offset=avatarRoot.CFrame.Position-hitPoint
-local sideways=Vector3.new(-camera.CFrame.LookVector.Z,0,camera.CFrame.LookVector.X).Unit
-assert(math.abs(offset.X*sideways.X+offset.Z*sideways.Z)>=5.99,'avatar overlaps target ray')
-local previousCamera=camera.CFrame
-TEST_SERVICES.UserInputService.InputChanged:Fire({UserInputType=Enum.UserInputType.MouseMovement,Delta=Vector3.new(25,0,0)})TICK(.05)
-assert(camera.CFrame.LookVector.X~=previousCamera.LookVector.X,'look frozen at target')
-workspace.Raycast=function()return nil end
-rightClick()assert(avatarRoot.CFrame==avatarStart,'second RMB failed to return without raycast target')
-rightClick()assert(avatarRoot.CFrame==avatarStart,'no target moved avatar')
-workspace.Raycast=function(_,origin)return {Instance=TEST_GRAB_TARGET,Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
-for cycle=1,10 do
- rightClick()assert(avatarRoot.CFrame~=avatarStart)
- leftClick()rightClick()assert(avatarRoot.CFrame==avatarStart)
-end
--- Throw/ragdoll separates visible assemblies from HRP. Both directions must
--- transform the entire model, not just its invisible root.
-local ragdoll=Instance.new('BoolValue')ragdoll.Name='Ragdolled' ragdoll.Value=true ragdoll.Parent=w
-local torso=ME.Character:FindFirstChild('Torso')
-torso.CFrame=CFrame.new(0,5,9)torso.Position=torso.CFrame.Position
-for cycle=1,12 do
- local oldTorso=torso.CFrame.Position local oldRoot=avatarRoot.CFrame.Position
- torso.AssemblyLinearVelocity=Vector3.new(900,800,700)
- torso.AssemblyAngularVelocity=Vector3.new(40,30,20)
- rightClick()
- local displacement=avatarRoot.CFrame.Position-oldRoot
- assert((torso.CFrame.Position-oldTorso-displacement).Magnitude<.00001,'ragdoll body left behind')
- assert(torso.AssemblyLinearVelocity.Magnitude==0 and torso.AssemblyAngularVelocity.Magnitude==0,'throw momentum retained')
- TICK(.05)assert(torso.LocalTransparencyModifier==0,'freecam body locally hidden')
- rightClick()assert(avatarRoot.CFrame==avatarStart,'ragdoll return failed')
-end
-ragdoll:Destroy()
--- Temporarily blocked return retains its original destination for a retry.
-rightClick()avatarRoot.Anchored=true rightClick()avatarRoot.Anchored=false
-rightClick()assert(avatarRoot.CFrame==avatarStart,'blocked return discarded destination')
-rightClick()TEST_OPTIONS.freeCameraEnabled:SetValue(false)
-assert(avatarRoot.CFrame==avatarStart,'disable failed to return')
-assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Viewer and otherHumanoid.NameDisplayDistance==100,'native names not restored')
-TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(.05)
-w.Sit=true rightClick()w.Sit=false
-assert(avatarRoot.CFrame==avatarStart,'seated avatar moved')
-TEST_GRAB_TARGET.Anchored=true rightClick()
-assert(avatarRoot.CFrame~=avatarStart,'anchored hit did not approach')
 TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
-assert(avatarRoot.CFrame==avatarStart,'focus loss failed to return')
+assert(avatarRoot.CFrame==avatarStart,'focus loss moved character')
 TEST_SERVICES.UserInputService.WindowFocused:Fire()
-TEST_GRAB_TARGET:Destroy()
-workspace.Raycast=previousRay ground:Destroy()
 TEST_OPTIONS.freeCameraEnabled:SetValue(false)
+assert(avatarRoot.CFrame==avatarStart,'Freecam disable moved character')
+assert(otherHumanoid.DisplayDistanceType==Enum.HumanoidDisplayDistanceType.Viewer and otherHumanoid.NameDisplayDistance==100)
 assert(not hud.Visible)
 menu.Visible=true assert(menu.Visible,'game UI stayed locked after freecam')
 cameraHook:Disconnect()gameUI:Destroy()shell:Destroy()

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.1"
+local VERSION="3.1.2"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -262,6 +262,8 @@ local ru={
     ["Test: approach / return [F5]"]="Тест: подойти / вернуть [F5]",
     ["Moves your visible character; this is an experiment."]="Перемещает видимого персонажа. Эксперимент.",
     ["Release LMB: return · F5: cancel"]="Отпусти ЛКМ: назад · F5: отмена",
+    ["Wheel: speed"]="Колесо: скорость",
+    ["Wheel: speed · E: objects"]="Колесо: скорость · E: предметы",
     ["Character is not ready"]="Персонаж ещё не готов",
     ["Leave the seat before this test"]="Перед тестом выйди из сиденья",
     ["Wait until the character stands up"]="Подожди, пока персонаж встанет",
@@ -527,7 +529,6 @@ ru["Waiting: toy ownership denied"]="Ожидание: владение пред
 ru["Waiting: attachment not confirmed"]="Ожидание: крепление не подтверждено"
 ru["Waiting: protection error"]="Ожидание: ошибка защиты"
 ru["Attached"]="Закреплено"
-ru["RMB: approach / return · E: objects · F4: exit"]="ПКМ: перейти / вернуться · E: предметы · F4: выход"
 ru["Items"]="Предметы"
 ru["Types"]="Типы"
 ru["Colors"]="Цвета"
@@ -1293,7 +1294,7 @@ local function buildVisualSystems()
         Run:BindToRenderStep("PrimeVisualsThirdPanMouse",Enum.RenderPriority.Camera.Value+3,updateThirdPan)
         thirdPanBound=true
     end
-    avatarVisibility=loadUIModule("AvatarVisibility")({Player=player,Patches=patches,Patch=patch,Unpatch=unpatch,
+    avatarVisibility=loadUIModule("AvatarVisibility")({Player=player,Players=Players,Patches=patches,Patch=patch,Unpatch=unpatch,
         TrackCleanup=function(fn)avatarVisibility={Destroy=fn}end,
         Near=thirdIsClose,Mode=function()
             if not alive then return nil end

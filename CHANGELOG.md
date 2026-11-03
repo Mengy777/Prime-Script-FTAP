@@ -1,3 +1,10 @@
+# 3.1.2 — 2026-11-03
+
+- Removed Freecam character teleport completely: RMB approach/return, fallback listeners, raycasts, PivotTo/velocity edits and related hints. RMB remains native; Freecam exit/focus loss never repositions the character.
+- Avatar visibility can restore initially hidden hair/head accessories from a native reference model built from the current HumanoidDescription. Match head attachments and accessory name/mesh; exclude waist/torso references.
+- Restore original Head decal texture from reference in far/free camera modes. Reference is unparented, disposed after extracting metadata; stale completions after unload/respawn discarded. Snapshot-only fallback if API fails.
+- Added reference recovery/cleanup tests and replaced teleport tests with no-movement/native-RMB checks. Live validation pending.
+
 # 3.1.1 — 2026-11-03
 
 - Freecam RMB now has UIS input fallback alongside CAS, deduplicating the same InputObject. Preserve native throw while holding and shared menu/focus gates.

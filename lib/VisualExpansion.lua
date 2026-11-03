@@ -633,7 +633,7 @@ return function(c)
         c.Action(g,"Apply selected skybox",function() c.ApplySky(c.Data.Skies[v.collectionSky]) end)
     end
     -- Camera features use native transforms/input. Mouse sensitivity is never changed.
-    local free={active=false,cameras={},humanoids={},parts={},menus={}}
+    local free={active=false,cameras={},humanoids={},menus={}}
     local hud,hudSpeed,hudHint,hudControls
     local function translated(text) return c.Translate and c.Translate(text) or text end
     local function updateHUD(speed,paused)
@@ -665,7 +665,7 @@ return function(c)
         end
         hud.Visible=not paused
         hudSpeed.Text=translated("Speed").."  ·  "..tostring(math.floor(speed))
-        hudHint.Text=translated(free.approach and "RMB: throw / return" or (free.interacting and "E: toy menu" or "RMB: approach · wheel: speed"))
+        hudHint.Text=translated(free.interacting and "E: toy menu" or "Wheel: speed")
         hudControls.Text=translated(free.interacting and "E: flight" or "E: objects")
     end
     local function clearFreeVisibility()
@@ -703,7 +703,6 @@ return function(c)
     local function suppressToyMenus()
         for _,object in ipairs(c.PlayerGui:GetDescendants()) do hideToyMenu(object) end
     end
-    local returnApproach
     local function releaseToyMenus()
         free.menuRequested=not free.interacting
         if not free.menuRequested then free.interacting=false free.look=Vector2.zero free.velocity=Vector3.zero end
@@ -736,92 +735,6 @@ return function(c)
             if not opened then free.menuRequested=false end
         end
     end
-    local function moveFreeCharacter(character,r,destination)
-        -- A ragdoll has multiple physical assemblies: moving only HRP can leave
-        -- its visible limbs behind after another player throws it.
-        local delta=destination*r.CFrame:Inverse()
-        character:PivotTo(delta*character:GetPivot())
-        for _,part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.AssemblyLinearVelocity=Vector3.zero
-                part.AssemblyAngularVelocity=Vector3.zero
-            end
-        end
-    end
-    returnApproach=function()
-        local saved=free.approach
-        if not saved then return end
-        local h=humanoid(me)
-        if me.Character~=saved.character or root(me)~=saved.root or not saved.root.Parent or not h or h.Health<=0 then
-            free.approach=nil
-            return
-        end
-        -- Keep the return point when temporarily seated/anchored; a later RMB
-        -- can retry instead of silently forgetting the original position.
-        if saved.root.Anchored or h.SeatPart then return end
-        moveFreeCharacter(saved.character,saved.root,saved.cframe)
-        free.approach=nil
-    end
-    local function beginApproach()
-        if not free.active then return end
-        if free.approach then returnApproach() return end
-        local character=me.Character local r=root(me) local h=humanoid(me)
-        assert(character and r and h and h.Health>0,translated("Character is not ready"))
-        assert(not r.Anchored and not h.SeatPart and not h.Sit,translated("Leave the seat before this test"))
-        local camera=W.CurrentCamera assert(camera,translated("Camera is not ready"))
-        local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
-        params.FilterDescendantsInstances=world and {character,world} or {character}
-        local hit=W:Raycast(camera.CFrame.Position,camera.CFrame.LookVector*5000,params)
-        if not hit or not hit.Instance or not (hit.Instance:IsA("BasePart") or hit.Instance:IsA("Terrain")) then return end
-        local height=math.max(3,(h.HipHeight or 0)+(r.Size and r.Size.Y or 2)/2+1)
-        local normal=hit.Normal or Vector3.new(0,1,0)
-        -- Step sideways relative to the viewing ray, rather than onto that ray.
-        -- A face normal alone can put the whole avatar between camera and target.
-        local look=camera.CFrame.LookVector
-        local side=Vector3.new(-look.Z,0,look.X)
-        side=side.Magnitude>.001 and side.Unit or Vector3.new(1,0,0)
-        local clearance=math.max(6,(r.Size and r.Size.X or 2)/2+4)
-        local position=hit.Position+side*clearance+normal*height
-        for _,n in ipairs({position.X,position.Y,position.Z}) do
-            assert(n==n and math.abs(n)<1000000,translated("Invalid test position"))
-        end
-        assert((position-r.Position).Magnitude<=5000,translated("Test position is too far away"))
-        local rotation=r.CFrame-r.CFrame.Position
-        free.approach={character=character,root=r,cframe=r.CFrame}
-        local ok,message=pcall(function()
-            moveFreeCharacter(character,r,CFrame.new(position)*rotation)
-        end)
-        if not ok then returnApproach(false) error(message,0) end
-    end
-    local function tryApproach()
-        local ok,message=pcall(beginApproach)
-        if not ok then
-            c.WarnOnce("Experimental approach",message)
-            if c.Notify then c.Notify(tostring(message):gsub("^.-:%d+: ","")) end
-        end
-    end
-    local function holdingObject()
-        -- FTAP's local grab scope: GrabParts/GrabPart/WeldConstraint.Part1.
-        -- A visible line or another player's held mouse button is not a grab.
-        for _,scope in ipairs(W:GetChildren()) do
-            if scope.Name=="GrabParts" then
-                local part=scope:FindFirstChild("GrabPart")
-                local weld=part and part:FindFirstChild("WeldConstraint")
-                local targetPart=weld and weld.Part1
-                if targetPart and targetPart:IsA("BasePart") and targetPart:IsDescendantOf(W) then return true end
-            end
-        end
-        return false
-    end
-    local function pressFreeRMB(input)
-        -- CAS and UIS deliver the same InputObject. Handle one physical press once.
-        if free.rmbInput==input then return free.rmbNative end
-        free.rmbInput=input
-        syncToyMenu()
-        free.rmbNative=holdingObject() or not free.focused or free.interacting or c.MenuOpen() or I:GetFocusedTextBox()~=nil
-        if not free.rmbNative then tryApproach() end
-        return free.rmbNative
-    end
     local function updateFreeNames()
         local current={}
         for _,player in ipairs(P:GetPlayers()) do
@@ -839,11 +752,9 @@ return function(c)
     end
     local function endFree()
         if not free.active then return end
-        returnApproach(false)
-        free.approach=nil -- Do not carry a blocked return into another session.
-        free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
-        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction") job("Freecam release")
-        free.interacting=false free.rmbNative=nil free.rmbInput=nil
+        free.active=false job("Freecam input") job("Freecam toy UI")
+        job("Freecam focus lost") job("Freecam focus gained")
+        free.interacting=false
         unpatch("freeNames") free.names={}
         clearFreeVisibility() unpatch("freeToyMenu")
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
@@ -873,26 +784,12 @@ return function(c)
                 if state==Enum.UserInputState.Begin and not c.MenuOpen() and not I:GetFocusedTextBox() then releaseToyMenus() end
                 return Enum.ContextActionResult.Pass
             end
-            if input and input.UserInputType==Enum.UserInputType.MouseButton2 then
-                if state==Enum.UserInputState.Begin then pressFreeRMB(input) end
-                -- Keep the whole press/release native even if the throw removes its weld.
-                local native=free.rmbNative
-                if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then free.rmbInput=nil end
-                return native and Enum.ContextActionResult.Pass or Enum.ContextActionResult.Sink
-            end
+            -- RMB is entirely native; Freecam never moves the character.
+            if input and input.UserInputType==Enum.UserInputType.MouseButton2 then return Enum.ContextActionResult.Pass end
             if free.interacting or c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space,Enum.UserInputType.MouseButton2)
-        job("Freecam interaction",I.InputBegan,function(input)
-            if free.active and input.UserInputType==Enum.UserInputType.MouseButton2 then
-                -- Our own CAS sink marks input processed; UI/focus gates live in the shared handler.
-                pressFreeRMB(input)
-            end
-        end)
-        job("Freecam release",I.InputEnded,function(input)
-            if input.UserInputType==Enum.UserInputType.MouseButton2 then free.rmbInput=nil end
-        end)
-        job("Freecam focus lost",I.WindowFocusReleased,function() returnApproach(false) free.focused=false free.rmbInput=nil free.look=Vector2.zero free.velocity=Vector3.zero end)
+        job("Freecam focus lost",I.WindowFocusReleased,function() free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
         job("Freecam input",I.InputChanged,function(input)
             if free.interacting or not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end
@@ -918,7 +815,6 @@ return function(c)
             startFree() if not free.active then return end
             if not free.cameras[camera] then free.cameras[camera]={type=camera.CameraType,subject=camera.CameraSubject,cf=camera.CFrame,focus=camera.Focus} end
             local h=humanoid(me)
-            if free.approach and (me.Character~=free.approach.character or not h or h.Health<=0) then returnApproach(true) end
             if h then
                 patch("freeCamera",h,"WalkSpeed",0) patch("freeCamera",h,"JumpPower",0) patch("freeCamera",h,"JumpHeight",0) patch("freeCamera",h,"AutoRotate",false)
                 free.humanoids[h]=true
@@ -966,8 +862,8 @@ return function(c)
             if on then if v.spectateEnabled then c.Setters.spectateEnabled(false,true) end startFree() else endFree() end
         end)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
-        panel("freeCameraEnabled"):AddLabel("WASD · Space / Q · mouse look · wheel 10–600")
-        panel("freeCameraEnabled"):AddLabel("RMB: approach / return · E: objects")
+        panel("freeCameraEnabled"):AddLabel("Wheel: speed")
+        panel("freeCameraEnabled"):AddLabel("Wheel: speed")
         g=group("Camera","Cinematic camera",2)
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
             if on then if v.freeCameraEnabled then c.Setters.freeCameraEnabled(false,true) end else stopSpectate() end
