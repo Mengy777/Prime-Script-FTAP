@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.0.6"
+local VERSION="3.0.7"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1334,7 +1334,7 @@ local function buildVisualSystems()
         if not ok then warn("Prime Visuals / third-person visibility: "..tostring(message)) end
     end
     local function thirdPart(part)
-        if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or thirdParts[part] then return end
+        if not avatarAppearance:IsPart(part) or thirdParts[part] then return end
         thirdParts[part]={alpha=avatarAppearance:Alpha(part)}
         local function repair()
             if thirdGuard.writing or not alive or not controls.camThird or controls.freeCameraEnabled or controls.spectateEnabled then return end
@@ -2545,6 +2545,7 @@ local function buildVisualSystems()
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
             PlayerPicker=addPlayerPicker,
+            IsAvatarPart=function(part)return avatarAppearance:IsPart(part)end,
             RevealAvatar=function()avatarAppearance:Reveal("freeAlpha")end,
             Notify=notify,
             IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,

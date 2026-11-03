@@ -1,3 +1,8 @@
+# 3.0.7 — 2026-11-03
+
+- Third-person/Freecam visibility repairs now target canonical avatar body and accessory handles only. Tools and helper geometry retain game visibility.
+- Appearance alpha recovery no longer tracks arbitrary character descendants.
+
 # 3.0.6 — 2026-11-03
 
 - Reapplying enabled protection no longer overwrites active status with Waiting for character. Active weld confirmation refreshes Attached status.

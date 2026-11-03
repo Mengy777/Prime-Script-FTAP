@@ -672,7 +672,7 @@ return function(c)
         local char=me.Character
         if free.character~=char then
             job("Freecam parts") unpatch("freeBody") unpatch("freeAlpha") free.parts={} free.character=char
-            local function add(part) if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then free.parts[part]=true end end
+            local function add(part) if part:IsA("BasePart") and part.Name~="HumanoidRootPart" and (not c.IsAvatarPart or c.IsAvatarPart(part)) then free.parts[part]=true end end
             if char then
                 for _,part in ipairs(char:GetDescendants()) do add(part) end
                 job("Freecam parts",char.DescendantAdded,add)

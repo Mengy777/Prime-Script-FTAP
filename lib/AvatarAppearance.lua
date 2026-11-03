@@ -14,6 +14,7 @@ return function(c)
  end
  local function track(o)
   if parts[o]or not(o:IsA("BasePart")or o:IsA("Decal")or o:IsA("Texture"))then return end
+  if not avatarPart(o)then return end
   local initial=o.Transparency
   local data={alpha=initial<1 and initial or avatarPart(o)and 0 or nil}parts[o]=data
   data.link=o:GetPropertyChangedSignal("Transparency"):Connect(function()
@@ -39,6 +40,7 @@ return function(c)
    removed=current.DescendantRemoving:Connect(function(o)local data=parts[o]if data then if data.link then data.link:Disconnect()end if data.localLink then data.localLink:Disconnect()end end parts[o]=nil end)
   end
  end
+ function api:IsPart(o)self:Sync()return o:IsA("BasePart")and avatarPart(o)end
  function api:Alpha(o)self:Sync()track(o)return parts[o]and parts[o].alpha end
  function api:Reveal(feature)
   self:Sync()
