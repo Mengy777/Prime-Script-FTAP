@@ -25,10 +25,18 @@ for cycle=1,150 do
  TEST_OPTIONS.freeCameraEnabled:SetValue(true)TICK(2)
  assert(KEYBOARD.Transparency==1 and OVERLAY.Transparency==1,'Freecam exposed invisible accessory')
  assert(HAIR.Transparency==.2 and HAIR.LocalTransparencyModifier==0)
+ -- Game grab/rotation listener runs AFTER our frame callback.
+ HAIR.LocalTransparencyModifier=1
+ assert(HAIR.LocalTransparencyModifier==0,'late grab update hid own hair')
+ local torso=ME.Character:FindFirstChild('Torso')
+ if torso then torso.LocalTransparencyModifier=1 assert(torso.LocalTransparencyModifier==0,'late rotation update hid torso')end
  TEST_OPTIONS.freeCameraEnabled:SetValue(false)TICK(2)
  TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
  assert(KEYBOARD.Transparency==1 and OVERLAY.Transparency==1)
 end
+TEST_OPTIONS.camThird:SetValue(false)
+TEST_OPTIONS.freeCameraEnabled:SetValue(false)
+HAIR.LocalTransparencyModifier=.7 assert(HAIR.LocalTransparencyModifier==.7,'Freecam listener survived disable')
 TEST_ACTIONS['Unload script']()
 assert(KEYBOARD.Transparency==1 and OVERLAY.Transparency==1)
 ''')

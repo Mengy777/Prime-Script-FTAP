@@ -668,19 +668,39 @@ return function(c)
         hudHint.Text=translated(free.approach and "RMB: throw / return" or (free.interacting and "E: toy menu" or "RMB: approach · wheel: speed"))
         hudControls.Text=translated(free.interacting and "E: flight" or "E: objects")
     end
+    local function clearFreeVisibility()
+        job("Freecam parts")
+        for _,link in pairs(free.parts) do disconnect(link) end
+        free.parts={} free.character=nil
+        unpatch("freeBody")
+    end
+    local function repairFreePart(part)
+        if free.visibilityWriting or not free.active or not v.freeCameraEnabled then return end
+        if not free.character or me.Character~=free.character or not part:IsDescendantOf(free.character) then return end
+        free.visibilityWriting=true
+        local ok,message=pcall(patch,"freeBody",part,"LocalTransparencyModifier",0)
+        free.visibilityWriting=false
+        if not ok then warn("Prime Visuals / Freecam visibility: "..tostring(message)) end
+    end
     local function visibleFreeBody()
         local char=me.Character
         if free.character~=char then
-            job("Freecam parts") unpatch("freeBody") free.parts={} free.character=char
-            local function add(part) if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then free.parts[part]=true end end
+            clearFreeVisibility() free.character=char
+            local function add(part)
+                if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or free.parts[part] then return end
+                free.parts[part]=part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
+                    repairFreePart(part)
+                end)
+            end
             if char then
                 for _,part in ipairs(char:GetDescendants()) do add(part) end
                 job("Freecam parts",char.DescendantAdded,add)
             end
         end
-        for part in pairs(free.parts) do
-            if not part.Parent or not char or not part:IsDescendantOf(char) then free.parts[part]=nil unpatch("freeBody",part)
-            else patch("freeBody",part,"LocalTransparencyModifier",0) end
+        for part,link in pairs(free.parts) do
+            if not part.Parent or not char or not part:IsDescendantOf(char) then
+                disconnect(link) free.parts[part]=nil unpatch("freeBody",part)
+            else repairFreePart(part) end
         end
     end
     -- Space ascent avoids E (FTAP toy-menu shortcut). Menu guards also cover activation itself.
@@ -845,7 +865,7 @@ return function(c)
         job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
         free.interacting=false free.rmbNative=nil
         unpatch("freeNames") free.names={}
-        unpatch("freeBody") unpatch("freeToyMenu") free.parts={} free.character=nil
+        clearFreeVisibility() unpatch("freeToyMenu")
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
         if hud then hud.Visible=false end
         pcall(function() game:GetService("ContextActionService"):UnbindAction("PrimeVisualsFreecam") end)

@@ -1,3 +1,8 @@
+# 3.0.9 — 2026-11-03
+
+- Freecam repairs late LocalTransparencyModifier changes through scoped property listeners, including changes after its frame callback. No ordinary Transparency reconstruction.
+- Listeners disconnect on mode exit, character replacement, removal and unload. Third-person code unchanged.
+
 # 3.0.8 — 2026-11-03
 
 - Restored thirdPart and Freecam visibleFreeBody implementations from v2.4.7; removed newer shared appearance-alpha reconstruction and its module.

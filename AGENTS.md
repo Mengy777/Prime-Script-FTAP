@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.0.8**, tag `v3.0.8`. Next normal runtime version: **3.0.9**. Consult Git for the release commit.
+- Published runtime target: **3.0.9**, tag `v3.0.9`. Next normal runtime version: **3.1.0**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -287,3 +287,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 3.0.7 camera visibility allowlist: canonical body, Accessory/Hat handles and head/accessory decals only. Exclude tools/helper geometry from alpha recovery and third/free LTM forcing. Regression includes hidden keyboard Tool and torso helper. Live screenshot cause not proven; no mesh/avatar deletion.
 
 - 3.0.8 supersedes3.0.3/.7 appearance repair: user requested v2.4.7 camera rollback. thirdPart and visibleFreeBody restored verbatim from tagv2.4.7; shared AvatarAppearance removed, no forced alpha fallback for invisible accessory Handles/decals. thirdGuard native pan/wheel/near behavior unchanged. New regression uses invisible ACCESSORIES (earlier test only tools missed this). Simulated checks do not prove live screenshot cause; approval pending.
+
+- User tentatively accepted third-person3.0.8; preserve it. 3.0.9 Freecam-only scoped LTM listeners repair writes after frame callback, no alpha reconstruction. clearFreeVisibility disconnects on exit/replacement/unload; per-part removal cleanup next update. Simulation late writes150cycles and disable pass; actual grab/rotation still requires live confirmation.
