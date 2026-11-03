@@ -1,3 +1,9 @@
+# 3.1.1 — 2026-11-03
+
+- Freecam RMB now has UIS input fallback alongside CAS, deduplicating the same InputObject. Preserve native throw while holding and shared menu/focus gates.
+- Refresh toy-menu state on press and clear input state on exit/focus loss. Visibility implementation unchanged.
+- Simulations cover UIS-only processed delivery, CAS→UIS and UIS→CAS ordering, existing approach/return/throw. Live acceptance pending; reported cause not independently observed.
+
 # 3.1.0 — 2026-11-03
 
 - Rebuilt avatar visibility for third person and Freecam around one early snapshot and shared ownership. Removed duplicate per-mode part caches/listeners.

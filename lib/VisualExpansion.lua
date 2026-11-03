@@ -813,6 +813,15 @@ return function(c)
         end
         return false
     end
+    local function pressFreeRMB(input)
+        -- CAS and UIS deliver the same InputObject. Handle one physical press once.
+        if free.rmbInput==input then return free.rmbNative end
+        free.rmbInput=input
+        syncToyMenu()
+        free.rmbNative=holdingObject() or not free.focused or free.interacting or c.MenuOpen() or I:GetFocusedTextBox()~=nil
+        if not free.rmbNative then tryApproach() end
+        return free.rmbNative
+    end
     local function updateFreeNames()
         local current={}
         for _,player in ipairs(P:GetPlayers()) do
@@ -833,8 +842,8 @@ return function(c)
         returnApproach(false)
         free.approach=nil -- Do not carry a blocked return into another session.
         free.active=false job("Freecam input") job("Freecam parts") job("Freecam toy UI")
-        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction")
-        free.interacting=false free.rmbNative=nil
+        job("Freecam focus lost") job("Freecam focus gained") job("Freecam interaction") job("Freecam release")
+        free.interacting=false free.rmbNative=nil free.rmbInput=nil
         unpatch("freeNames") free.names={}
         clearFreeVisibility() unpatch("freeToyMenu")
         for _,entry in pairs(free.menus) do disconnect(entry.connection) end free.menus={}
@@ -865,23 +874,25 @@ return function(c)
                 return Enum.ContextActionResult.Pass
             end
             if input and input.UserInputType==Enum.UserInputType.MouseButton2 then
-                if state==Enum.UserInputState.Begin then
-                    free.rmbNative=holdingObject() or not free.focused or free.interacting or c.MenuOpen() or I:GetFocusedTextBox()~=nil
-                    if not free.rmbNative then tryApproach() end
-                end
+                if state==Enum.UserInputState.Begin then pressFreeRMB(input) end
                 -- Keep the whole press/release native even if the throw removes its weld.
                 local native=free.rmbNative
-                if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then free.rmbNative=nil end
+                if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then free.rmbInput=nil end
                 return native and Enum.ContextActionResult.Pass or Enum.ContextActionResult.Sink
             end
             if free.interacting or c.MenuOpen() or I:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
             return Enum.ContextActionResult.Sink
         end,false,3000,Enum.KeyCode.W,Enum.KeyCode.A,Enum.KeyCode.S,Enum.KeyCode.D,Enum.KeyCode.Q,Enum.KeyCode.E,Enum.KeyCode.Space,Enum.UserInputType.MouseButton2)
-        job("Freecam interaction",I.InputBegan,function(input,processed)
-            if processed or I:GetFocusedTextBox() then return end
-            -- Exit uses the HUD button or a user-assigned bind in Major3.
+        job("Freecam interaction",I.InputBegan,function(input)
+            if free.active and input.UserInputType==Enum.UserInputType.MouseButton2 then
+                -- Our own CAS sink marks input processed; UI/focus gates live in the shared handler.
+                pressFreeRMB(input)
+            end
         end)
-        job("Freecam focus lost",I.WindowFocusReleased,function() returnApproach(false) free.focused=false free.look=Vector2.zero free.velocity=Vector3.zero end)
+        job("Freecam release",I.InputEnded,function(input)
+            if input.UserInputType==Enum.UserInputType.MouseButton2 then free.rmbInput=nil end
+        end)
+        job("Freecam focus lost",I.WindowFocusReleased,function() returnApproach(false) free.focused=false free.rmbInput=nil free.look=Vector2.zero free.velocity=Vector3.zero end)
         job("Freecam focus gained",I.WindowFocused,function() free.focused=true end)
         job("Freecam input",I.InputChanged,function(input)
             if free.interacting or not free.focused or c.MenuOpen() or I:GetFocusedTextBox() then return end

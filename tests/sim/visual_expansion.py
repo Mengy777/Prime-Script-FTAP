@@ -266,6 +266,21 @@ local function leftClick()
  TEST_SERVICES.UserInputService.InputEnded:Fire({UserInputType=Enum.UserInputType.MouseButton1})
 end
 leftClick()assert(avatarRoot.CFrame==avatarStart,'LMB unexpectedly approached')
+-- UIS-only delivery when another CAS action consumes the press.
+local mouseInput={UserInputType=Enum.UserInputType.MouseButton2}
+TEST_SERVICES.UserInputService.InputBegan:Fire(mouseInput,true)
+assert(avatarRoot.CFrame~=avatarStart,'UIS fallback failed to approach')
+local afterFallback=avatarRoot.CFrame
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,mouseInput)
+assert(avatarRoot.CFrame==afterFallback,'CAS and UIS double-toggled one press')
+TEST_SERVICES.UserInputService.InputEnded:Fire(mouseInput)
+mouseInput={UserInputType=Enum.UserInputType.MouseButton2}
+TEST_SERVICES.ContextActionService.bound('PrimeVisualsFreecam',Enum.UserInputState.Begin,mouseInput)
+assert(avatarRoot.CFrame==avatarStart,'CAS press failed to return')
+TEST_SERVICES.UserInputService.InputBegan:Fire(mouseInput,true)
+assert(avatarRoot.CFrame==avatarStart,'UIS duplicated the CAS return')
+TEST_SERVICES.UserInputService.InputEnded:Fire(mouseInput)
+
 assert(rightClick()==Enum.ContextActionResult.Sink)TICK(.05)
 assert((avatarRoot.CFrame.Position-avatarStart.Position).Magnitude>10,'RMB did not approach')
 local atTarget=avatarRoot.CFrame
