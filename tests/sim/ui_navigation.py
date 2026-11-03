@@ -7,9 +7,12 @@ assert(TEST_GROUPS.Camera.BoxHolder.Visible and TEST_GROUPS['Custom skybox'].Box
 assert(TEST_GROUPS.Particles.BoxHolder.Visible and TEST_GROUPS.Snowfall.BoxHolder.Visible)
 for _,tab in pairs(TEST_TAB_OBJECTS)do assert(not tab.Container:FindFirstChild('PV_SectionBar'))end
 assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera')
-assert(TEST_GROUPS.Freecam.NavigationCategory=='Prime Vortex')
+assert(TEST_GROUPS['Camera tools'].NavigationCategory=='View')
+assert(TEST_OPTIONS.freeCameraEnabled and TEST_OPTIONS.freeCameraSpeed)
+for _,g in pairs(TEST_GROUPS)do assert(g.NavigationCategory~='Prime Vortex','Prime Vortex should remain empty')end
+assert(TEST_TAB_OBJECTS['Prime Vortex'],'empty Prime Vortex tab was removed')
 """)
-print('PASS merged sections display all cards without section bars; Freecam placement retained')
+print('PASS merged sections display all cards without section bars; Freecam moved to View camera tools and Prime Vortex remains empty')
 lua.execute('TEST_DRAIN()')
 before=D.writes
 lua.execute(r"""

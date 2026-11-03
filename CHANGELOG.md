@@ -1,3 +1,8 @@
+# 3.1.3 — 2026-11-03
+
+- Moved Freecam into View → Camera tools alongside Spectate; Prime Vortex category stays present and empty.
+- Kept setting/bind identifiers and camera behavior unchanged; removed repeated speed hint.
+
 # 3.1.2 — 2026-11-03
 
 - Removed Freecam character teleport completely: RMB approach/return, fallback listeners, raycasts, PivotTo/velocity edits and related hints. RMB remains native; Freecam exit/focus loss never repositions the character.

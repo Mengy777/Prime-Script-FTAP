@@ -4,12 +4,12 @@ return function(c)
     local pages={
         View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
-        FTAP={"Grab line","Crosshair","Blackholes","Audio"},["Prime Vortex"]={"Freecam"},Settings={"General","Profiles"},
+        FTAP={"Grab line","Crosshair","Blackholes","Audio"},["Prime Vortex"]={},Settings={"General","Profiles"},
     }
     -- Input group -> short subpage, shared card, column. Adjacent single-toggle cards merge.
     local routes={
-        Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},["Cinematic camera"]={"Camera","Camera tools",2}},
-        Vortex={Freecam={"Freecam","Freecam",1}},
+        Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},Freecam={"Camera","Camera tools",2},["Cinematic camera"]={"Camera","Camera tools",2}},
+        Vortex={},
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
         Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
         Particles={Particles={"Weather","Particles",1},Snowfall={"Weather","Snowfall",2}},

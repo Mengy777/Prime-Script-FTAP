@@ -857,12 +857,11 @@ return function(c)
 
     end
     do
-        local g=group("Vortex","Freecam",1)
+        local g=group("Camera","Freecam",2)
         toggle(g,"freeCameraEnabled","Free camera",false,function(on)
             if on then if v.spectateEnabled then c.Setters.spectateEnabled(false,true) end startFree() else endFree() end
         end)
         slider(panel("freeCameraEnabled"),"freeCameraSpeed","Speed",10,600,80,1,function() end)
-        panel("freeCameraEnabled"):AddLabel("Wheel: speed")
         panel("freeCameraEnabled"):AddLabel("Wheel: speed")
         g=group("Camera","Cinematic camera",2)
         toggle(g,"spectateEnabled","Spectate player",false,function(on)
