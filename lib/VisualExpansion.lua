@@ -669,39 +669,10 @@ return function(c)
         hudControls.Text=translated(free.interacting and "E: flight" or "E: objects")
     end
     local function clearFreeVisibility()
-        job("Freecam parts")
-        for _,link in pairs(free.parts) do disconnect(link) end
-        free.parts={} free.character=nil
-        unpatch("freeBody")
-    end
-    local function repairFreePart(part)
-        if free.visibilityWriting or not free.active or not v.freeCameraEnabled then return end
-        if not free.character or me.Character~=free.character or not part:IsDescendantOf(free.character) then return end
-        free.visibilityWriting=true
-        local ok,message=pcall(patch,"freeBody",part,"LocalTransparencyModifier",0)
-        free.visibilityWriting=false
-        if not ok then warn("Prime Visuals / Freecam visibility: "..tostring(message)) end
+        if c.RefreshAvatarVisibility then c.RefreshAvatarVisibility()end
     end
     local function visibleFreeBody()
-        local char=me.Character
-        if free.character~=char then
-            clearFreeVisibility() free.character=char
-            local function add(part)
-                if not part:IsA("BasePart") or part.Name=="HumanoidRootPart" or free.parts[part] then return end
-                free.parts[part]=part:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
-                    repairFreePart(part)
-                end)
-            end
-            if char then
-                for _,part in ipairs(char:GetDescendants()) do add(part) end
-                job("Freecam parts",char.DescendantAdded,add)
-            end
-        end
-        for part,link in pairs(free.parts) do
-            if not part.Parent or not char or not part:IsDescendantOf(char) then
-                disconnect(link) free.parts[part]=nil unpatch("freeBody",part)
-            else repairFreePart(part) end
-        end
+        if c.RefreshAvatarVisibility then c.RefreshAvatarVisibility()end
     end
     -- Space ascent avoids E (FTAP toy-menu shortcut). Menu guards also cover activation itself.
     -- Also suppress recognized toy-menu containers for game listeners that ignore processed input.

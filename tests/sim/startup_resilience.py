@@ -165,7 +165,7 @@ lu.execute(s)
 lu.execute("assert(TEST_MODULE_CALLS.LightingEditor==3 and #TEST_STARTUP_MESSAGES==1); TEST_NO_LEAKS()")
 print('PASS advanced lighting module HTTP failure cleans partial startup without changing the game')
 
-for module in ('Keybinds','MajorInterface'):
+for module in ('Keybinds','MajorInterface','AvatarVisibility'):
  lu,s=setup();lu.execute(f"TEST_FAULT('{module}','offline')")
  lu.execute(s)
  lu.execute("TEST_NO_LEAKS(); local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'); assert(not pg:FindFirstChild('PrimeStatus') and not pg:FindFirstChild('PrimeLoading'))")

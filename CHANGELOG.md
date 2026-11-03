@@ -1,3 +1,10 @@
+# 3.1.0 — 2026-11-03
+
+- Rebuilt avatar visibility for third person and Freecam around one early snapshot and shared ownership. Removed duplicate per-mode part caches/listeners.
+- Recover observed hair, face decals and body alpha after late game writes to Transparency or LocalTransparencyModifier; preserve invisible accessories without inventing alpha0.
+- Explicit mode/near transitions release previous patches; clean character replacement, descendant removal and unload; preserve intentional effect layers. First-person body fade remains near only. Camera movement/controls unchanged.
+- Regression expanded to real hidden accessory handles, ordinary-alpha hides before enable and during Freecam,150 switches, hidden decals, disable, and existing360-cycle third-person/respawn tests. Live validation pending. Unknown already-hidden accessories at startup and deleted assets remain outside snapshot recovery.
+
 # 3.0.9 — 2026-11-03
 
 - Freecam repairs late LocalTransparencyModifier changes through scoped property listeners, including changes after its frame callback. No ordinary Transparency reconstruction.
