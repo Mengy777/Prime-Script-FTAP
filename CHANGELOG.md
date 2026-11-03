@@ -1,3 +1,9 @@
+# 3.0.5 — 2026-11-03
+
+- Header wordmark shifted beyond the sidebar divider.
+- Protection waiting watchdog rebinds stale character state every 8 seconds.
+- New protection spawns wait while holding an object and for 4 seconds after leaving a foreign plot; game cooldown remains respected.
+
 # Prime Visuals — Changelog
 
 Версии 0.x ниже — ретроспективная нумерация этапов из переписки и истории Git. Исходные номера и даты выпусков до 1.0.0 не фиксировались. Эксперименты и неудачные исправления отмечены явно. Начиная с 1.0.0 версии ведутся при каждом обновлении.

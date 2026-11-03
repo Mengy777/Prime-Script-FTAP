@@ -8,6 +8,7 @@ return function(c)
     local links={}
     local spawnTask
     local boundCharacter,boundRoot,boundHumanoid,boundHitbox
+    local waitingSince,wasForeign,spawnGrace=nil,false,0
     local lastStatus
     local function status(text)
         if text~=lastStatus then lastStatus=text if c.Status then c.Status(text) end end
@@ -66,7 +67,19 @@ return function(c)
     local function retry(now,text)
         clear() nextAttempt=now+3 status(text)
     end
+    local function holdingObject()
+        for _,scope in ipairs(world:GetChildren()) do
+            if scope.Name=="GrabParts" then
+                local part=scope:FindFirstChild("GrabPart")
+                local weld=part and part:FindFirstChild("WeldConstraint")
+                if weld and weld.Part1 and weld.Part1:IsDescendantOf(world) then return true end
+            end
+        end
+        return false
+    end
     local function beginSpawn(now,root)
+        if holdingObject() then spawnGrace=now+1.5 status("Waiting: holding an object") return end
+        if now<spawnGrace then status("Waiting: spawn deferred") return end
         local spawn=remote("MenuToys","SpawnToyRemoteFunction")
         local owner=remote("GrabEvents","SetNetworkOwner")
         local attach=remote("PlayerEvents","StickyPartEvent")
@@ -114,6 +127,13 @@ return function(c)
             clear() nextAttempt=0
             boundCharacter,boundRoot,boundHumanoid,boundHitbox=char,root,humanoid,hitbox
         end
+        if not root or not humanoid or humanoid.Health<=0 or not root.Parent or not hitbox then
+            waitingSince=waitingSince or now
+            if now-waitingSince>=8 then
+                clear() nextAttempt=0 waitingSince=now
+                boundCharacter,boundRoot,boundHumanoid,boundHitbox=nil,nil,nil,nil
+            end
+        else waitingSince=nil end
         if not root or not humanoid or humanoid.Health<=0 or not root.Parent then
             if toy or phase~="idle" or busy then clear() end status("Waiting for character") return
         end
@@ -122,7 +142,10 @@ return function(c)
             status("Waiting for character hitbox") return
         end
         local inPlot=player:FindFirstChild("InPlot") local ownPlot=player:FindFirstChild("InOwnedPlot")
-        if inPlot and inPlot.Value and (not ownPlot or not ownPlot.Value) then
+        local foreign=inPlot and inPlot.Value and (not ownPlot or not ownPlot.Value)
+        if wasForeign and not foreign then spawnGrace=now+4 end
+        wasForeign=foreign==true
+        if foreign then
             if toy or phase~="idle" or busy then clear() end status("Paused in another player's plot") return
         end
         if phase=="idle" then

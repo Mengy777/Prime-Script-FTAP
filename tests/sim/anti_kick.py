@@ -103,6 +103,23 @@ protector:SetEnabled(true)build()
 assert(#toys:GetChildren()==1,'stale completion destroyed or duplicated current protection')
 spawn.InvokeServer=originalInvoke
 protector:Restart()build()assert(#toys:GetChildren()==1)
+local scope=make('Folder','GrabParts',world)
+local grabPart=make('Part','GrabPart',scope)
+local holding=make('WeldConstraint','WeldConstraint',grabPart)holding.Part1=root
+local before=spawned
+protector:Restart()
+for i=1,30 do tick()end
+assert(spawned==before,'protection spawn interrupted held object')
+scope:Destroy()
+for i=1,9 do tick()end
+build()assert(spawned==before+1)
+local foreign=make('BoolValue','InPlot',player)foreign.Value=true
+tick()foreign.Value=false tick()
+before=spawned
+for i=1,15 do tick()end
+assert(spawned==before,'protection consumed immediate post-plot cooldown')
+for i=1,8 do tick()end
+build()assert(spawned==before+1)
 protector:Destroy()assert(#toys:GetChildren()==0)
 local count=spawned for i=1,20 do tick()end assert(spawned==count)
 CFrame.new,CFrame.Angles=oldNew,oldAngles

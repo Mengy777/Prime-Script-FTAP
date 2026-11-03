@@ -11269,6 +11269,8 @@ function Library:CreateWindow(WindowInfo)
             20,
             180
         )
+        -- Keep the wordmark to the right of the sidebar divider.
+        New("Frame", {BackgroundTransparency = 1, Size = UDim2.fromOffset(12, 1), Parent = TitleHolder})
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
