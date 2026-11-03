@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.0.5**, tag `v3.0.5`. Next normal runtime version: **3.0.6**. Consult Git for the release commit.
+- Published runtime target: **3.0.6**, tag `v3.0.6`. Next normal runtime version: **3.0.7**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -281,3 +281,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 3.0.4 Wordmark module styles nativeWindow.TitleLabel and HUD title with Arcade, fixed per-letter rich colours and static rainbow underline. Omega still animates; HUD icon26px. TextService measurement + fallback packs FPS7px after brand and8px end padding. Brand font protected from general menu font registry updates. No settings/gameplay changes; wordmark.py and hud_drag.py cover static colours/spacing/persistence; visual acceptance pending.
 
 - 3.0.5: header spacer keeps brand beyond sidebar divider. Protection waiting watchdog clears stale bindings every8s; no fabricated character/hitbox. Spawn defers while holding +1.5s and4s after foreign plot exit. This creates an unprotected interval; no server cooldown/limit bypass. Simulated coverage does not prove live protection.
+
+- 3.0.6 protection SetEnabled is idempotent; repeated true callback previously replaced Attached status with Waiting while active phase never refreshed it. Confirmed active weld now refreshes Attached. User accepted header3.0.5; preserve it. Live protection acceptance still pending.

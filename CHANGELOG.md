@@ -1,3 +1,8 @@
+# 3.0.6 — 2026-11-03
+
+- Reapplying enabled protection no longer overwrites active status with Waiting for character. Active weld confirmation refreshes Attached status.
+- No additional toy spawn for repeated enabled-setting callbacks.
+
 # 3.0.5 — 2026-11-03
 
 - Header wordmark shifted beyond the sidebar divider.

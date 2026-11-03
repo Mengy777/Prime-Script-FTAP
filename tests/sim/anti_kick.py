@@ -44,6 +44,8 @@ local function build()
 end
 protector:SetEnabled(true)build()assert(spawned==1 and attached==1)
 for i=1,100 do tick()end assert(spawned==1,'duplicate spawn while attached')
+for i=1,10 do protector:SetEnabled(true)tick()assert(status=='Attached','reapplied setting overwrote active status')end
+assert(spawned==1,'reapplied enabled setting respawned toy')
 local toy=toys:GetChildren()[1]
 local sticky=toy:FindFirstChild('StickyPart')
 assert(sticky.LocalTransparencyModifier==1 and sticky:FindFirstChild('StickyWeld').Part1==hitbox)

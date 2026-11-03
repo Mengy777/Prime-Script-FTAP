@@ -195,7 +195,7 @@ return function(c)
                     event:FireServer(sticky,hitbox,CFrame.new(0,-.3,0)*CFrame.Angles(math.pi/2,0,0))
                     phase="attach" deadline=now+.75 status("Restoring protection")
                 else retry(now,"Restoring protection") end
-            else hideToy() end
+            else hideToy() status("Attached") end
         end
     end
     local elapsed=0
@@ -206,7 +206,12 @@ return function(c)
     end)
     local api={}
     function api:SetEnabled(on)
-        enabled=on==true if not enabled then clear() status("Off") else nextAttempt=0 status("Waiting for character") end
+        if dead then return end
+        local requested=on==true
+        if requested==enabled then return end
+        enabled=requested
+        if not enabled then clear() status("Off")
+        else nextAttempt=0 status("Waiting for character") end
     end
     function api:Restart()
         if dead then return end
