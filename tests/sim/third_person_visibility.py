@@ -34,7 +34,8 @@ TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
 assert(char:FindFirstChild('Torso').LocalTransparencyModifier==0,'first-person body alpha competed with third person')
 TEST_OPTIONS.camDistance:SetValue(30)
 assert(ME.CameraMinZoomDistance==.5 and ME.CameraMaxZoomDistance==80)
-local later=Instance.new('MeshPart')later.Name='LateAccessory' later.LocalTransparencyModifier=1 later.Transparency=.4 later.Parent=char
+local lateAccessory=Instance.new('Accessory')lateAccessory.Name='LateAccessory'lateAccessory.Parent=char
+local later=Instance.new('MeshPart')later.Name='Handle' later.LocalTransparencyModifier=1 later.Transparency=.4 later.Parent=lateAccessory
 char.DescendantAdded:Fire(later)TEST_SERVICES.RunService._render.PrimeVisualsThirdBody()
 assert(later.LocalTransparencyModifier==0 and later.Transparency==.4)
 local camera=workspace.CurrentCamera
