@@ -1,3 +1,9 @@
+# 3.2.0 — 2026-11-04
+
+- Removed the in-script toy collection editor, catalogue, previews, slot picker, assignment and starter-reset actions. Keep only the collection enable/disable toggle and the fixed current27-toy set (pallet23).
+- Deleted editor runtime/preview/migration code and three persisted editor settings. Old profiles ignore removed keys while retaining collection enable state and other settings;398 settings remain.
+- Kept native prepared order/instant repair, smaller rainbow markers and disable/unload restoration. Native100-cycle no-wholeGUI-scan check retained; actual FTAP check pending.
+
 # 3.1.9 — 2026-11-04
 
 - Replaced Katana10/ Kunai11/ Tetracube I19/ T20 with Snowball10/ Glass Box11/ Burger19/ Ladder20. Central FloatingIsland21/Decoy22/pallet23/Blobman24 and rocket14 unchanged.

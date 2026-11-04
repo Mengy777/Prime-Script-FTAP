@@ -30,14 +30,6 @@ assert(star:FindFirstChild('Fill').ImageColor3.R==0 and star:FindFirstChild('Fil
 local before=star:FindFirstChild('Outline').ImageColor3.R
 TEST_CLOCK=TEST_CLOCK+1 TEST_SERVICES.RunService.Heartbeat:Fire(.11)
 assert(star:FindFirstChild('Outline').ImageColor3.R~=before,'star outline not animated')
-local option=TEST_OPTIONS.toyCollectionToy
-assert(option.Type=='Dropdown' and option.Info.Searchable,'toy picker still requires typing')
-assert(#option.Values>=34,'native toy catalogue not populated')
--- Legacy hidden dropdown no longer creates duplicate previews.
-option:SetValue('tetracubl')TEST_OPTIONS.toyCollectionSlot:SetValue(2)
-TEST_ACTIONS['Assign toy to position']()
-TEST_SERVICES.RunService.Heartbeat:Fire(.21)
-assert(CARDS.TetracubeL.Position==POSITIONS[2],'click selection did not assign toy')
 TEST_OPTIONS.toyCollectionEnabled:SetValue(false)
 assert(CARDS.PalletLightBrown.Position==POSITIONS[1] and not CARDS.PalletLightBrown:FindFirstChild('PV_CollectionStar'),'native position/marker not restored')
 TEST_ACTIONS['Unload script']()

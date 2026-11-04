@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.1.9**, tag `v3.1.9`. Next normal runtime version: **3.2.0**. Consult Git for the release commit.
+- Published runtime target: **3.2.0**, tag `v3.2.0`. Next normal runtime version: **3.2.1**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -311,3 +311,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - User confirmed3.1.7 freezes disappeared.3.1.8 curated starter27 all verified owned IDs, grid9columns: row1 UFO/Plane/Helicopter/PaperPlane/Boombox/Basketball/Balloon/Sparkler/SmokeBomb; row2 Katana/Kunai/AcousticGuitar/DarkMatter/Rocket/TetracubeL/Trumpet/Ocarina/Cake; row3 TetracubeI/T/FloatingIsland/YouDecoy/Pallet/Blobman/DiscoColorBall/LightBall/JukeboxBlue. Prioritize22/24 besidepallet23 and14above. No TetracubeO/couches or otherfood/instruments. UpgradeOrder replaces previous starter if it contains Donut+Melodica+ShoppingCart, updates persisted control value; other customorders retained. Restorestarter always newset. No server calls or performance rewrite. Actual DiscoCube label ambiguous: only native DiscoColorBall exists in capturedcatalogue; state this rather than inventing anID.
 
 - 3.1.9 user screenshot removes Katana/Kunai/TetracubeI/T. Replace slots10Snowball(BallSnowball),11GlassBoxGray,19FoodHamburger,20LadderLightBrown. Burger explicitly supersedes cake-only rule; keepcake too. Central priorities unchanged. UpgradeOrder maps those four exact saved IDs in place rather than resetting other slots.27items/performance unchanged.
+
+- 3.2.0 user REMOVED ability to edit collection in-game. Only toggle and fixed3.1.9 set remain. Removed entire editor/catalogue/preview/assignment/reset/upgrade APIs and3 editor settingkeys;398settings. Old profiles ignore those keys, always use current curated27set. Keep native fastpath/fixedorder/smallstars/disable restore. Do not restore editor without newrequest.

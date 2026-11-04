@@ -1,3 +1,9 @@
+## 3.2.0 — fixed collection only (pending live check)
+
+- Collection toggle works; no item/slot editor, catalogue or collection reset action remains.
+- Native E menu retains current27-toy set, pallet23, smaller stars and immediate opening.
+- Old autosave loads without editor keys; disable restores native order.
+
 ## 3.1.9 — four toy replacements (pending live check)
 
 - Snowball10, Glass Box11, burger19, ladder20; no Katana/Kunai/TetracubeI/T in the custom27.

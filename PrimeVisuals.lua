@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.9"
+local VERSION="3.2.0"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2372,63 +2372,12 @@ local function buildVisualSystems()
         choice(g,"uiLanguage","Language",{"English","Русский"},"English",function(value)
             setLanguage(value=="Русский" and "ru" or "en")
         end)
-        local collectionStatus,collectionPicker
-        local toyNames={}
         toyCollection=loadUIModule("ToyCollection")({PlayerGui=playerGui,Run=Run,Patches=patches,Patch=patch,Unpatch=unpatch,
             TrackCleanup=function(fn)toyCollection={Destroy=fn}end,
             CaptureDiagnostic=function()return loadUIModule("ToyMenuDiagnostics")()end,
-            Catalog=function(entries)
-                if not collectionPicker then return end
-                local values={}for _,entry in ipairs(entries)do
-                    local key=entry.id values[#values+1]=key toyNames[key]=entry.name
-                end
-                if #values==0 then return end
-                local current=toyCollection:Canonical(controls.toyCollectionToy or values[1])
-                if not table.find(values,current)then values[#values+1]=current end
-                local previous=suppressed suppressed=true
-                collectionPicker:SetValues(values)collectionPicker:SetValue(current)
-                suppressed=previous
-            end,
-            Warn=function(message)warn("Prime Visuals / toy collection: "..tostring(message))end,
-            Status=function(code)
-                if collectionStatus then collectionStatus:SetText(({off="Disabled",missing="Open E and Your Toys",ready="Collection ready",error="Menu not recognized"})[code]or "")end
-            end})
+            Warn=function(message)warn("Prime Visuals / toy collection: "..tostring(message))end})
+        toyCollection:SetOrder(toyCollection:DefaultOrder())
         toggle(g,"toyCollectionEnabled","Custom toy collection",false,function(on)toyCollection:SetEnabled(on)end)
-        local collectionPanel=featureSettings("toyCollectionEnabled")
-        local defaultToyOrder=toyCollection:DefaultOrder()
-        field(collectionPanel,"toyCollectionOrder","Collection data",defaultToyOrder,function(value)
-            local upgraded=toyCollection:UpgradeOrder(value)
-            controls.toyCollectionOrder=upgraded toyCollection:SetOrder(upgraded)
-        end)
-        if widgets.toyCollectionOrder.SetVisible then widgets.toyCollectionOrder:SetVisible(false)end
-        toyCollection:SetOrder(defaultToyOrder)
-        sliderControl(collectionPanel,"toyCollectionSlot","Position",1,28,1,1,function()end)
-        collectionPicker=collectionPanel:AddDropdown("toyCollectionToy",{Text="Toy",Values={"Rocket"},Default="Rocket",Searchable=true,
-            FormatListValue=function(value)return toyNames[value]or value end,
-            FormatDisplayValue=function(value)return toyNames[value]or value end,
-            Callback=changed("toyCollectionToy",function()end)})
-        local nativeToySet=collectionPicker.SetValue
-        function collectionPicker:SetValue(value)
-            value=type(value)=="string"and value or ""
-            if not table.find(self.Values,value)then self.Values[#self.Values+1]=value end
-            nativeToySet(self,value)
-        end
-        register("toyCollectionToy",collectionPicker,"Rocket",function()end,false,{Kind="Input"})
-        local legacyAssign=action(collectionPanel,"Assign toy to position",function()
-            local value=toyCollection:Assign(controls.toyCollectionOrder,controls.toyCollectionSlot,controls.toyCollectionToy)
-            setters.toyCollectionOrder(value,true)
-        end)
-        for _,key in ipairs({"toyCollectionSlot","toyCollectionToy"})do if widgets[key].SetVisible then widgets[key]:SetVisible(false)end end
-        if legacyAssign and legacyAssign.SetVisible then legacyAssign:SetVisible(false)end
-        toyCollection:MountEditor(collectionPanel,{
-            Russian=function()return uiLanguage=="ru"end,
-            Select=function(slot)setters.toyCollectionSlot(slot,true)end,
-            Assign=function(slot,toy)
-                setters.toyCollectionToy(toy,false)
-                setters.toyCollectionOrder(toyCollection:Assign(controls.toyCollectionOrder,slot,toy),true)
-            end})
-        action(collectionPanel,"Restore starter collection",function()setters.toyCollectionOrder(defaultToyOrder,true)end)
-        collectionStatus=collectionPanel:AddLabel("Open E and Your Toys")
         local resetting=false
         action(g,"Reset all settings",function()
             if resetting then return end

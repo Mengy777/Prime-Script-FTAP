@@ -49,7 +49,7 @@ assert(CARDS.BombMissile.LayoutOrder==-9986,'actual owned path not recognized')
 assert(CARDS.BombDarkMatter.LayoutOrder==-9987,'native dark crystal alias missing')
 assert(CARDS.TetracubeL.LayoutOrder==-9985)
 assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
-assert(#TEST_OPTIONS.toyCollectionToy.Values>=195)
+assert(TEST_OPTIONS.toyCollectionToy==nil and TEST_OPTIONS.toyCollectionSlot==nil and TEST_OPTIONS.toyCollectionOrder==nil)
 local marked=0 for _,card in pairs(CARDS)do if card:FindFirstChild('PV_CollectionStar')then marked=marked+1 end end
 assert(marked==27,'collection must mark exactly27 toys')
 CARDS.PalletLightBrown.LayoutOrder=999999
@@ -59,74 +59,20 @@ assert(star and math.abs(star.Size.X.Scale-.711*.65)<.00001)
 for _,tab in ipairs(SCREEN:FindFirstChild('Menu'):FindFirstChild('TabContents'):GetChildren())do if tab.Name~='Toys'then
  for _,b in ipairs(tab:FindFirstChild('Contents'):GetChildren())do if b:IsA('GuiObject')then assert(b.LayoutOrder==777)end end
 end end
-TEST_OPTIONS.toyCollectionEnabled:SetValue(false)
-for _,entry in ipairs(CAPTURED_CARDS)do assert(CARDS[entry.name].LayoutOrder==(entry.name=='PalletLightBrown'and 999999 or entry.order))end
-TEST_ACTIONS['Unload script']()
-""")
-print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pallet23, exact favorite geometry; shop/destroy untouched; restore')
-# Exercise real editor construction/click callbacks (not just SetValue controls).
-factory=lua.execute((ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8'))
-api=factory(lua.table_from({}))
-starter=api.DefaultOrder(api).split(',')
-owned={entry['name'] for entry in json.loads((ROOT/'tests/fixtures/native_toy_cards.json').read_text())}
-assert len(starter)==27 and len(set(starter))==27 and set(starter)<=owned
-assert starter[21:24]==['YouDecoy','PalletLightBrown','CreatureBlobman']
-assert starter[13]=='BombMissile' and starter[12]=='BombDarkMatter' and starter[14]=='TetracubeL'
-assert [x for x in starter if x.startswith('Food')]==['FoodCakePink','FoodHamburger']
-assert {x for x in starter if x.startswith('Instrument')}=={'InstrumentBrassTrumpet','InstrumentWoodwindOcarina','InstrumentGuitarAcoustic'}
-assert not any('Couch'in x or x in {'TetracubeO','TetracubeI','TetracubeT','NinjaKatana','NinjaKunai'}for x in starter)
-assert [starter[i-1]for i in (10,11,19,20)]==['BallSnowball','GlassBoxGray','FoodHamburger','LadderLightBrown']
-legacy=','.join({'BallSnowball':'NinjaKatana','GlassBoxGray':'NinjaKunai','FoodHamburger':'TetracubeI','LadderLightBrown':'TetracubeT'}.get(x,x)for x in starter)
-assert api.UpgradeOrder(api,legacy)==','.join(starter)
-print('PASS curated27-slot starter: all actual owned IDs, unique slots, cake and burger/three instruments/no couches or TetracubeO, Decoy22/pallet23/Blob24')
-lua.globals().TOY_FACTORY=factory
-lua.execute(r"""
-local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui')
-local parent=Instance.new('Frame')parent.Parent=pg parent.ZIndex=4
-local panel={Container=parent}
-function panel:AddLabel()
- local root=Instance.new('TextLabel')root.Parent=self.Container root.ZIndex=4
- local layout=Instance.new('UIListLayout')layout.Parent=root
- self.Root=root return {Holder=root}
-end
-function panel:Resize()end
-local patches={}
-local function patch(_,o,k,v)patches[o]=patches[o]or{}if not patches[o][k]then patches[o][k]={original=o[k]}end o[k]=v end
-local manager=TOY_FACTORY({PlayerGui=pg,Run=TEST_SERVICES.RunService,Patches=patches,Patch=patch,Unpatch=function()end})
-manager:SetEnabled(true)
-local data=manager:DefaultOrder()local assigned=0
-manager:MountEditor(panel,{Russian=function()return false end,Select=function(i)assert(i==26)end,Assign=function(slot,toy)
- assigned=slot data=manager:Assign(data,slot,toy)manager:SetOrder(data)
-end})
-local root=panel.Root
-assert(not root:FindFirstChildWhichIsA('UIListLayout'),'label layout overrides editor positions')
-local slots=root:GetChildren()[2]
-local target
-for _,o in ipairs(root:GetDescendants())do if o.Name=='Slot26' then target=o end end
-assert(target and target.ZIndex==4)
-target.MouseButton1Click:Fire()
-local choice
-for _,o in ipairs(root:GetDescendants())do if o.Name=='bombdarkmatter'or o.Name=='blackcrystal'then choice=o end end
-if not choice then for _,o in ipairs(root:GetDescendants())do if o:IsA('TextButton')and o.Name~='Previous'and o.Name~='Next'and not o.Name:find('Slot')then choice=o break end end end
-assert(choice,'catalogue page is empty')choice.MouseButton1Click:Fire()
-assert(assigned==26,'slot click then toy click did not assign immediately')
-local search=root:FindFirstChild('Search')search.Text='PalletLightBrown'
-local found=false for _,o in ipairs(root:GetDescendants())do if o.Name=='palletlightbrown'then found=true end end assert(found,'search cannot find real toy')
-local scans,clones=GUI_FULL_SCANS,PREVIEW_CLONES
+local scans=GUI_FULL_SCANS
 for i=1,100 do
- CARDS.PalletLightBrown.LayoutOrder=800000+i
+ CARDS.PalletLightBrown.LayoutOrder=900000+i
  CARDS.PalletLightBrown.Visible=false CARDS.PalletLightBrown.Visible=true
  TEST_SERVICES.RunService.Heartbeat:Fire(.11)
  assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
 end
-assert(GUI_FULL_SCANS==scans,'reopening rescans whole PlayerGui')
-assert(PREVIEW_CLONES==clones,'unchanged editor rebuilds preview models')
-local old=manager:DefaultOrder():gsub('PalletLightBrown,FoodPizzaCheese,FoodCoconut,FoodHamburger','FoodHamburger,FoodPizzaCheese,FoodCoconut,PalletLightBrown')..',SantaSleigh'
-manager:SetOrder(old)TEST_SERVICES.RunService.Heartbeat:Fire(.11)
-assert(CARDS.PalletLightBrown.LayoutOrder==-9977,'old28-slot save did not migrate pallet23')
-manager:Destroy()parent:Destroy()
+assert(GUI_FULL_SCANS==scans,'native reopening causes wholeGUI scans')
+TEST_OPTIONS.toyCollectionEnabled:SetValue(false)
+for _,entry in ipairs(CAPTURED_CARDS)do assert(CARDS[entry.name].LayoutOrder==(entry.name=='PalletLightBrown'and 900100 or entry.order))end
+TEST_ACTIONS['Unload script']()
 """)
-print('PASS actual27-slot editor creation, inherited overlay ZIndex, layout isolation, slot26 selection, immediate catalogue assignment and search')
-
-
-print('PASS100 native reopen/rewrite cycles: immediate fixed order, no whole-GUI scans/no preview clones; exactly27 marks; old28-slot migration')
+print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pallet23, exact favorite geometry; shop/destroy untouched; restore')
+# The shipped client exposes no collection editing controls/actions.
+assert 'MountEditor' not in (ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8')
+assert 'toyCollectionSlot' not in (ROOT/'PrimeVisuals.lua').read_text(encoding='utf-8')
+print('PASS fixed27-toy set only: no editor, assignment action or obsolete persisted editor controls')
