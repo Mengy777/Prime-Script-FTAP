@@ -1,3 +1,10 @@
+# 3.1.5 — 2026-11-04
+
+- Replaced manual toy-name input with a searchable click-select catalogue built from native toy cards; optional3D previews in virtualized dropdown rows. Preserve saved toy-selection/order keys.
+- Extended native-menu adapter to viewport-only cards and manually positioned grids, in addition to UIGridLayout/UIListLayout. Original positions restored on disable/unload.
+- Custom collection cards receive black star fill and smoothly cycling colored outline; use original favorite-star bounds/image when detected.
+- Integrated automatic local toy-menu diagnostics; no separate executor command required. Actual FTAP hierarchy/cursor placement still pending live verification.
+
 # 3.1.4 — 2026-11-04
 
 - Added optional custom28-slot ordering inside the native Your Toys grid. Starter priorities include Rocket, black crystal, Blobman, Tetracub L, cake, cube, trumpet and ocarina; standard pallet reserved at26. Missing choices are filled from available native cards.

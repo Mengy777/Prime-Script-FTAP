@@ -90,6 +90,7 @@ function methods:FindFirstAncestorOfClass(class) local p=self.Parent while p do 
 function methods:IsDescendantOf(root) local p=self.Parent while p do if p==root then return true end p=p.Parent end return false end
 function methods:GetPropertyChangedSignal(name) self._signals=self._signals or {} self._signals[name]=self._signals[name] or signal() return self._signals[name] end
 function methods:GetAttribute(name) return nil end
+function methods:GetAttributes() return {} end
 function methods:Destroy() if self._props.Destroying then self._props.Destroying:Fire() end for _,c in ipairs(self:GetChildren()) do c:Destroy() end self.Parent=nil end
 function methods:IsFocused() return false end
 function methods:ReleaseFocus() end
@@ -177,6 +178,6 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
+for module in ("ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
  lua.globals().TEST_VISUAL_SOURCE=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  lua.execute("local source=TEST_VISUAL_SOURCE; local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('"+module+".lua',1,true) then return source end return previous(self,url) end")

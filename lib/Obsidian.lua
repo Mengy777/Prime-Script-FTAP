@@ -8191,6 +8191,7 @@ do
             Values = Info.Values,
             DisabledValues = Info.DisabledValues,
             ValueImages = Info.ValueImages,
+            ValuePreviews = Info.ValuePreviews,
 
             Multi = Info.Multi,
             DragSelect = Info.Multi and not Library.IsMobile and Info.DragSelect == true,
@@ -8642,6 +8643,23 @@ do
                     Row.Button.Position = UDim2.fromOffset(0, 0)
                 end
 
+                local PreviewFactory = Dropdown.ValuePreviews and Dropdown.ValuePreviews[Entry.Value]
+                if Row.PreviewFactory ~= PreviewFactory then
+                    if Row.Preview then Row.Preview:Destroy() Row.Preview = nil end
+                    Row.PreviewFactory = PreviewFactory
+                    if PreviewFactory then
+                        local Ok, Preview = pcall(PreviewFactory, Row.Image)
+                        if Ok then Row.Preview = Preview end
+                    end
+                end
+                if Row.Preview then
+                    Row.Image.Visible = true
+                    Row.Image.ImageTransparency = 1
+                    Row.Button.Size = UDim2.new(1, -22, 0, ItemHeight)
+                    Row.Button.Position = UDim2.fromOffset(22, 0)
+                else
+                    Row.Image.ImageTransparency = 0
+                end
                 Row:UpdateButton()
             end
         end

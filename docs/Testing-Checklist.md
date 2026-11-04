@@ -1,3 +1,12 @@
+## 3.1.5 — Your Toys redesign, pending live verification
+
+- Enable Settings → Custom toy collection, open E → Your Toys.
+- Feature parameters: select toy from searchable list, select position, Assign; no text input required.
+- Rocket first, pallet26; inspect Tetracub L and other preferred aliases.
+- Selected cards show black stars with animated colored outlines at native star location; click/spawn/favorite controls still work.
+- Disable/unload restores positions and removes custom stars.
+- If adapter still fails, inspect automatic local PrimeVisuals/ToyMenu-Diagnostics.json from Xeno workspace; do not request separate diagnostic execution.
+
 ## 3.1.4 — коллекция Your Toys (ожидает проверки в игре)
 
 - Включить Настройки → Своя коллекция игрушек; открыть E → Your Toys.
