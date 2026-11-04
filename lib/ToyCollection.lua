@@ -2,7 +2,7 @@
 return function(c)
  local api={} local enabled,dead,writing,dirty=false,false,false,false
  local cards,layouts,links={}, {}, {} local order={}local lastStatus
- local catalog={} local catalogueSignature=""
+ local catalog={} local catalogueSignature="" local editorRefresh
  local diagnosticSize=-1 local diagnosticTime=-math.huge
  local defaults={"Rocket","Black Crystal","CreatureBlobman","Tetracub L","FoodCakePink","Cube","InstrumentBrassTrumpet","InstrumentWoodwindOcarina",
  "FoodDonut","InstrumentGuitarUkulele","InstrumentGuitarAcoustic","InstrumentPianoMelodica","InstrumentVoiceMicrophone","InstrumentDrumBongos",
@@ -11,10 +11,11 @@ return function(c)
  local aliases={}
  local function alias(id,values)aliases[norm(id)]=norm(id)for _,v in ipairs(values)do aliases[norm(v)]=norm(id)end end
  alias("Rocket",{"BombMissile","Missile","FireworkRocket"})
- alias("Black Crystal",{"CrystalBlack","BlackCrystal","DarkCrystal","Crystal"})
+ alias("Black Crystal",{"CrystalBlack","BlackCrystal","DarkCrystal","Crystal","BombDarkMatter"})
  alias("CreatureBlobman",{"Blobman"})alias("Tetracub L",{"TetracubeL","TetraCubeL","TetraCube L","TetrisL"})
  alias("PalletLightBrown",{"Pallet","WoodPallet","Standard Pallet","Light Brown Pallet"})
- alias("Cube",{"BlockCube","WoodCube"})alias("FoodCakePink",{"Cake","Pink Cake"})alias("FoodDonut",{"Donut","Doughnut"})
+ alias("Basketball",{"BallBasketball"})alias("Balloon",{"BombBalloon"})alias("Chair",{"ChildrensChair"})alias("Couch",{"CouchBlue"})alias("Ball",{"BallSnowball"})alias("Firework",{"FireworkSparkler"})
+ alias("Cube",{"BlockCube","WoodCube","TetracubeO"})alias("FoodCakePink",{"Cake","Pink Cake"})alias("FoodDonut",{"Donut","Doughnut"})
  alias("InstrumentBrassTrumpet",{"Trumpet"})alias("InstrumentWoodwindOcarina",{"Ocarina"})
  for _,v in ipairs(defaults)do if not aliases[norm(v)]then aliases[norm(v)]=norm(v)end end
  local function id(s)local key=norm(s)return aliases[key]or key end
@@ -30,7 +31,7 @@ return function(c)
   end
   for i=#result+1,28 do result[i]=""end return result
  end
- function api:SetOrder(value)order=parse(value)dirty=true end
+ function api:SetOrder(value)order=parse(value)dirty=true if editorRefresh then editorRefresh()end end
  function api:Assign(value,slot,toy)
   local list=parse(value)slot=math.clamp(math.floor(tonumber(slot)or 1),1,28)
   toy=tostring(toy or ""):match("^%s*(.-)%s*$")
@@ -60,11 +61,16 @@ return function(c)
   for _,v in ipairs(values)do if type(v)=="string"and norm(v)~=""and norm(v)~="frame"and norm(v)~="button"and norm(v)~="template"then return id(v),v,false end end
  end
  local function context(parent,recognized)
+  -- Verified native capture: only the owned Toys tab, never shop/templates/destroy.
+  if parent.Name=="Contents" and parent.Parent and parent.Parent.Name=="Toys" then
+   local tabs=parent.Parent.Parent local menu=tabs and tabs.Parent
+   if tabs and tabs.Name=="TabContents" and menu and menu.Name=="Menu" and menu.Parent and menu.Parent.Name=="MenuGui" then return true end
+  end
   local p=parent local toyMenu=false
   while p and p~=c.PlayerGui do
    local name=norm(p.Name)
    if name:find("prime",1,true)or name:find("pvvisual",1,true)then return false end
-   if name:find("shop",1,true)or name:find("store",1,true)then return false end
+   if name:find("shop",1,true)or name:find("store",1,true)or name=="toydestroy"or name=="toytemplates"then return false end
    if name:find("yourtoys",1,true)or name:find("ownedtoys",1,true)or name:find("mytoys",1,true)then return true end
    if name:find("toy",1,true)and(name:find("menu",1,true)or name:find("inventory",1,true))then toyMenu=true end
    for _,child in ipairs(p:GetChildren())do
@@ -99,11 +105,17 @@ return function(c)
  function api:Preview(key,parent)
   local item=catalog[key]local source=item and item.viewport
   if not source or not source.Parent then return end
-  local copy=source:Clone()copy.Name="PV_ToyPreview"copy.Position=UDim2.fromOffset(0,0)copy.AnchorPoint=Vector2.new(0,0)copy.Size=UDim2.fromScale(1,1)
-  copy.BackgroundTransparency=1 copy.BorderSizePixel=0 copy.Active=false
-  for _,o in ipairs(copy:GetDescendants())do if o:IsA("LuaSourceContainer")then o:Destroy()end end
-  if source.CurrentCamera then local camera=source.CurrentCamera:Clone()camera.Parent=copy copy.CurrentCamera=camera end
-  copy.Parent=parent return copy
+  local copy
+  local ok=pcall(function()
+   copy=source:Clone()if not copy then return end
+   copy.ZIndex=parent.ZIndex or 1 copy.Name="PV_ToyPreview"copy.Position=UDim2.fromOffset(0,0)copy.AnchorPoint=Vector2.new(0,0)copy.Size=UDim2.fromScale(1,1)
+   copy.BackgroundTransparency=1 copy.BorderSizePixel=0 copy.Active=false
+   for _,o in ipairs(copy:GetDescendants())do if o:IsA("LuaSourceContainer")then o:Destroy()end end
+   if source.CurrentCamera then local camera=source.CurrentCamera:Clone()if camera then camera.Parent=copy copy.CurrentCamera=camera end end
+   copy.Parent=parent
+  end)
+  if ok then return copy end if copy then copy:Destroy()end
+
  end
  local function star(card,data,selected)
   if not selected then if data.star then data.star:Destroy()data.star=nil end return end
@@ -130,7 +142,7 @@ return function(c)
  end
  local function refresh()
   if not enabled or dead or not dirty then return end dirty=false
-  local seenCards,seenLayouts={},{} local found,total=false,0
+  local seenCards,seenLayouts={},{} local found,total=false,0 local catalogChanged=false
   local ok,message=pcall(function()
    local groups={}
    local descendants=c.PlayerGui:GetDescendants()
@@ -179,7 +191,9 @@ return function(c)
      local allItems=items items={}
      for _,item in ipairs(allItems)do
       seenCards[item.card]=true
-      catalog[item.id]={id=item.id,name=item.name,viewport=preview(item.card)}
+      local vp=preview(item.card)
+      if not catalog[item.id]or catalog[item.id].viewport~=vp then catalogChanged=true end
+      catalog[item.id]={id=item.id,name=item.name,viewport=vp}
       if not cards[item.card]then
        local data={links={},base=item.base,position=item.position,origin=item.origin}cards[item.card]=data
        watch(item.card,"LayoutOrder",data)watch(item.card,"Position",data)
@@ -206,19 +220,85 @@ return function(c)
    local choices={}for _,entry in pairs(catalog)do choices[#choices+1]=entry end
    table.sort(choices,function(a,b)return a.name<b.name end)
    local signature=""for _,entry in ipairs(choices)do signature=signature..entry.id..tostring(entry.viewport)end
-   if signature~=catalogueSignature then catalogueSignature=signature if c.Catalog then c.Catalog(choices)end end
+   if catalogChanged or signature~=catalogueSignature then catalogueSignature=signature if c.Catalog then c.Catalog(choices)end if editorRefresh then editorRefresh()end end
   end)
   writing=false
   if not ok then dirty=true status("error")if c.Warn then c.Warn(message)end
   else status(found and "ready"or "missing",total)end
+ end
+ -- Visual editor reuses the persisted order/slot/toy keys. No toy remotes.
+ function api:MountEditor(panel,options)
+  local label=panel:AddLabel("")local root=label.Holder
+  if not root then return end -- minimal non-rendering test hosts
+  for _,child in ipairs(root:GetChildren())do if child:IsA("UIListLayout")then child:Destroy()end end
+  root.Name="PV_SetBuilder"root.Size=UDim2.new(1,0,0,394)root.Text=""root.ClipsDescendants=true
+  local selected,page,query=1,1,"" local slotButtons,slotPreviews={},{}
+  local accent=Color3.fromRGB(166,99,255)local muted=Color3.fromRGB(32,29,39)
+  local function make(class,parent,props)
+   local o=Instance.new(class)o.ZIndex=parent.ZIndex or 1 for k,v in pairs(props)do o[k]=v end o.Parent=parent return o
+  end
+  local function text(parent,value,pos,size)
+   return make("TextLabel",parent,{Text=value,Position=pos,Size=size,BackgroundTransparency=1,TextColor3=Color3.fromRGB(230,225,240),TextSize=12,Font=Enum.Font.Gotham,TextWrapped=true})
+  end
+  local heading=text(root,"",UDim2.fromOffset(0,0),UDim2.new(1,0,0,22))
+  local slots=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.fromOffset(0,24),Size=UDim2.new(1,0,0,168)})
+  local catalogue=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.fromOffset(0,228),Size=UDim2.new(1,0,0,136)})
+  local search=make("TextBox",root,{Name="Search",PlaceholderText="Search / Поиск",Text="",ClearTextOnFocus=false,BackgroundColor3=muted,TextColor3=Color3.new(1,1,1),TextSize=12,Font=Enum.Font.Gotham,Position=UDim2.fromOffset(0,198),Size=UDim2.new(1,0,0,26)})
+  local catalogButtons={}
+  local function button(parent,name,x,y,w,h)
+   local b=make("TextButton",parent,{Name=name,Text="",AutoButtonColor=true,BackgroundColor3=muted,BorderSizePixel=1,BorderColor3=Color3.fromRGB(61,52,75),Position=UDim2.new(x,2,0,y),Size=UDim2.new(w,-4,0,h)})return b
+  end
+  local function refresh()
+   if dead or not root.Parent then return end
+   local ru=options.Russian()heading.Text=(ru and "Слот "or "Slot ")..selected..(ru and " · выбери игрушку ниже"or " · choose a toy below")
+   for i,b in ipairs(slotButtons)do
+    b.BorderColor3=i==selected and accent or Color3.fromRGB(61,52,75)
+    local key=id(order[i])local old=slotPreviews[i]
+    if not old or old.key~=key or old.source~=(catalog[key]and catalog[key].viewport)then
+     if old and old.view then old.view:Destroy()end
+     local vp=api:Preview(key,b)if vp then vp.ZIndex=b.ZIndex end
+     slotPreviews[i]={key=key,source=catalog[key]and catalog[key].viewport,view=vp}
+     b.Text=vp and ""or tostring(order[i]or ""):sub(1,15)b.TextSize=9 b.TextColor3=Color3.new(1,1,1)
+    end
+   end
+   for _,b in ipairs(catalogButtons)do b:Destroy()end catalogButtons={}
+   local choices={}for _,entry in pairs(catalog)do if query==""or entry.name:lower():find(query,1,true)then choices[#choices+1]=entry end end
+   table.sort(choices,function(a,b)return a.name<b.name end)
+   local pages=math.max(1,math.ceil(#choices/18))page=math.clamp(page,1,pages)
+   for index=(page-1)*18+1,math.min(page*18,#choices)do
+    local entry=choices[index]local j=index-(page-1)*18-1
+    local b=button(catalogue,entry.id,(j%6)/6,math.floor(j/6)*45,1/6,42)catalogButtons[#catalogButtons+1]=b
+    local vp=api:Preview(entry.id,b)if vp then vp.Size=UDim2.new(1,0,1,-12)end
+    local caption=text(b,entry.name,UDim2.new(0,0,1,-13),UDim2.new(1,0,0,13))caption.TextSize=8 caption.ZIndex=b.ZIndex+2
+    b.MouseButton1Click:Connect(function()options.Assign(selected,entry.id)end)
+   end
+   options.Page.Text=tostring(page).." / "..pages.." · "..#choices
+  end
+  for i=1,28 do
+   local b=button(slots,"Slot"..i,((i-1)%7)/7,math.floor((i-1)/7)*42,1/7,39)slotButtons[i]=b
+   local n=text(b,tostring(i),UDim2.fromOffset(1,0),UDim2.fromOffset(16,13))n.ZIndex=b.ZIndex+3 n.TextColor3=accent
+   b.MouseButton1Click:Connect(function()selected=i options.Select(i)refresh()end)
+  end
+  local prev=button(root,"Previous",0,369,.18,22)prev.Text="<"prev.TextColor3=accent
+  local nextButton=button(root,"Next",.82,369,.18,22)nextButton.Text=">"nextButton.TextColor3=accent
+  options.Page=text(root,"",UDim2.new(.18,0,0,369),UDim2.new(.64,0,0,22))
+  prev.MouseButton1Click:Connect(function()page=math.max(1,page-1)refresh()end)
+  nextButton.MouseButton1Click:Connect(function()page=page+1 refresh()end)
+  search:GetPropertyChangedSignal("Text"):Connect(function()query=search.Text:lower()page=1 refresh()end)
+  editorRefresh=refresh refresh()panel:Resize()
  end
  function api:SetEnabled(on)
   if dead or enabled==(on==true)then return end enabled=on==true
   for _,link in ipairs(links)do link:Disconnect()end links={}
   if not enabled then restore()status("off")return end
   dirty=true
-  links[#links+1]=c.PlayerGui.DescendantAdded:Connect(function()dirty=true end)
-  links[#links+1]=c.PlayerGui.DescendantRemoving:Connect(function()dirty=true end)
+  local function nativeChanged(o)
+   local node=o while node and node~=c.PlayerGui do
+    if node.Name:find("PV_",1,true)or norm(node.Name):find("prime",1,true)or norm(node.Name):find("obsidian",1,true)then return end node=node.Parent
+   end dirty=true
+  end
+  links[#links+1]=c.PlayerGui.DescendantAdded:Connect(nativeChanged)
+  links[#links+1]=c.PlayerGui.DescendantRemoving:Connect(nativeChanged)
   local elapsed=0
   links[#links+1]=c.Run.Heartbeat:Connect(function(dt)
    elapsed=elapsed+dt

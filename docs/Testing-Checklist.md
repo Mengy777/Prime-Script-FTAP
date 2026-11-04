@@ -1,3 +1,10 @@
+## 3.1.6 — custom collection (pending live confirmation)
+
+1. Enable Settings → Custom toy collection, open E → Your Toys: rocket1, dark crystal2, Tetracub L4, pallet26.
+2. Open collection settings: click a numbered slot, then a catalogue preview; native menu changes without Assign. Search and catalogue arrows work.
+3. Move an already assigned toy: original slots swap. Reopen E and reload script: saved order remains.
+4. Stars use native lower-right bounds; ordinary spawn/favorite buttons work. Off/unload restores native order; Shop and destruction tabs unchanged.
+
 ## 3.1.5 — Your Toys redesign, pending live verification
 
 - Enable Settings → Custom toy collection, open E → Your Toys.

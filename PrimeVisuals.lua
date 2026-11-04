@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.5"
+local VERSION="3.1.6"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2413,10 +2413,19 @@ local function buildVisualSystems()
             nativeToySet(self,value)
         end
         register("toyCollectionToy",collectionPicker,"Rocket",function()end,false,{Kind="Input"})
-        action(collectionPanel,"Assign toy to position",function()
+        local legacyAssign=action(collectionPanel,"Assign toy to position",function()
             local value=toyCollection:Assign(controls.toyCollectionOrder,controls.toyCollectionSlot,controls.toyCollectionToy)
             setters.toyCollectionOrder(value,true)
         end)
+        for _,key in ipairs({"toyCollectionSlot","toyCollectionToy"})do if widgets[key].SetVisible then widgets[key]:SetVisible(false)end end
+        if legacyAssign and legacyAssign.SetVisible then legacyAssign:SetVisible(false)end
+        toyCollection:MountEditor(collectionPanel,{
+            Russian=function()return uiLanguage=="ru"end,
+            Select=function(slot)setters.toyCollectionSlot(slot,true)end,
+            Assign=function(slot,toy)
+                setters.toyCollectionToy(toy,false)
+                setters.toyCollectionOrder(toyCollection:Assign(controls.toyCollectionOrder,slot,toy),true)
+            end})
         action(collectionPanel,"Restore starter collection",function()setters.toyCollectionOrder(defaultToyOrder,true)end)
         collectionStatus=collectionPanel:AddLabel("Open E and Your Toys")
         local resetting=false

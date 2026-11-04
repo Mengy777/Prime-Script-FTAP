@@ -1,3 +1,10 @@
+# 3.1.6 — 2026-11-04
+
+- Fixed owned toy-grid recognition against the actual captured MenuGui/Menu/TabContents/Toys/Contents hierarchy (195 cards). Shop, destruction and template tabs excluded.
+- Replaced visible slot slider/dropdown/Assign workflow with a28-slot preview board: click a slot then click a catalogue card to assign immediately. Search,18-card catalogue pages and duplicate-slot swapping; saved config identifiers retained.
+- Matched captured native IDs for dark crystal, cube and common starter toys; pallet remains slot26. Native favorite-star image/bounds preserved.
+- Protected optional preview cloning, excluded generated UI changes from native rebuild events, and isolated the editor layout. Added a sanitized195-ID fixture and real editor click-callback checks. Live FTAP confirmation pending.
+
 # 3.1.5 — 2026-11-04
 
 - Replaced manual toy-name input with a searchable click-select catalogue built from native toy cards; optional3D previews in virtualized dropdown rows. Preserve saved toy-selection/order keys.
