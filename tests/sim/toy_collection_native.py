@@ -76,3 +76,13 @@ print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pal
 assert 'MountEditor' not in (ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8')
 assert 'toyCollectionSlot' not in (ROOT/'PrimeVisuals.lua').read_text(encoding='utf-8')
 print('PASS fixed27-toy set only: no editor, assignment action or obsolete persisted editor controls')
+
+import json
+factory=lua.execute((ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8'))
+api=factory(lua.table_from({}));items=api.DefaultOrder(api).split(',')
+owned={x['name'] for x in json.loads((ROOT/'tests/fixtures/native_toy_cards.json').read_text())}
+assert len(items)==27 and len(set(items))==27 and set(items)<=owned
+assert [items[i-1]for i in (2,3,5,6)]==['Campfire','FoodMushroomPoison','FoodHotSauce','ToiletWhite']
+assert not set(items)&{'FlyingToyPlane','FlyingToyHelicopter','Boombox','BallBasketball'}
+assert items[21:24]==['YouDecoy','PalletLightBrown','CreatureBlobman']
+print('PASS curated replacement slots2/3/5/6 use real unique owned IDs; Decoy22/pallet23/Blob24 preserved')

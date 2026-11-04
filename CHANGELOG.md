@@ -1,3 +1,9 @@
+# 3.2.1a — 2026-11-05
+
+- Replaced plane2→Campfire, helicopter3→Poison Mushroom, Boombox5→Hot Sauce, basketball6→white Toilet in the fixed27-toy set.
+- Other slots, Decoy22/pallet23/Blobman24, prepared native ordering and performance behavior unchanged. Existing enabled profiles use the updated fixed set automatically.
+- IDs verified against the captured owned catalogue; regression checks27 unique available items and exact replacement slots. Actual live placement awaits user check.
+
 # 3.2.1 — 2026-11-04
 
 - Added default-off FTAP → Game interface → Custom coin icon. Replaces only native MenuGui/TopRight/CoinsFrame/CoinsDisplay/CoinImage with an original code-drawn black concave sparkle (⟡), thin animated single-hue rainbow contour and soft glow.

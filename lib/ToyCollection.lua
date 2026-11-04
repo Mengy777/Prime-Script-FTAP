@@ -4,7 +4,7 @@ return function(c)
  local cards,layouts,links={}, {}, {} local order={}local lastStatus
  local LIMIT=27 local nativeParent
  local diagnosticSize=-1 local diagnosticTime=-math.huge
- local defaults={"FlyingToyUfo","FlyingToyPlane","FlyingToyHelicopter","PaperPlane","Boombox","BallBasketball","BombBalloon","FireworkSparkler","FireworkSmokeBomb",
+ local defaults={"FlyingToyUfo","Campfire","FoodMushroomPoison","PaperPlane","FoodHotSauce","ToiletWhite","BombBalloon","FireworkSparkler","FireworkSmokeBomb",
  "BallSnowball","GlassBoxGray","InstrumentGuitarAcoustic","BombDarkMatter","BombMissile","TetracubeL","InstrumentBrassTrumpet","InstrumentWoodwindOcarina","FoodCakePink",
  "FoodHamburger","LadderLightBrown","FloatingIsland","YouDecoy","PalletLightBrown","CreatureBlobman","DiscoColorBall","BallMagicLight","JukeboxBlue"}
  local function norm(s)return tostring(s or ""):lower():gsub("[^%w]","")end

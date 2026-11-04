@@ -1,3 +1,9 @@
+## 3.2.1a — toy replacements (pending live check)
+
+- E → Your Toys: Campfire2, Poison Mushroom3, Hot Sauce5, white Toilet6.
+- Plane/helicopter/Boombox/basketball absent from custom27; Decoy22/pallet23/Blobman24 unchanged. Opening remains immediate.
+- Updated fixed set loads with existing collection switch; no editor or reset needed.
+
 ## 3.2.1 — custom coin icon (pending live check)
 
 1. FTAP → Game interface → Custom coin icon starts OFF. Enable: native gold coin becomes black ⟡ with thin smoothly cycling contour/glow, fits original top-right box.

@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.1**, tag `v3.2.1`. Next normal runtime version: **3.2.1a**. Consult Git for the release commit.
+- Published runtime target: **3.2.1a**, tag `v3.2.1a`. Next normal runtime version: **3.2.1b**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -316,3 +316,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 
 - Latest user version scheme:3.2.1→3.2.1a→3.2.1b→3.2.1c→3.2.1ab→3.2.1ac→3.2.1bc→3.2.1abc→3.2.1abcf→3.2.2, repeat suffix order for each base. No new Major Update branding; detailed reports retained. Do not use alphabet a…z or50-number series proposed then rejected.
 - 3.2.1 new CoinIcon module, defaultOFF FTAP/Gameinterface coinIconEnabled +bind (400keys). Actual local diagnostic verifies MenuGui/TopRight/CoinsFrame/CoinsDisplay/CoinImage, native texture8659337867, amount sibling Coins; store CoinImage instances explicitly not targeted. Code-only concave ⟡ black48spans +8x3stroke layers, native scaling, singleHSVhue8s cycle at30Hz. Child overlay retains source image box/layout and CoinsButton, patches ImageTransparency only. Fixedpath retry.5s enabledonly; hiddenGUI animation skip, overlay/menu recovery, ownedcleanup. No currencytext/serverchanges/assets. Unit and config tests coin_icon.py; real rendering/placement pending.
+
+- User explicitly accepted3.2.1 coin icon works.3.2.1a(2026-11-05): replace plane2 with Campfire, helicopter3 FoodMushroomPoison, Boombox5 FoodHotSauce, basketball6 ToiletWhite.27fixedset; allother slotsunchanged inclpallet23. IDs capturedownedverified; no editor restoration or perfchanges. Live replacement approval pending.
