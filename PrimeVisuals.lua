@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.0"
+local VERSION="3.2.1"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -526,6 +526,8 @@ ru["Speed"]="Скорость"
 ru["Thickness"]="Толщина"
 ru["Anti-Kick"]="Защита от кика"
 ru["waiting"]="ожидание"
+ru["Game interface"]="Игровой интерфейс"
+ru["Custom coin icon"]="Своя иконка монеты"
 ru["Unavailable: FTAP remotes missing"]="Недоступно: игровые события FTAP не найдены"
 ru["Waiting for toy folder"]="Ожидание папки предметов"
 ru["Waiting for toy cooldown"]="Ожидание восстановления предмета"
@@ -856,7 +858,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility,toyCollection
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility,toyCollection,coinIcon
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -869,6 +871,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if coinIcon then attempt("coin icon",function()coinIcon:Destroy()end)end
         if toyCollection then attempt("toy collection",function()toyCollection:Destroy()end)end
         if avatarVisibility then attempt("avatar visibility",function()avatarVisibility:Destroy()end)end
         if majorInterface then attempt("interface",function() majorInterface:Destroy() end) end
@@ -2293,6 +2296,10 @@ local function buildVisualSystems()
         field(h,"crossImage","Image","9943168532",update)
         color(h,"crossColor","Color",white,update,function(value) crossImage.ImageColor3=value end)
         sliderControl(h,"crossSize","Size",8,128,28,1,update)
+        local coinGroup=group("Tweaks","Game interface",2)
+        coinIcon=loadUIModule("CoinIcon")({PlayerGui=playerGui,Run=Run,Patch=patch,Unpatch=unpatch,
+            TrackCleanup=function(fn)coinIcon={Destroy=fn}end})
+        toggle(coinGroup,"coinIconEnabled","Custom coin icon",false,function(on)coinIcon:SetEnabled(on)end)
         local b=group("Tweaks","Blackholes",1)
         toggle(b,"bhImageEnabled","Custom image",false,blackholeLoop)
         field(featureSettings("bhImageEnabled"),"bhImage","Image","9920612764",function() unpatch("blackhole") blackholeLoop() end)

@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.0**, tag `v3.2.0`. Next normal runtime version: **3.2.1**. Consult Git for the release commit.
+- Published runtime target: **3.2.1**, tag `v3.2.1`. Next normal runtime version: **3.2.1a**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -37,7 +37,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Mengy777/Prime-Script
 - `PrimeVortex.lua` can run separately and is launched by a button in the final Settings category.
 - Prime Visuals modules/assets are pinned to `refs/tags/v` + VERSION. Publish main and the corresponding complete tag together; otherwise a missing tagged module can kill startup.
 - Runtime release: update VERSION and prepend an accurately dated CHANGELOG.md entry in the same commit; compile/test, sync output copies, commit, tag, `git push --atomic origin main vX.Y.Z`, verify raw main and new tagged dependencies with a cache-busting query. Do not force-rewrite release tags.
-- User version sequence: last digit increments through 9, then carries: `2.1.8 → 2.1.9 → 2.2.0 → 2.2.1`. Do not skip routine versions.
+- Historical version sequence (superseded by suffix scheme below): last digit increments through 9, then carries: `2.1.8 → 2.1.9 → 2.2.0 → 2.2.1`. Do not skip routine versions.
 - Documentation-only changes need no runtime version/tag. No in-menu changelog, dormant Lua history table or loading screen. Pre-1.0 changelog milestones are retrospective, not verified original releases/dates.
 
 ## Files / architecture
@@ -313,3 +313,6 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 3.1.9 user screenshot removes Katana/Kunai/TetracubeI/T. Replace slots10Snowball(BallSnowball),11GlassBoxGray,19FoodHamburger,20LadderLightBrown. Burger explicitly supersedes cake-only rule; keepcake too. Central priorities unchanged. UpgradeOrder maps those four exact saved IDs in place rather than resetting other slots.27items/performance unchanged.
 
 - 3.2.0 user REMOVED ability to edit collection in-game. Only toggle and fixed3.1.9 set remain. Removed entire editor/catalogue/preview/assignment/reset/upgrade APIs and3 editor settingkeys;398settings. Old profiles ignore those keys, always use current curated27set. Keep native fastpath/fixedorder/smallstars/disable restore. Do not restore editor without newrequest.
+
+- Latest user version scheme:3.2.1→3.2.1a→3.2.1b→3.2.1c→3.2.1ab→3.2.1ac→3.2.1bc→3.2.1abc→3.2.1abcf→3.2.2, repeat suffix order for each base. No new Major Update branding; detailed reports retained. Do not use alphabet a…z or50-number series proposed then rejected.
+- 3.2.1 new CoinIcon module, defaultOFF FTAP/Gameinterface coinIconEnabled +bind (400keys). Actual local diagnostic verifies MenuGui/TopRight/CoinsFrame/CoinsDisplay/CoinImage, native texture8659337867, amount sibling Coins; store CoinImage instances explicitly not targeted. Code-only concave ⟡ black48spans +8x3stroke layers, native scaling, singleHSVhue8s cycle at30Hz. Child overlay retains source image box/layout and CoinsButton, patches ImageTransparency only. Fixedpath retry.5s enabledonly; hiddenGUI animation skip, overlay/menu recovery, ownedcleanup. No currencytext/serverchanges/assets. Unit and config tests coin_icon.py; real rendering/placement pending.

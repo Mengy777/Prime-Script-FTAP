@@ -24,7 +24,7 @@ return function(c)
             Geometry={"Players","Player overlays",2},
             ["Player visibility"]={"Tools","Player visibility",1},["Target trace"]={"Tools","Player tracker",1},
             ["Local position history"]={"Tools","Position history",2}},
-        Tweaks={["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
+        Tweaks={["Game interface"]={"Crosshair","Game interface",2},["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
             Blackholes={"Blackholes","Blackholes",1},["Animated blackholes"]={"Blackholes","Blackhole animation",2}},
         Audio={["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
         Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},

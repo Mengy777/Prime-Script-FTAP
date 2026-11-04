@@ -1,3 +1,10 @@
+# 3.2.1 — 2026-11-04
+
+- Added default-off FTAP → Game interface → Custom coin icon. Replaces only native MenuGui/TopRight/CoinsFrame/CoinsDisplay/CoinImage with an original code-drawn black concave sparkle (⟡), thin animated single-hue rainbow contour and soft glow.
+- Native coin count, layout, purchase button and store price icons untouched. No currency/remote changes, fonts/images/network assets required for symbol. Geometry scales with native icon; original image transparency restored on disable/unload.
+- Constant-depth native path lookup twice per second only while enabled; animation30Hz skips hidden ancestors. Rebind replaced HUD/removed overlay; persist switch and optional bind (400 settings).
+- Simulations cover default-off, numeric text updates, shop exclusion, animation, deletion/recreation, restore and autosave. Live FTAP placement/appearance await user confirmation.
+
 # 3.2.0 — 2026-11-04
 
 - Removed the in-script toy collection editor, catalogue, previews, slot picker, assignment and starter-reset actions. Keep only the collection enable/disable toggle and the fixed current27-toy set (pallet23).

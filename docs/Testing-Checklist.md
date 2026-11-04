@@ -1,3 +1,9 @@
+## 3.2.1 — custom coin icon (pending live check)
+
+1. FTAP → Game interface → Custom coin icon starts OFF. Enable: native gold coin becomes black ⟡ with thin smoothly cycling contour/glow, fits original top-right box.
+2. Real coin number remains readable and updates normally; coin button still opens its native action. Store price icons unchanged.
+3. Off/unload restores original coin; reloading retains chosen switch. No extra copies after deaths/menu recreation.
+
 ## 3.2.0 — fixed collection only (pending live check)
 
 - Collection toggle works; no item/slot editor, catalogue or collection reset action remains.
