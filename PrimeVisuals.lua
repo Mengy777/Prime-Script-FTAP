@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1a"
+local VERSION="3.2.1b"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -14,7 +14,13 @@ local function loadUIModule(name,state)
     for attempt=1,3 do
         if state and not state.Alive then error("Prime Visuals module load cancelled",0) end
         source=sourceCache[name]
-        if not source then
+        local downloaded=state and state.Downloads and state.Downloads[name]
+        if attempt==1 and not source and downloaded then
+            while not downloaded.Done and state.Alive do task.wait() end
+            if not state.Alive then error("Prime Visuals module load cancelled",0)end
+            source=downloaded.Source message=downloaded.Error
+        end
+        if not source and not(attempt==1 and downloaded)then
             local url="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/lib/"..filename..".lua"
             if attempt>1 then url=url.."?retry="..attempt end
             local ok,result=pcall(game.HttpGet,game,url)
@@ -34,7 +40,7 @@ local function loadUIModule(name,state)
         function(library) if state then state.Library=library end end)
     if not ok then sourceCache[name]=nil error("Prime Visuals module "..filename.." failed: "..tostring(result),0) end
     sourceCache[name]=source
-    if name=="PrimeIcon" and type(result)=="function" then factoryCache[name]=result end
+    if type(result)=="function" then factoryCache[name]=result end
     return result
 end
 local function cleanupFailedStartup(state)
@@ -79,13 +85,62 @@ for _,name in ipairs({"PrimeVisuals","MengysVisual","FOVPanel"}) do
     local old=playerGui:FindFirstChild(name)
     if old then old:Destroy() end
 end
+-- Bootstrap UI is local/native so it appears before downloading Obsidian.
 local intro=Instance.new("ScreenGui")intro.Name="PrimeLoading"intro.IgnoreGuiInset=true intro.ResetOnSpawn=false intro.DisplayOrder=10000 intro.Parent=playerGui
-startup.IntroClose=function()if intro then intro:Destroy()intro=nil end end
-local backdrop=Instance.new("CanvasGroup")backdrop.Size=UDim2.fromScale(1,1)backdrop.BackgroundColor3=Color3.fromRGB(8,8,12)backdrop.BorderSizePixel=0 backdrop.Active=true backdrop.GroupTransparency=1 backdrop.Parent=intro
-game:GetService("TweenService"):Create(backdrop,TweenInfo.new(.2),{GroupTransparency=0}):Play()
-local introTitle=Instance.new("TextLabel")introTitle.BackgroundTransparency=1 introTitle.Size=UDim2.fromScale(1,.12)introTitle.Position=UDim2.fromScale(0,.42)introTitle.Text="Ω  PRIME VISUALS"introTitle.Font=Enum.Font.BuilderSansBold introTitle.TextSize=32 introTitle.TextColor3=Color3.fromRGB(190,140,255)introTitle.Parent=backdrop
-local introStatus=Instance.new("TextLabel")introStatus.BackgroundTransparency=1 introStatus.Size=UDim2.fromScale(1,.06)introStatus.Position=UDim2.fromScale(0,.55)introStatus.Text="Loading components…"introStatus.Font=Enum.Font.BuilderSans introStatus.TextSize=15 introStatus.TextColor3=Color3.fromRGB(185,180,200)introStatus.Parent=backdrop
-startup.Progress=function(name)if intro then introStatus.Text="Загрузка: "..name end end
+local tweens=game:GetService("TweenService")local introTween,cardTween,introAnimation
+local function bootMake(class,props,parent)
+    local o=Instance.new(class)for key,value in pairs(props)do o[key]=value end o.Parent=parent return o
+end
+local backdrop=bootMake("Frame",{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,Active=true,BackgroundTransparency=1},intro)
+local card=bootMake("CanvasGroup",{Name="LoadingCard",GroupTransparency=1,BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.new(.85,0,0,170),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},backdrop)
+bootMake("UISizeConstraint",{MaxSize=Vector2.new(420,170)},card)
+local omega=bootMake("ImageLabel",{Name="LoadingOmega",BackgroundTransparency=1,Size=UDim2.fromOffset(44,44),Position=UDim2.new(.5,-22,0,4),Image=""},card)
+local initialOmega=bootMake("TextLabel",{BackgroundTransparency=1,Size=UDim2.fromScale(1,1),Text=utf8.char(937),Font=Enum.Font.BuilderSans,TextSize=42,TextColor3=Color3.new(1,1,1)},omega)
+local introTitle=bootMake("TextLabel",{Name="LoadingBrand",BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,62),Size=UDim2.fromOffset(280,30),Text="Prime Visuals",Font=Enum.Font.Arcade,TextSize=24,TextColor3=Color3.new(1,1,1)},card)
+local introStatus=bootMake("TextLabel",{Name="LoadingStatus",BackgroundTransparency=1,Size=UDim2.new(1,0,0,22),Position=UDim2.fromOffset(0,108),Text="Загрузка",Font=Enum.Font.BuilderSans,TextSize=14,TextColor3=Color3.new(1,1,1)},card)
+local track=bootMake("Frame",{BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,Position=UDim2.new(.1,0,0,150),Size=UDim2.new(.8,0,0,2)},card)
+local fill=bootMake("Frame",{BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,Size=UDim2.fromScale(0,1)},track)
+local phase="Загрузка"local progress=0 local finished=false local elapsed=0 local lastDots=-1
+startup.IntroClose=function()
+    if introAnimation then introAnimation:Disconnect()introAnimation=nil end
+    if introTween then introTween:Cancel()introTween=nil end
+    if cardTween then cardTween:Cancel()cardTween=nil end
+    if intro then intro:Destroy()intro=nil end
+end
+startup.Progress=function(name)
+    if not intro or finished then return end
+    phase=({Library="Интерфейс",Icons="Оформление",Wordmark="Оформление",PrimeIcon="Оформление",ConfigStore="Настройки"})[name]or "Подготовка функций"
+end
+introAnimation=RunService.RenderStepped:Connect(function(dt)
+    if not intro then return end
+    elapsed=elapsed+math.min(dt,.1)
+    initialOmega.Rotation=(elapsed*100)%360
+    local dots=math.floor(elapsed*2)%4
+    if dots~=lastDots then lastDots=dots introStatus.Text=finished and "Готово"or phase..string.rep(".",dots)end
+    local target=finished and 1 or progress
+    local current=fill.Size.X.Scale
+    if math.abs(target-current)>.001 then fill.Size=UDim2.fromScale(current+(target-current)*(1-math.exp(-dt*14)),1)end
+end)
+introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
+cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
+-- Download only sources concurrently; constructors still execute in dependency order.
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+startup.Downloads={}local nextDownload=0 local downloaded=0
+for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
+for worker=1,4 do task.defer(function()
+    while startup.Alive do
+        nextDownload=nextDownload+1 local name=preload[nextDownload]if not name then return end
+        local item=startup.Downloads[name]
+        if not item.Done then
+            local filename=name=="Library"and "Obsidian"or name
+            local ok,result=pcall(game.HttpGet,game,"https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/lib/"..filename..".lua")
+            if not startup.Alive then item.Done=true return end
+            if ok and type(result)=="string"and result:find("%S")then item.Source=result else item.Error=tostring(result)end
+            item.Done=true
+        end
+        downloaded=downloaded+1 progress=downloaded/#preload*.85
+    end
+end)end
 local connections={}
 local cleanupExtra=function() end
 local profileChanged=function() end
@@ -643,6 +698,15 @@ local black=Color3.fromRGB(9,9,11)
 local Library=loadUIModule("Library")
 if type(Library)=="table" then startup.Library=Library end
 assert(type(Library)=="table" and type(Library.CreateWindow)=="function","Obsidian returned an invalid library")
+-- Reuse the actual menu wordmark and Omega, with no extra asset fetch.
+local branded,brandError=pcall(function()
+    loadUIModule("Wordmark")({Make=bootMake}):Apply(introTitle,24,360)
+    initialOmega.Visible=false
+    local brandedOmega=loadUIModule("PrimeIcon")(omega,backdrop,RunService)
+    local oldClose=startup.IntroClose
+    startup.IntroClose=function()if brandedOmega then brandedOmega:Disconnect()brandedOmega=nil end oldClose()end
+end)
+if not branded then warn("Prime Visuals loader branding: "..tostring(brandError))end
 Library.ForceCheckbox=true
 Library.WindowEntranceEnabled=true
 Library.TabTransitionInfo=TweenInfo.new(0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
@@ -3194,6 +3258,7 @@ local function shutdown()
     if closing then return end
     closing=true
     startup.Alive=false
+    startup.IntroClose()
     if not discardAutosave then flushProfile(true) end
     cleanupExtra()
     restoreSky()
@@ -3218,9 +3283,13 @@ if not prepared then
     error(prepareError,0)
 end
 if not closing and gui.Parent then
-    introStatus.Text="Ready"
-    game:GetService("TweenService"):Create(backdrop,TweenInfo.new(.3),{GroupTransparency=1}):Play()
-    task.delay(.32,startup.IntroClose)
+    finished=true introStatus.Text="Готово"fill.Size=UDim2.fromScale(1,1)
+    if introTween then introTween:Cancel()end
+    if cardTween then cardTween:Cancel()end
+    cardTween=tweens:Create(card,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=1})cardTween:Play()
+    introTween=tweens:Create(backdrop,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=1})
+    introTween:Play()
+    task.delay(.18,startup.IntroClose)
     Library:Toggle(true)
     menuOpen=true
 end

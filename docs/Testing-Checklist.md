@@ -1,3 +1,9 @@
+## 3.2.1b — startup (pending live check)
+
+1. Fresh execute: black background, white status/dots, Arcade rainbow title/underline and rotating menu Omega, thin progress bar.
+2. No fixed multi-second wait; menu opens after readiness with short fade. Compare fresh/repeated startup duration and responsiveness.
+3. Unload/reset immediately after menu appears: no leftover black screen or duplicate emblem. Saved settings and first Home tab remain intact.
+
 ## 3.2.1a — toy replacements (pending live check)
 
 - E → Your Toys: Campfire2, Poison Mushroom3, Hot Sauce5, white Toilet6.

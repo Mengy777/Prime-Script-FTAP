@@ -1,3 +1,11 @@
+# 3.2.1b — 2026-11-05
+
+- Rebuilt bootstrap loading screen: pure black backdrop, white Builder Sans status/dots, exact Arcade rainbow menu wordmark and rotating geometric Omega, thin progress bar; short .14s entrance/.18s exit, no minimum display delay.
+- Fullscreen backdrop is a plain Frame; only the small central card uses CanvasGroup. Reuse brand modules without external icon/image assets; cleanup animations/tweens on failure and early unload.
+- Prefetch15 common module sources with four workers, execute constructors in original dependency order. First failed prefetched request counts toward existing three-attempt retry budget; no duplicate successful fetch. Reuse compiled function factories within the same script session.
+- Network/download progress advances independently of construction and completes only after initialization. No fake percentage, server-speed or live timing claims.
+- Startup failure suite and cooperative delayed-transport/loader presentation tests passed; full simulation report records regressions. Actual Xeno startup duration/appearance pending user test.
+
 # 3.2.1a — 2026-11-05
 
 - Replaced plane2→Campfire, helicopter3→Poison Mushroom, Boombox5→Hot Sauce, basketball6→white Toilet in the fixed27-toy set.
