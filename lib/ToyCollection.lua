@@ -6,11 +6,18 @@ return function(c)
  local LIMIT=27 local nativeParent local editorDirty=true
  local diagnosticSize=-1 local diagnosticTime=-math.huge
  local defaults={"FlyingToyUfo","FlyingToyPlane","FlyingToyHelicopter","PaperPlane","Boombox","BallBasketball","BombBalloon","FireworkSparkler","FireworkSmokeBomb",
- "NinjaKatana","NinjaKunai","InstrumentGuitarAcoustic","BombDarkMatter","BombMissile","TetracubeL","InstrumentBrassTrumpet","InstrumentWoodwindOcarina","FoodCakePink",
- "TetracubeI","TetracubeT","FloatingIsland","YouDecoy","PalletLightBrown","CreatureBlobman","DiscoColorBall","BallMagicLight","JukeboxBlue"}
+ "BallSnowball","GlassBoxGray","InstrumentGuitarAcoustic","BombDarkMatter","BombMissile","TetracubeL","InstrumentBrassTrumpet","InstrumentWoodwindOcarina","FoodCakePink",
+ "FoodHamburger","LadderLightBrown","FloatingIsland","YouDecoy","PalletLightBrown","CreatureBlobman","DiscoColorBall","BallMagicLight","JukeboxBlue"}
  function api:UpgradeOrder(value)
   local text=tostring(value or "")
   if text:find("FoodDonut",1,true)and text:find("InstrumentPianoMelodica",1,true)and text:find("ShoppingCart",1,true)then return table.concat(defaults,",")end
+  local replacements={NinjaKatana="BallSnowball",NinjaKunai="GlassBoxGray",TetracubeI="FoodHamburger",TetracubeT="LadderLightBrown"}
+  local parts={}local changed=false
+  for part in (text..","):gmatch("(.-),")do
+   local nextValue=replacements[part]or part
+   if nextValue~=part then changed=true end parts[#parts+1]=nextValue
+  end
+  if changed then return table.concat(parts,",")end
   return value
  end
  local function norm(s)return tostring(s or ""):lower():gsub("[^%w]","")end

@@ -1,3 +1,9 @@
+# 3.1.9 — 2026-11-04
+
+- Replaced Katana10/ Kunai11/ Tetracube I19/ T20 with Snowball10/ Glass Box11/ Burger19/ Ladder20. Central FloatingIsland21/Decoy22/pallet23/Blobman24 and rocket14 unchanged.
+- Migrate those four exact IDs in saved collections in place, preserving all other slots. Starter retains27 verified owned toys; burger is an explicit exception to the previous cake-only food preference.
+- No menu sorting, previews or performance behavior changed. Compilation/simulated checks recorded separately; placement ergonomics need live confirmation.
+
 # 3.1.8 — 2026-11-04
 
 - Rebuilt the27-item starter set using verified owned toy IDs: Decoy You22/pallet23/Blobman24; black crystal13/rocket14/Tetracube L15. Added Floating Island21, DiscoColorBall25, Light Ball26 and blue Jukebox27.

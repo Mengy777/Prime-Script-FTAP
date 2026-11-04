@@ -1,3 +1,9 @@
+## 3.1.9 — four toy replacements (pending live check)
+
+- Snowball10, Glass Box11, burger19, ladder20; no Katana/Kunai/TetracubeI/T in the custom27.
+- FloatingIsland21/Decoy22/pallet23/Blobman24 retained; native opening stays instant.
+- Saved set upgrades four slots without moving other selections.
+
 ## 3.1.8 — curated starter (pending user check)
 
 1. Existing starter upgrades automatically; if an independently customized set remains, Restore starter collection loads the new layout.

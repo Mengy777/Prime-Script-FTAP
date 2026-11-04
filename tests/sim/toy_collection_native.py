@@ -72,10 +72,13 @@ owned={entry['name'] for entry in json.loads((ROOT/'tests/fixtures/native_toy_ca
 assert len(starter)==27 and len(set(starter))==27 and set(starter)<=owned
 assert starter[21:24]==['YouDecoy','PalletLightBrown','CreatureBlobman']
 assert starter[13]=='BombMissile' and starter[12]=='BombDarkMatter' and starter[14]=='TetracubeL'
-assert [x for x in starter if x.startswith('Food')]==['FoodCakePink']
+assert [x for x in starter if x.startswith('Food')]==['FoodCakePink','FoodHamburger']
 assert {x for x in starter if x.startswith('Instrument')}=={'InstrumentBrassTrumpet','InstrumentWoodwindOcarina','InstrumentGuitarAcoustic'}
-assert not any('Couch'in x or x=='TetracubeO'for x in starter)
-print('PASS curated27-slot starter: all actual owned IDs, unique slots, cake-only food/three instruments/no couches or TetracubeO, Decoy22/pallet23/Blob24')
+assert not any('Couch'in x or x in {'TetracubeO','TetracubeI','TetracubeT','NinjaKatana','NinjaKunai'}for x in starter)
+assert [starter[i-1]for i in (10,11,19,20)]==['BallSnowball','GlassBoxGray','FoodHamburger','LadderLightBrown']
+legacy=','.join({'BallSnowball':'NinjaKatana','GlassBoxGray':'NinjaKunai','FoodHamburger':'TetracubeI','LadderLightBrown':'TetracubeT'}.get(x,x)for x in starter)
+assert api.UpgradeOrder(api,legacy)==','.join(starter)
+print('PASS curated27-slot starter: all actual owned IDs, unique slots, cake and burger/three instruments/no couches or TetracubeO, Decoy22/pallet23/Blob24')
 lua.globals().TOY_FACTORY=factory
 lua.execute(r"""
 local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui')
