@@ -1,3 +1,11 @@
+# 3.1.7 — 2026-11-04
+
+- Prepared and locked native toy order: reopening or native favorite-order writes no longer wait for a rebuild; synchronous property repair retains latest native values for disabling.
+- Native fast path reads only the owned card container, caches identities, and skips whole-PlayerGui scans/diagnostic serialization. Visibility changes no longer rebuild the native set; structural changes and script-editor changes still update it.
+- Editor previews created only while its window is visible; reuse catalogue page across slot selection. Removed duplicate hidden-dropdown preview creation. Rainbow markers update at10Hz and pause with the native menu hidden.
+- Collection now27 slots, pallet23. Previous28-slot orders migrate pallet26→23 while retaining other entries by swap; hidden legacy slot range remains compatible with saved profiles.
+- Favorite markers reduced to65% of previous size. Added100-cycle regression for immediate order locking, no whole-GUI scans or preview clones on unchanged openings; real frame-time result needs user testing.
+
 # 3.1.6 — 2026-11-04
 
 - Fixed owned toy-grid recognition against the actual captured MenuGui/Menu/TabContents/Toys/Contents hierarchy (195 cards). Shop, destruction and template tabs excluded.

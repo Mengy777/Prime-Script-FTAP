@@ -4,8 +4,14 @@ lua,source,_,to_lua=session(Disk(),execute=False)
 lua.globals().CAPTURED_CARDS=to_lua(json.loads((ROOT/'tests/fixtures/native_toy_cards.json').read_text()))
 lua.execute(r"""
 local mt=getmetatable(Instance.new('Frame'))local oldIndex=mt.__index
+GUI_FULL_SCANS=0 PREVIEW_CLONES=0
 mt.__index=function(o,k)
+ if k=='GetDescendants'then return function(self)
+  if self==TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui')then GUI_FULL_SCANS=GUI_FULL_SCANS+1 end
+  return oldIndex(o,k)(self)
+ end end
  if k=='Clone'then return function(self)
+  PREVIEW_CLONES=PREVIEW_CLONES+1
   local copy=Instance.new(self._class)
   for key,value in pairs(self._props)do if key~='Parent'and key~='CurrentCamera'then copy[key]=value end end
   for _,child in ipairs(self:GetChildren())do local cloned=child:Clone()cloned.Parent=copy end
@@ -42,18 +48,22 @@ TEST_SERVICES.RunService.Heartbeat:Fire(.21)
 assert(CARDS.BombMissile.LayoutOrder==-9999,'actual owned path not recognized')
 assert(CARDS.BombDarkMatter.LayoutOrder==-9998,'native dark crystal alias missing')
 assert(CARDS.TetracubeL.LayoutOrder==-9996)
-assert(CARDS.PalletLightBrown.LayoutOrder==-9974)
+assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
 assert(#TEST_OPTIONS.toyCollectionToy.Values>=195)
+local marked=0 for _,card in pairs(CARDS)do if card:FindFirstChild('PV_CollectionStar')then marked=marked+1 end end
+assert(marked==27,'collection must mark exactly27 toys')
+CARDS.PalletLightBrown.LayoutOrder=999999
+assert(CARDS.PalletLightBrown.LayoutOrder==-9977,'native favorite write was not repaired synchronously')
 local star=CARDS.PalletLightBrown:FindFirstChild('PV_CollectionStar')
-assert(star and star.Size==CARDS.PalletLightBrown:FindFirstChild('Favorite').Size)
+assert(star and math.abs(star.Size.X.Scale-.711*.65)<.00001)
 for _,tab in ipairs(SCREEN:FindFirstChild('Menu'):FindFirstChild('TabContents'):GetChildren())do if tab.Name~='Toys'then
  for _,b in ipairs(tab:FindFirstChild('Contents'):GetChildren())do if b:IsA('GuiObject')then assert(b.LayoutOrder==777)end end
 end end
 TEST_OPTIONS.toyCollectionEnabled:SetValue(false)
-for _,entry in ipairs(CAPTURED_CARDS)do assert(CARDS[entry.name].LayoutOrder==entry.order)end
+for _,entry in ipairs(CAPTURED_CARDS)do assert(CARDS[entry.name].LayoutOrder==(entry.name=='PalletLightBrown'and 999999 or entry.order))end
 TEST_ACTIONS['Unload script']()
 """)
-print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pallet26, exact favorite geometry; shop/destroy untouched; restore')
+print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pallet23, exact favorite geometry; shop/destroy untouched; restore')
 # Exercise real editor construction/click callbacks (not just SetValue controls).
 factory=lua.execute((ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8'))
 lua.globals().TOY_FACTORY=factory
@@ -89,7 +99,21 @@ assert(choice,'catalogue page is empty')choice.MouseButton1Click:Fire()
 assert(assigned==26,'slot click then toy click did not assign immediately')
 local search=root:FindFirstChild('Search')search.Text='PalletLightBrown'
 local found=false for _,o in ipairs(root:GetDescendants())do if o.Name=='palletlightbrown'then found=true end end assert(found,'search cannot find real toy')
+local scans,clones=GUI_FULL_SCANS,PREVIEW_CLONES
+for i=1,100 do
+ CARDS.PalletLightBrown.LayoutOrder=800000+i
+ CARDS.PalletLightBrown.Visible=false CARDS.PalletLightBrown.Visible=true
+ TEST_SERVICES.RunService.Heartbeat:Fire(.11)
+ assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
+end
+assert(GUI_FULL_SCANS==scans,'reopening rescans whole PlayerGui')
+assert(PREVIEW_CLONES==clones,'unchanged editor rebuilds preview models')
+local old=manager:DefaultOrder():gsub('PalletLightBrown,FoodPizzaCheese,FoodCoconut,FoodHamburger','FoodHamburger,FoodPizzaCheese,FoodCoconut,PalletLightBrown')..',SantaSleigh'
+manager:SetOrder(old)TEST_SERVICES.RunService.Heartbeat:Fire(.11)
+assert(CARDS.PalletLightBrown.LayoutOrder==-9977,'old28-slot save did not migrate pallet23')
 manager:Destroy()parent:Destroy()
 """)
-print('PASS actual28-slot editor creation, inherited overlay ZIndex, layout isolation, slot26 selection, immediate catalogue assignment and search')
+print('PASS actual27-slot editor creation, inherited overlay ZIndex, layout isolation, slot26 selection, immediate catalogue assignment and search')
 
+
+print('PASS100 native reopen/rewrite cycles: immediate fixed order, no whole-GUI scans/no preview clones; exactly27 marks; old28-slot migration')

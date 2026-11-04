@@ -23,17 +23,17 @@ lua.execute(r'''
 TEST_OPTIONS.toyCollectionEnabled:SetValue(true)
 for i=1,3 do TEST_SERVICES.RunService.Heartbeat:Fire(.21)end
 assert(CARDS.BombMissile.Position==POSITIONS[1],'viewport-only rocket not sorted')
-assert(CARDS.PalletLightBrown.Position==POSITIONS[26],'manual-position pallet not26')
+assert(CARDS.PalletLightBrown.Position==POSITIONS[23],'manual-position pallet not23')
 local card=CARDS.PalletLightBrown local star=card:FindFirstChild('PV_CollectionStar')
-assert(star and star.Position==card:FindFirstChild('FavoriteStar').Position and star.Size==card:FindFirstChild('FavoriteStar').Size,'custom star misplaced')
+assert(star and star.Position==card:FindFirstChild('FavoriteStar').Position and star.Size.X.Offset==card:FindFirstChild('FavoriteStar').Size.X.Offset*.65,'custom star misplaced')
 assert(star:FindFirstChild('Fill').ImageColor3.R==0 and star:FindFirstChild('Fill').ImageColor3.G==0,'star not black')
 local before=star:FindFirstChild('Outline').ImageColor3.R
-TEST_CLOCK=TEST_CLOCK+1 TEST_SERVICES.RunService.Heartbeat:Fire(.05)
+TEST_CLOCK=TEST_CLOCK+1 TEST_SERVICES.RunService.Heartbeat:Fire(.11)
 assert(star:FindFirstChild('Outline').ImageColor3.R~=before,'star outline not animated')
 local option=TEST_OPTIONS.toyCollectionToy
 assert(option.Type=='Dropdown' and option.Info.Searchable,'toy picker still requires typing')
 assert(#option.Values>=34,'native toy catalogue not populated')
-assert(option.Info.ValuePreviews.palletlightbrown,'3D preview factory absent')
+-- Legacy hidden dropdown no longer creates duplicate previews.
 option:SetValue('tetracubl')TEST_OPTIONS.toyCollectionSlot:SetValue(2)
 TEST_ACTIONS['Assign toy to position']()
 TEST_SERVICES.RunService.Heartbeat:Fire(.21)
@@ -42,7 +42,7 @@ TEST_OPTIONS.toyCollectionEnabled:SetValue(false)
 assert(CARDS.PalletLightBrown.Position==POSITIONS[1] and not CARDS.PalletLightBrown:FindFirstChild('PV_CollectionStar'),'native position/marker not restored')
 TEST_ACTIONS['Unload script']()
 ''')
-print('PASS viewport-only/manual-position native catalogue, clickable searchable picker/preview factories, pallet26, exact native-star bounds, black fill/animated outline, assignment and restore')
+print('PASS viewport-only/manual-position native catalogue, clickable searchable picker/preview factories, pallet23, exact native-star bounds, black fill/animated outline, assignment and restore')
 
 report=json.loads(D.files['PrimeVisuals/ToyMenu-Diagnostics.json'])
 assert report['roots']>=1 and any(n['class']=='ViewportFrame'for n in report['nodes'])

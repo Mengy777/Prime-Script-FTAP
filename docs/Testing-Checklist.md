@@ -1,3 +1,10 @@
+## 3.1.7 — collection performance (pending live check)
+
+1. Repeatedly open/close E: set should already be ordered without delayed visible rearrangement. Exactly27 custom stars; pallet23.
+2. Toggle native favorite stars: custom placement stays fixed while enabled. Script editor still changes it; disable restores native order.
+3. Play with the native menu closed, then open editor, select slots/search/pages: assess freezes/frame drops versus3.1.6.
+4. Reload previous profile: order retained with pallet moved26→23; editor has27 selectable positions and smaller stars.
+
 ## 3.1.6 — custom collection (pending live confirmation)
 
 1. Enable Settings → Custom toy collection, open E → Your Toys: rocket1, dark crystal2, Tetracub L4, pallet26.

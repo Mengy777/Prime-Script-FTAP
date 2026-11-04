@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.6"
+local VERSION="3.1.7"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2373,7 +2373,7 @@ local function buildVisualSystems()
             setLanguage(value=="Русский" and "ru" or "en")
         end)
         local collectionStatus,collectionPicker
-        local toyNames,toyPreviews={},{}
+        local toyNames={}
         toyCollection=loadUIModule("ToyCollection")({PlayerGui=playerGui,Run=Run,Patches=patches,Patch=patch,Unpatch=unpatch,
             TrackCleanup=function(fn)toyCollection={Destroy=fn}end,
             CaptureDiagnostic=function()return loadUIModule("ToyMenuDiagnostics")()end,
@@ -2381,7 +2381,6 @@ local function buildVisualSystems()
                 if not collectionPicker then return end
                 local values={}for _,entry in ipairs(entries)do
                     local key=entry.id values[#values+1]=key toyNames[key]=entry.name
-                    toyPreviews[key]=function(parent)return toyCollection:Preview(key,parent)end
                 end
                 if #values==0 then return end
                 local current=toyCollection:Canonical(controls.toyCollectionToy or values[1])
@@ -2402,7 +2401,6 @@ local function buildVisualSystems()
         toyCollection:SetOrder(defaultToyOrder)
         sliderControl(collectionPanel,"toyCollectionSlot","Position",1,28,1,1,function()end)
         collectionPicker=collectionPanel:AddDropdown("toyCollectionToy",{Text="Toy",Values={"Rocket"},Default="Rocket",Searchable=true,
-            ValuePreviews=toyPreviews,
             FormatListValue=function(value)return toyNames[value]or value end,
             FormatDisplayValue=function(value)return toyNames[value]or value end,
             Callback=changed("toyCollectionToy",function()end)})

@@ -2,11 +2,12 @@
 return function(c)
  local api={} local enabled,dead,writing,dirty=false,false,false,false
  local cards,layouts,links={}, {}, {} local order={}local lastStatus
- local catalog={} local catalogueSignature="" local editorRefresh
+ local catalog={} local catalogueSignature="" local catalogRevision=0 local editorRefresh
+ local LIMIT=27 local nativeParent local editorDirty=true
  local diagnosticSize=-1 local diagnosticTime=-math.huge
  local defaults={"Rocket","Black Crystal","CreatureBlobman","Tetracub L","FoodCakePink","Cube","InstrumentBrassTrumpet","InstrumentWoodwindOcarina",
  "FoodDonut","InstrumentGuitarUkulele","InstrumentGuitarAcoustic","InstrumentPianoMelodica","InstrumentVoiceMicrophone","InstrumentDrumBongos",
- "Basketball","Balloon","Firework","Boombox","Chair","Couch","Ball","Snowboard","FoodHamburger","FoodPizzaCheese","FoodCoconut","PalletLightBrown","ShoppingCart","SantaSleigh"}
+ "Basketball","Balloon","Firework","Boombox","Chair","Couch","Ball","Snowboard","PalletLightBrown","FoodPizzaCheese","FoodCoconut","FoodHamburger","ShoppingCart"}
  local function norm(s)return tostring(s or ""):lower():gsub("[^%w]","")end
  local aliases={}
  local function alias(id,values)aliases[norm(id)]=norm(id)for _,v in ipairs(values)do aliases[norm(v)]=norm(id)end end
@@ -27,13 +28,16 @@ return function(c)
  function api:DefaultOrder()return table.concat(defaults,",")end
  local function parse(value)
   local result={}for part in (tostring(value or "")..","):gmatch("(.-),")do
-   if #result>=28 then break end result[#result+1]=part:match("^%s*(.-)%s*$")
+   if #result>=LIMIT then break end result[#result+1]=part:match("^%s*(.-)%s*$")
   end
-  for i=#result+1,28 do result[i]=""end return result
+  for i=#result+1,LIMIT do result[i]=""end
+  local _,commas=tostring(value or ""):gsub(",",",")
+  if commas>=27 and id(result[26])==id("PalletLightBrown")then result[23],result[26]=result[26],result[23]end
+  return result
  end
- function api:SetOrder(value)order=parse(value)dirty=true if editorRefresh then editorRefresh()end end
+ function api:SetOrder(value)order=parse(value)dirty=true editorDirty=true end
  function api:Assign(value,slot,toy)
-  local list=parse(value)slot=math.clamp(math.floor(tonumber(slot)or 1),1,28)
+  local list=parse(value)slot=math.clamp(math.floor(tonumber(slot)or 1),1,LIMIT)
   toy=tostring(toy or ""):match("^%s*(.-)%s*$")
   assert(#toy<=100 and not toy:find(",",1,true),"Enter one toy name")
   if toy~=""then for i,v in ipairs(list)do if i~=slot and id(v)==id(toy)then list[i]=list[slot]break end end end
@@ -85,7 +89,7 @@ return function(c)
   writing=true
   for _,data in pairs(cards)do disconnect(data)end
   for _,data in pairs(layouts)do disconnect(data)end
-  cards={}layouts={}c.Unpatch("toyCollection")writing=false
+  cards={}layouts={}nativeParent=nil c.Unpatch("toyCollection")writing=false
  end
  local function original(o,property)
   local entry=c.Patches[o]and c.Patches[o][property]
@@ -96,6 +100,9 @@ return function(c)
    if writing or not enabled or dead then return end
    local entry=c.Patches[o]and c.Patches[o][property]
    if entry then entry.original=o[property]end
+   -- Native reopening/favorite sorting cannot displace a prepared collection.
+   local target=data.targets and data.targets[property]
+   if target~=nil then writing=true c.Patch("toyCollection",o,property,target)writing=false return end
    if property=="LayoutOrder"then data.base=o.LayoutOrder elseif property=="Position"then data.position=o.Position data.origin=o.AbsolutePosition end dirty=true
   end)
  end
@@ -127,7 +134,8 @@ return function(c)
   local holder=Instance.new("Frame")holder.Name="PV_CollectionStar"holder.BackgroundTransparency=1 holder.Active=false
   holder.Position=source and source.Position or UDim2.new(1,-3,1,-3)
   holder.AnchorPoint=source and source.AnchorPoint or Vector2.new(1,1)
-  holder.Size=source and source.Size or UDim2.fromOffset(25,25)holder.Rotation=source and source.Rotation or 0
+  local size=source and source.Size or UDim2.fromOffset(25,25)
+  holder.Size=UDim2.new(size.X.Scale*.65,size.X.Offset*.65,size.Y.Scale*.65,size.Y.Offset*.65)holder.Rotation=source and source.Rotation or 0
   holder.ZIndex=(source and source.ZIndex or card.ZIndex or 1)+2 holder.ClipsDescendants=false
   local image=source and(source:IsA("ImageLabel")or source:IsA("ImageButton"))and source.Image~=""
   local function layer(scale,black)
@@ -145,8 +153,15 @@ return function(c)
   local seenCards,seenLayouts={},{} local found,total=false,0 local catalogChanged=false
   local ok,message=pcall(function()
    local groups={}
-   local descendants=c.PlayerGui:GetDescendants()
-   if c.CaptureDiagnostic and #descendants~=diagnosticSize and os.clock()-diagnosticTime>=2 then
+   local screen=c.PlayerGui:FindFirstChild("MenuGui")local menu=screen and screen:FindFirstChild("Menu")
+   local tabs=menu and menu:FindFirstChild("TabContents")local toys=tabs and tabs:FindFirstChild("Toys")
+   nativeParent=toys and toys:FindFirstChild("Contents")
+   local descendants={}
+   if nativeParent then
+    local grid=nativeParent:FindFirstChildWhichIsA("UIGridLayout")or nativeParent:FindFirstChildWhichIsA("UIListLayout")
+    if grid then groups[nativeParent]={layout=grid}end
+   else descendants=c.PlayerGui:GetDescendants()end
+   if not nativeParent and c.CaptureDiagnostic and #descendants~=diagnosticSize and os.clock()-diagnosticTime>=2 then
     diagnosticSize=#descendants diagnosticTime=os.clock()pcall(c.CaptureDiagnostic)
    end
    for _,o in ipairs(descendants)do
@@ -166,7 +181,11 @@ return function(c)
    for parent,group in pairs(groups)do
     local layout=group.layout local items={}local recognized=0
     for index,card in ipairs(parent:GetChildren())do if card:IsA("GuiObject")and not card.Name:find("PV_",1,true)then
-     local key,name,known=identity(card)
+     local cached=cards[card]
+     local key,name,known
+     if cached and cached.key then key,name,known=cached.key,cached.name,cached.known
+     elseif parent==nativeParent then key,name,known=id(card.Name),card.Name,aliases[norm(card.Name)]~=nil
+     else key,name,known=identity(card)end
      if key then
       local data=cards[card]
       items[#items+1]={card=card,id=key,name=name,index=index,base=data and data.base or original(card,"LayoutOrder")or 0,
@@ -178,7 +197,7 @@ return function(c)
      found=true
      if layout then
       seenLayouts[layout]=true
-      if not layouts[layout]then local data={links={}}layouts[layout]=data watch(layout,"SortOrder",data)end
+      if not layouts[layout]then local data={links={},targets={SortOrder=Enum.SortOrder.LayoutOrder}}layouts[layout]=data watch(layout,"SortOrder",data)end
      end
      local byName=layout and original(layout,"SortOrder")==Enum.SortOrder.Name
      table.sort(items,function(a,b)
@@ -195,22 +214,23 @@ return function(c)
       if not catalog[item.id]or catalog[item.id].viewport~=vp then catalogChanged=true end
       catalog[item.id]={id=item.id,name=item.name,viewport=vp}
       if not cards[item.card]then
-       local data={links={},base=item.base,position=item.position,origin=item.origin}cards[item.card]=data
-       watch(item.card,"LayoutOrder",data)watch(item.card,"Position",data)
-       data.links[#data.links+1]=item.card:GetPropertyChangedSignal("Visible"):Connect(function()if not writing then dirty=true end end)
+       local data={links={},base=item.base,position=item.position,origin=item.origin,key=item.id,name=item.name,known=true,targets={}}cards[item.card]=data
+       watch(item.card,"LayoutOrder",data)if not layout then watch(item.card,"Position",data)end
+       if parent~=nativeParent then data.links[#data.links+1]=item.card:GetPropertyChangedSignal("Visible"):Connect(function()if not writing then dirty=true end end)end
       end
-      if item.card.Visible~=false then items[#items+1]=item else star(item.card,cards[item.card],false)c.Unpatch("toyCollection",item.card)end
+      if parent==nativeParent or item.card.Visible~=false then items[#items+1]=item else star(item.card,cards[item.card],false)c.Unpatch("toyCollection",item.card)end
      end
      local slots,used={},{}
-     for slot=1,28 do for _,item in ipairs(items)do if not used[item]and order[slot]~=""and item.id==id(order[slot])then slots[slot]=item used[item]=true break end end end
-     for slot=1,math.min(28,#items)do if not slots[slot]then for _,item in ipairs(items)do if not used[item]then slots[slot]=item used[item]=true break end end end end
+     for slot=1,LIMIT do for _,item in ipairs(items)do if not used[item]and order[slot]~=""and item.id==id(order[slot])then slots[slot]=item used[item]=true break end end end
+     for slot=1,math.min(LIMIT,#items)do if not slots[slot]then for _,item in ipairs(items)do if not used[item]then slots[slot]=item used[item]=true break end end end end
      local ranks,ordered={},{}
-     for slot=1,28 do local item=slots[slot]if item then ranks[item.card]=-10000+slot ordered[#ordered+1]=item total=total+1 end end
+     for slot=1,LIMIT do local item=slots[slot]if item then ranks[item.card]=-10000+slot ordered[#ordered+1]=item total=total+1 end end
      for _,item in ipairs(items)do if not used[item]then ordered[#ordered+1]=item end end
      if layout then c.Patch("toyCollection",layout,"SortOrder",Enum.SortOrder.LayoutOrder)end
      for index,item in ipairs(ordered)do
-      if layout then c.Patch("toyCollection",item.card,"LayoutOrder",ranks[item.card]or index)
-      else c.Patch("toyCollection",item.card,"Position",items[index].position)end
+      local data=cards[item.card]
+      if layout then data.targets.LayoutOrder=ranks[item.card]or index c.Patch("toyCollection",item.card,"LayoutOrder",data.targets.LayoutOrder)
+      else data.targets.Position=items[index].position c.Patch("toyCollection",item.card,"Position",data.targets.Position)end
       star(item.card,cards[item.card],ranks[item.card]~=nil)
      end
     end
@@ -220,7 +240,7 @@ return function(c)
    local choices={}for _,entry in pairs(catalog)do choices[#choices+1]=entry end
    table.sort(choices,function(a,b)return a.name<b.name end)
    local signature=""for _,entry in ipairs(choices)do signature=signature..entry.id..tostring(entry.viewport)end
-   if catalogChanged or signature~=catalogueSignature then catalogueSignature=signature if c.Catalog then c.Catalog(choices)end if editorRefresh then editorRefresh()end end
+   if catalogChanged or signature~=catalogueSignature then catalogueSignature=signature catalogRevision=catalogRevision+1 if c.Catalog then c.Catalog(choices)end editorDirty=true end
   end)
   writing=false
   if not ok then dirty=true status("error")if c.Warn then c.Warn(message)end
@@ -244,12 +264,14 @@ return function(c)
   local slots=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.fromOffset(0,24),Size=UDim2.new(1,0,0,168)})
   local catalogue=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.fromOffset(0,228),Size=UDim2.new(1,0,0,136)})
   local search=make("TextBox",root,{Name="Search",PlaceholderText="Search / Поиск",Text="",ClearTextOnFocus=false,BackgroundColor3=muted,TextColor3=Color3.new(1,1,1),TextSize=12,Font=Enum.Font.Gotham,Position=UDim2.fromOffset(0,198),Size=UDim2.new(1,0,0,26)})
-  local catalogButtons={}
+  local catalogButtons={} local pageSignature
   local function button(parent,name,x,y,w,h)
    local b=make("TextButton",parent,{Name=name,Text="",AutoButtonColor=true,BackgroundColor3=muted,BorderSizePixel=1,BorderColor3=Color3.fromRGB(61,52,75),Position=UDim2.new(x,2,0,y),Size=UDim2.new(w,-4,0,h)})return b
   end
-  local function refresh()
-   if dead or not root.Parent then return end
+  local function refresh(force)
+   if dead or not root.Parent or(not force and not editorDirty)then return end
+   local ancestor=root while ancestor and ancestor~=c.PlayerGui do if ancestor:IsA("GuiObject")and ancestor.Visible==false then return end ancestor=ancestor.Parent end
+   editorDirty=false
    local ru=options.Russian()heading.Text=(ru and "Слот "or "Slot ")..selected..(ru and " · выбери игрушку ниже"or " · choose a toy below")
    for i,b in ipairs(slotButtons)do
     b.BorderColor3=i==selected and accent or Color3.fromRGB(61,52,75)
@@ -261,10 +283,12 @@ return function(c)
      b.Text=vp and ""or tostring(order[i]or ""):sub(1,15)b.TextSize=9 b.TextColor3=Color3.new(1,1,1)
     end
    end
-   for _,b in ipairs(catalogButtons)do b:Destroy()end catalogButtons={}
    local choices={}for _,entry in pairs(catalog)do if query==""or entry.name:lower():find(query,1,true)then choices[#choices+1]=entry end end
    table.sort(choices,function(a,b)return a.name<b.name end)
    local pages=math.max(1,math.ceil(#choices/18))page=math.clamp(page,1,pages)
+   local signature=query..":"..page..":"..catalogRevision
+   if signature~=pageSignature then
+   pageSignature=signature for _,b in ipairs(catalogButtons)do b:Destroy()end catalogButtons={}
    for index=(page-1)*18+1,math.min(page*18,#choices)do
     local entry=choices[index]local j=index-(page-1)*18-1
     local b=button(catalogue,entry.id,(j%6)/6,math.floor(j/6)*45,1/6,42)catalogButtons[#catalogButtons+1]=b
@@ -272,19 +296,20 @@ return function(c)
     local caption=text(b,entry.name,UDim2.new(0,0,1,-13),UDim2.new(1,0,0,13))caption.TextSize=8 caption.ZIndex=b.ZIndex+2
     b.MouseButton1Click:Connect(function()options.Assign(selected,entry.id)end)
    end
+   end
    options.Page.Text=tostring(page).." / "..pages.." · "..#choices
   end
-  for i=1,28 do
+  for i=1,LIMIT do
    local b=button(slots,"Slot"..i,((i-1)%7)/7,math.floor((i-1)/7)*42,1/7,39)slotButtons[i]=b
    local n=text(b,tostring(i),UDim2.fromOffset(1,0),UDim2.fromOffset(16,13))n.ZIndex=b.ZIndex+3 n.TextColor3=accent
-   b.MouseButton1Click:Connect(function()selected=i options.Select(i)refresh()end)
+   b.MouseButton1Click:Connect(function()selected=i options.Select(i)refresh(true)end)
   end
   local prev=button(root,"Previous",0,369,.18,22)prev.Text="<"prev.TextColor3=accent
   local nextButton=button(root,"Next",.82,369,.18,22)nextButton.Text=">"nextButton.TextColor3=accent
   options.Page=text(root,"",UDim2.new(.18,0,0,369),UDim2.new(.64,0,0,22))
-  prev.MouseButton1Click:Connect(function()page=math.max(1,page-1)refresh()end)
-  nextButton.MouseButton1Click:Connect(function()page=page+1 refresh()end)
-  search:GetPropertyChangedSignal("Text"):Connect(function()query=search.Text:lower()page=1 refresh()end)
+  prev.MouseButton1Click:Connect(function()page=math.max(1,page-1)refresh(true)end)
+  nextButton.MouseButton1Click:Connect(function()page=page+1 refresh(true)end)
+  search:GetPropertyChangedSignal("Text"):Connect(function()query=search.Text:lower()page=1 refresh(true)end)
   editorRefresh=refresh refresh()panel:Resize()
  end
  function api:SetEnabled(on)
@@ -293,6 +318,7 @@ return function(c)
   if not enabled then restore()status("off")return end
   dirty=true
   local function nativeChanged(o)
+   if nativeParent and nativeParent.Parent and not o:IsDescendantOf(nativeParent)and o~=nativeParent then return end
    local node=o while node and node~=c.PlayerGui do
     if node.Name:find("PV_",1,true)or norm(node.Name):find("prime",1,true)or norm(node.Name):find("obsidian",1,true)then return end node=node.Parent
    end dirty=true
@@ -302,7 +328,13 @@ return function(c)
   local elapsed=0
   links[#links+1]=c.Run.Heartbeat:Connect(function(dt)
    elapsed=elapsed+dt
-   if elapsed>=.2 then elapsed=0 refresh()end
+   if dirty then refresh()end
+   if elapsed<.1 then return end elapsed=0
+   if editorRefresh then editorRefresh()end
+   local visible=nativeParent
+   while visible and visible~=c.PlayerGui do
+    if visible:IsA("GuiObject")and visible.Visible==false then return end visible=visible.Parent
+   end
    local color=Color3.fromHSV((os.clock()%8)/8,1,1)
    for card,data in pairs(cards)do if data.star and data.star.Parent and card.Visible~=false then
     if data.outline:IsA("ImageLabel")then data.outline.ImageColor3=color else data.outline.TextColor3=color end
