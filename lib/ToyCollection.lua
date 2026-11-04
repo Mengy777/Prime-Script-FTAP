@@ -5,9 +5,14 @@ return function(c)
  local catalog={} local catalogueSignature="" local catalogRevision=0 local editorRefresh
  local LIMIT=27 local nativeParent local editorDirty=true
  local diagnosticSize=-1 local diagnosticTime=-math.huge
- local defaults={"Rocket","Black Crystal","CreatureBlobman","Tetracub L","FoodCakePink","Cube","InstrumentBrassTrumpet","InstrumentWoodwindOcarina",
- "FoodDonut","InstrumentGuitarUkulele","InstrumentGuitarAcoustic","InstrumentPianoMelodica","InstrumentVoiceMicrophone","InstrumentDrumBongos",
- "Basketball","Balloon","Firework","Boombox","Chair","Couch","Ball","Snowboard","PalletLightBrown","FoodPizzaCheese","FoodCoconut","FoodHamburger","ShoppingCart"}
+ local defaults={"FlyingToyUfo","FlyingToyPlane","FlyingToyHelicopter","PaperPlane","Boombox","BallBasketball","BombBalloon","FireworkSparkler","FireworkSmokeBomb",
+ "NinjaKatana","NinjaKunai","InstrumentGuitarAcoustic","BombDarkMatter","BombMissile","TetracubeL","InstrumentBrassTrumpet","InstrumentWoodwindOcarina","FoodCakePink",
+ "TetracubeI","TetracubeT","FloatingIsland","YouDecoy","PalletLightBrown","CreatureBlobman","DiscoColorBall","BallMagicLight","JukeboxBlue"}
+ function api:UpgradeOrder(value)
+  local text=tostring(value or "")
+  if text:find("FoodDonut",1,true)and text:find("InstrumentPianoMelodica",1,true)and text:find("ShoppingCart",1,true)then return table.concat(defaults,",")end
+  return value
+ end
  local function norm(s)return tostring(s or ""):lower():gsub("[^%w]","")end
  local aliases={}
  local function alias(id,values)aliases[norm(id)]=norm(id)for _,v in ipairs(values)do aliases[norm(v)]=norm(id)end end

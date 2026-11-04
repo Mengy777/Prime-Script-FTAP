@@ -27,10 +27,10 @@ lua.execute(r'''
 assert(CARDS.PalletLightBrown.LayoutOrder==101,'default-off changed native menu')
 TEST_OPTIONS.toyCollectionEnabled:SetValue(true)
 for i=1,4 do TEST_SERVICES.RunService.Heartbeat:Fire(.21)end
-assert(CARDS.BombMissile.LayoutOrder==-9999,'rocket not first '..tostring(CARDS.BombMissile.LayoutOrder))
-assert(CARDS.CrystalBlack.LayoutOrder==-9998)
-assert(CARDS.CreatureBlobman.LayoutOrder==-9997)
-assert(CARDS.TetracubeL.LayoutOrder==-9996)
+assert(CARDS.BombMissile.LayoutOrder==-9986,'rocket not first '..tostring(CARDS.BombMissile.LayoutOrder))
+assert(CARDS.CrystalBlack.LayoutOrder==-9987)
+assert(CARDS.CreatureBlobman.LayoutOrder==-9976)
+assert(CARDS.TetracubeL.LayoutOrder==-9985)
 assert(CARDS.PalletLightBrown.LayoutOrder==-9977,'pallet not slot23')
 assert(GRID.SortOrder==Enum.SortOrder.LayoutOrder)
 for _,o in ipairs(SCREEN:FindFirstChild('ToyShop'):GetChildren())do if o:IsA('GuiObject')then assert(o.LayoutOrder==77,'shop card changed')end end
@@ -51,7 +51,7 @@ TEST_OPTIONS.toyCollectionSlot:SetValue(1)
 TEST_OPTIONS.toyCollectionToy:SetValue('Donut')
 TEST_ACTIONS['Assign toy to position']()
 TEST_SERVICES.RunService.Heartbeat:Fire(.21)
-assert(CARDS.FoodDonut.LayoutOrder==-9999 and CARDS.BombMissile.LayoutOrder==-9991)
+assert(CARDS.FoodDonut.LayoutOrder==-9999 and CARDS.BombMissile.LayoutOrder==-9986)
 assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
 -- Destroyed/recreated native game menu is rebound.
 SCREEN:Destroy()

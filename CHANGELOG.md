@@ -1,3 +1,10 @@
+# 3.1.8 — 2026-11-04
+
+- Rebuilt the27-item starter set using verified owned toy IDs: Decoy You22/pallet23/Blobman24; black crystal13/rocket14/Tetracube L15. Added Floating Island21, DiscoColorBall25, Light Ball26 and blue Jukebox27.
+- Food reduced to pink cake; musical instruments to Acoustic Guitar, Trumpet and Ocarina. Removed couches, Tetracube O and filler food/instruments. Remaining slots use aircraft, fireworks, ninja props and Tetracubes I/T.
+- Recognize the previous starter signature (Donut/Melodica/ShoppingCart) and replace it with the new starter in saved control state; independently customized collections without that signature stay unchanged. Restore starter button always applies this new set.
+- Retained3.1.7 prepared-order performance/lifecycle. Tests verify27 unique owned IDs, exclusions and central priorities; live ergonomics pending.
+
 # 3.1.7 — 2026-11-04
 
 - Prepared and locked native toy order: reopening or native favorite-order writes no longer wait for a rebuild; synchronous property repair retains latest native values for disabling.

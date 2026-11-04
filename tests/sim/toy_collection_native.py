@@ -45,9 +45,9 @@ lua.execute(source)
 lua.execute(r"""
 TEST_OPTIONS.toyCollectionEnabled:SetValue(true)
 TEST_SERVICES.RunService.Heartbeat:Fire(.21)
-assert(CARDS.BombMissile.LayoutOrder==-9999,'actual owned path not recognized')
-assert(CARDS.BombDarkMatter.LayoutOrder==-9998,'native dark crystal alias missing')
-assert(CARDS.TetracubeL.LayoutOrder==-9996)
+assert(CARDS.BombMissile.LayoutOrder==-9986,'actual owned path not recognized')
+assert(CARDS.BombDarkMatter.LayoutOrder==-9987,'native dark crystal alias missing')
+assert(CARDS.TetracubeL.LayoutOrder==-9985)
 assert(CARDS.PalletLightBrown.LayoutOrder==-9977)
 assert(#TEST_OPTIONS.toyCollectionToy.Values>=195)
 local marked=0 for _,card in pairs(CARDS)do if card:FindFirstChild('PV_CollectionStar')then marked=marked+1 end end
@@ -66,6 +66,16 @@ TEST_ACTIONS['Unload script']()
 print('PASS captured native MenuGui/Toys hierarchy and195 real IDs; aliases, pallet23, exact favorite geometry; shop/destroy untouched; restore')
 # Exercise real editor construction/click callbacks (not just SetValue controls).
 factory=lua.execute((ROOT/'lib/ToyCollection.lua').read_text(encoding='utf-8'))
+api=factory(lua.table_from({}))
+starter=api.DefaultOrder(api).split(',')
+owned={entry['name'] for entry in json.loads((ROOT/'tests/fixtures/native_toy_cards.json').read_text())}
+assert len(starter)==27 and len(set(starter))==27 and set(starter)<=owned
+assert starter[21:24]==['YouDecoy','PalletLightBrown','CreatureBlobman']
+assert starter[13]=='BombMissile' and starter[12]=='BombDarkMatter' and starter[14]=='TetracubeL'
+assert [x for x in starter if x.startswith('Food')]==['FoodCakePink']
+assert {x for x in starter if x.startswith('Instrument')}=={'InstrumentBrassTrumpet','InstrumentWoodwindOcarina','InstrumentGuitarAcoustic'}
+assert not any('Couch'in x or x=='TetracubeO'for x in starter)
+print('PASS curated27-slot starter: all actual owned IDs, unique slots, cake-only food/three instruments/no couches or TetracubeO, Decoy22/pallet23/Blob24')
 lua.globals().TOY_FACTORY=factory
 lua.execute(r"""
 local pg=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui')

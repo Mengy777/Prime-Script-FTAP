@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.1.7"
+local VERSION="3.1.8"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2396,7 +2396,10 @@ local function buildVisualSystems()
         toggle(g,"toyCollectionEnabled","Custom toy collection",false,function(on)toyCollection:SetEnabled(on)end)
         local collectionPanel=featureSettings("toyCollectionEnabled")
         local defaultToyOrder=toyCollection:DefaultOrder()
-        field(collectionPanel,"toyCollectionOrder","Collection data",defaultToyOrder,function(value)toyCollection:SetOrder(value)end)
+        field(collectionPanel,"toyCollectionOrder","Collection data",defaultToyOrder,function(value)
+            local upgraded=toyCollection:UpgradeOrder(value)
+            controls.toyCollectionOrder=upgraded toyCollection:SetOrder(upgraded)
+        end)
         if widgets.toyCollectionOrder.SetVisible then widgets.toyCollectionOrder:SetVisible(false)end
         toyCollection:SetOrder(defaultToyOrder)
         sliderControl(collectionPanel,"toyCollectionSlot","Position",1,28,1,1,function()end)

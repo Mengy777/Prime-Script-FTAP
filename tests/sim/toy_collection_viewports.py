@@ -22,7 +22,7 @@ lua.execute(source)
 lua.execute(r'''
 TEST_OPTIONS.toyCollectionEnabled:SetValue(true)
 for i=1,3 do TEST_SERVICES.RunService.Heartbeat:Fire(.21)end
-assert(CARDS.BombMissile.Position==POSITIONS[1],'viewport-only rocket not sorted')
+assert(CARDS.BombMissile.Position==POSITIONS[14],'viewport-only rocket not sorted')
 assert(CARDS.PalletLightBrown.Position==POSITIONS[23],'manual-position pallet not23')
 local card=CARDS.PalletLightBrown local star=card:FindFirstChild('PV_CollectionStar')
 assert(star and star.Position==card:FindFirstChild('FavoriteStar').Position and star.Size.X.Offset==card:FindFirstChild('FavoriteStar').Size.X.Offset*.65,'custom star misplaced')

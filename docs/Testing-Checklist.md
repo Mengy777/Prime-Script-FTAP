@@ -1,3 +1,10 @@
+## 3.1.8 — curated starter (pending user check)
+
+1. Existing starter upgrades automatically; if an independently customized set remains, Restore starter collection loads the new layout.
+2. Decoy22/pallet23/Blobman24, rocket14 directly above pallet, dark crystal13/Tetracube L15. Check ergonomics in native9-column menu.
+3. FloatingIsland21/DiscoColorBall25/LightBall26/JukeboxBlue27. Only cake for food; only Acoustic Guitar/Trumpet/Ocarina for instruments; no couches/TetracubeO.
+4. Reload retains the new arrangement;3.1.7 instant opening remains intact.
+
 ## 3.1.7 — collection performance (pending live check)
 
 1. Repeatedly open/close E: set should already be ordered without delayed visible rearrangement. Exactly27 custom stars; pallet23.
