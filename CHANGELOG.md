@@ -1,3 +1,10 @@
+# 3.2.1bc — 2026-11-05
+
+- Improved third-person/Freecam cold-start appearance recovery. Incomplete applied descriptions or default face data can fall back to the player's UserId HumanoidDescription, rather than permanently accepting missing hair/classic face as final.
+- Match genuine head accessories by normalized mesh asset ID as well as original name; mesh fallback requires a head attachment, excluding invisible waist/torso helpers. Head decal name matching is case-insensitive.
+- Keep useful partial references and retry incomplete/failed reference data after15s. Temporary descriptions/models remain unparented/cleaned, generation guarded; no whole-avatar ApplyDescription or accessory insertion.
+- Tests cover third-person active at construction, incomplete applied description, hidden renamed hair and custom face, waist exclusion, model cleanup and no per-frame API calls. Existing camera/near/Freecam checks retained; actual startup screenshot cause remains unobserved directly.
+
 # 3.2.1ac — 2026-11-05
 
 - Restricted Custom Line styling to the local player's beam origin rather than every Beam under GrabParts. Foreign-character origins are excluded even when their grabbed target is the local avatar; unknown/unassigned origins stay native.

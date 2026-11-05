@@ -28,13 +28,20 @@ return function(c)
  local headAttachments={HairAttachment=true,HatAttachment=true,FaceFrontAttachment=true,FaceCenterAttachment=true}
  local function meshKey(handle)
   local ok,value=pcall(function()return handle.MeshId end)
-  if ok and type(value)=="string"and value~=""then return value end
+  if ok and type(value)=="string"and value~=""then return value:match("(%d+)$")or value end
   local mesh=handle:FindFirstChildWhichIsA("SpecialMesh")
-  return mesh and tostring(mesh.MeshId)or ""
+  local value=mesh and tostring(mesh.MeshId)or ""return value:match("(%d+)$")or value
+ end
+ local function isHeadHandle(o)
+  for _,child in ipairs(o:GetChildren())do if child:IsA("Attachment")and headAttachments[child.Name]then return true end end
+  return false
  end
  local function reference(o)
-  if o:IsA("BasePart")and o.Name=="Handle"and o.Parent then return headReferences[o.Parent.Name.."|"..meshKey(o)]end
-  if(o:IsA("Decal")or o:IsA("Texture"))and o.Parent==character:FindFirstChild("Head")then return faceReferences[o.ClassName.."|"..o.Name]end
+  if o:IsA("BasePart")and o.Name=="Handle"and o.Parent then
+   local key=meshKey(o)
+   return headReferences[o.Parent.Name.."|"..key]or(key~=""and isHeadHandle(o)and headReferences["@mesh:"..key]or nil)
+  end
+  if(o:IsA("Decal")or o:IsA("Texture"))and o.Parent==character:FindFirstChild("Head")then return faceReferences[o.ClassName.."|"..o.Name:lower()]end
  end
  local function requestReference()
   if referenceState=="pending"or referenceState=="ready"or os.clock()<referenceRetry or not character then return end
@@ -42,28 +49,66 @@ return function(c)
   if not h or type(h.GetAppliedDescription)~="function"or not c.Players or type(c.Players.CreateHumanoidModelFromDescriptionAsync)~="function"then return end
   referenceState="pending"local token=generation local current=character
   task.spawn(function()
-   local description,model local heads,faces={},{}
-   local ok,message=pcall(function()
-    description=h:GetAppliedDescription()
-    if dead or token~=generation or c.Player.Character~=current then return end
-    model=c.Players:CreateHumanoidModelFromDescriptionAsync(description,h.RigType)
-    if dead or token~=generation or c.Player.Character~=current then return end
+   local temporaries={}local heads,faces={},{}
+   local function owned(o)if o then temporaries[#temporaries+1]=o end return o end
+   local function currentGeneration()return not dead and token==generation and c.Player.Character==current end
+   local function collect(model,faceOverride)
     for _,accessory in ipairs(model:GetChildren())do
      if accessory:IsA("Accessory")or accessory:IsA("Hat")then
-      local handle=accessory:FindFirstChild("Handle")local isHead=false
-      if handle then for _,child in ipairs(handle:GetChildren())do if child:IsA("Attachment")and headAttachments[child.Name]then isHead=true break end end end
-      if isHead and handle.Transparency<1 then heads[accessory.Name.."|"..meshKey(handle)]={alpha=handle.Transparency}end
+      local handle=accessory:FindFirstChild("Handle")
+      if handle and isHeadHandle(handle)and handle.Transparency<1 then
+       local record={alpha=handle.Transparency}local mesh=meshKey(handle)
+       heads[accessory.Name.."|"..mesh]=record if mesh~=""then heads["@mesh:"..mesh]=record end
+      end
      end
     end
     local head=model:FindFirstChild("Head")
     if head then for _,o in ipairs(head:GetChildren())do
-     if(o:IsA("Decal")or o:IsA("Texture"))and o.Transparency<1 then faces[o.ClassName.."|"..o.Name]={alpha=o.Transparency,texture=o.Texture}end
+     if(o:IsA("Decal")or o:IsA("Texture"))and o.Transparency<1 then
+      local key=o.ClassName.."|"..o.Name:lower()
+      if faceOverride or not faces[key]then faces[key]={alpha=o.Transparency,texture=o.Texture}end
+     end
     end end
+   end
+   local applied
+   local ok,message=pcall(function()
+    applied=owned(h:GetAppliedDescription())if not currentGeneration()then return end
+    local model=owned(c.Players:CreateHumanoidModelFromDescriptionAsync(applied,h.RigType))
+    if currentGeneration()then collect(model,true)end
    end)
-   if description then pcall(function()description:Destroy()end)end
-   if model then pcall(function()model:Destroy()end)end
-   if dead or token~=generation or c.Player.Character~=current then return end
-   if ok then headReferences,faceReferences=heads,faces referenceState="ready"
+   local incomplete=not ok
+   if currentGeneration()then
+    for _,o in ipairs(current:GetDescendants())do
+     if o:IsA("BasePart")and o.Name=="Handle"and o.Parent and isHeadHandle(o)then
+      local mesh=meshKey(o)
+      if not heads[o.Parent.Name.."|"..mesh]and not heads["@mesh:"..mesh]then incomplete=true break end
+     end
+    end
+   end
+   local needsRetry=incomplete
+   local defaultFace=applied and applied.Face==0
+   if currentGeneration()and(incomplete or defaultFace)and type(c.Players.GetHumanoidDescriptionFromUserIdAsync)=="function"then
+    local fallbackOK,fallbackError=pcall(function()
+     local description=owned(c.Players:GetHumanoidDescriptionFromUserIdAsync(c.Player.UserId))
+     if not currentGeneration()then return end
+     local model=owned(c.Players:CreateHumanoidModelFromDescriptionAsync(description,h.RigType))
+     if currentGeneration()then collect(model,not ok or(defaultFace and type(description.Face)=="number"and description.Face>0))end
+    end)
+    if fallbackOK then
+     ok=true needsRetry=false
+     if currentGeneration()then for _,o in ipairs(current:GetDescendants())do
+      if o:IsA("BasePart")and o.Name=="Handle"and o.Parent and isHeadHandle(o)then
+       local key=meshKey(o)
+       if not heads[o.Parent.Name.."|"..key]and not heads["@mesh:"..key]then needsRetry=true break end
+      end
+     end end
+    else message=fallbackError needsRetry=true end
+   end
+   for _,o in ipairs(temporaries)do pcall(function()o:Destroy()end)end
+   if not currentGeneration()then return end
+   if ok then
+    headReferences,faceReferences=heads,faces
+    if needsRetry then referenceState=nil referenceRetry=os.clock()+15 else referenceState="ready"end
    else referenceState=nil referenceRetry=os.clock()+15 warn("Prime Visuals / avatar reference: "..tostring(message))end
    api:Refresh()
   end)

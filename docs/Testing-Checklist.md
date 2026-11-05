@@ -1,3 +1,9 @@
+## 3.2.1bc — saved third-person startup (pending live check)
+
+- Save enabled third person, unload/re-execute: hair and custom face recover without reset. Asset/API fallback may complete asynchronously.
+- Wheel into first person and back: head hides near, full avatar returns far; Freecam retains genuine hair without gray/keyboard helpers.
+- Death/reload and several minutes of play: appearance stays correct. If hair objects are actually deleted by the game, this scoped reference repair does not recreate them.
+
 ## 3.2.1ac — own Custom Line only (pending live check)
 
 - Enable own texture/color/rainbow: your line changes, nearby other players keep their real game lines.
