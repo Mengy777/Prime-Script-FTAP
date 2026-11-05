@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1b"
+local VERSION="3.2.1c"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -95,7 +95,22 @@ local backdrop=bootMake("Frame",{Size=UDim2.fromScale(1,1),BackgroundColor3=Colo
 local card=bootMake("CanvasGroup",{Name="LoadingCard",GroupTransparency=1,BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.new(.85,0,0,170),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},backdrop)
 bootMake("UISizeConstraint",{MaxSize=Vector2.new(420,170)},card)
 local omega=bootMake("ImageLabel",{Name="LoadingOmega",BackgroundTransparency=1,Size=UDim2.fromOffset(44,44),Position=UDim2.new(.5,-22,0,4),Image=""},card)
-local initialOmega=bootMake("TextLabel",{BackgroundTransparency=1,Size=UDim2.fromScale(1,1),Text=utf8.char(937),Font=Enum.Font.BuilderSans,TextSize=42,TextColor3=Color3.new(1,1,1)},omega)
+-- Same geometric Omega as the menu, available before any HTTP/compile.
+local initialOmega=bootMake("Frame",{Name="PrimeOmega",BackgroundTransparency=1,Size=UDim2.fromScale(1,1)},omega)
+local omegaLines={}
+local function omegaSegment(x,y,a,b)
+    local dx,dy=a-x,b-y
+    local line=bootMake("Frame",{BorderSizePixel=0,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale((x+a)/2,(y+b)/2),
+        Size=UDim2.new(math.sqrt(dx*dx+dy*dy),0,0,2.4),Rotation=math.deg(math.atan2(dy,dx)),BackgroundColor3=Color3.fromHSV(0,.78,1)},initialOmega)
+    omegaLines[#omegaLines+1]=line
+end
+local omegaX,omegaY
+for i=0,28 do
+    local angle=math.rad(215-i*250/28)local x,y=.5+.31*math.cos(angle),.42-.31*math.sin(angle)
+    if omegaX then omegaSegment(omegaX,omegaY,x,y)end omegaX,omegaY=x,y
+end
+omegaSegment(.246,.598,.31,.78)omegaSegment(.31,.78,.13,.78)
+omegaSegment(.754,.598,.69,.78)omegaSegment(.69,.78,.87,.78)
 local introTitle=bootMake("TextLabel",{Name="LoadingBrand",BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,62),Size=UDim2.fromOffset(280,30),Text="Prime Visuals",Font=Enum.Font.Arcade,TextSize=24,TextColor3=Color3.new(1,1,1)},card)
 local introStatus=bootMake("TextLabel",{Name="LoadingStatus",BackgroundTransparency=1,Size=UDim2.new(1,0,0,22),Position=UDim2.fromOffset(0,108),Text="Загрузка",Font=Enum.Font.BuilderSans,TextSize=14,TextColor3=Color3.new(1,1,1)},card)
 local track=bootMake("Frame",{BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,Position=UDim2.new(.1,0,0,150),Size=UDim2.new(.8,0,0,2)},card)
@@ -114,7 +129,9 @@ end
 introAnimation=RunService.RenderStepped:Connect(function(dt)
     if not intro then return end
     elapsed=elapsed+math.min(dt,.1)
-    initialOmega.Rotation=(elapsed*100)%360
+    initialOmega.Rotation=(elapsed*35)%360
+    local omegaColor=Color3.fromHSV((elapsed/12)%1,.78,1)
+    for _,line in ipairs(omegaLines)do line.BackgroundColor3=omegaColor end
     local dots=math.floor(elapsed*2)%4
     if dots~=lastDots then lastDots=dots introStatus.Text=finished and "Готово"or phase..string.rep(".",dots)end
     local target=finished and 1 or progress
@@ -698,13 +715,9 @@ local black=Color3.fromRGB(9,9,11)
 local Library=loadUIModule("Library")
 if type(Library)=="table" then startup.Library=Library end
 assert(type(Library)=="table" and type(Library.CreateWindow)=="function","Obsidian returned an invalid library")
--- Reuse the actual menu wordmark and Omega, with no extra asset fetch.
+-- Wordmark styling does not replace/rebuild the already animated bootstrap Omega.
 local branded,brandError=pcall(function()
     loadUIModule("Wordmark")({Make=bootMake}):Apply(introTitle,24,360)
-    initialOmega.Visible=false
-    local brandedOmega=loadUIModule("PrimeIcon")(omega,backdrop,RunService)
-    local oldClose=startup.IntroClose
-    startup.IntroClose=function()if brandedOmega then brandedOmega:Disconnect()brandedOmega=nil end oldClose()end
 end)
 if not branded then warn("Prime Visuals loader branding: "..tostring(brandError))end
 Library.ForceCheckbox=true

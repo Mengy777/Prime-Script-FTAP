@@ -1,3 +1,8 @@
+## 3.2.1c — initial Omega (pending live check)
+
+- Execute: first visible symbol already colored/rotating, no white glyph then replacement.
+- Through interface-loading phase the same symbol rotates without disappearing/rebuilding; normal short fade into main menu.
+
 ## 3.2.1b — startup (pending live check)
 
 1. Fresh execute: black background, white status/dots, Arcade rainbow title/underline and rotating menu Omega, thin progress bar.

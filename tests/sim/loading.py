@@ -44,6 +44,14 @@ game.HttpGet=function(self,url)
  return originalHttp(self,url)
 end
 local main=task.spawn(assert(load(BOOT_SOURCE)))
+local intro=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeLoading')
+local bootOmega=intro and intro:FindFirstChild('PrimeOmega',true)
+assert(bootOmega and #bootOmega:GetChildren()==32,'rainbow Omega missing before HTTP completion')
+local line=bootOmega:GetChildren()[1]
+assert(line.BackgroundColor3.R~=line.BackgroundColor3.G,'first frame Omega is white')
+TEST_SERVICES.RunService.RenderStepped:Fire(.05)
+assert(bootOmega.Rotation and bootOmega.Rotation>0,'Omega not animated before downloads')
+
 for tick=1,200 do
  local pending=false
  for _,thread in ipairs(queue)do if coroutine.status(thread)~='dead'then
@@ -52,6 +60,7 @@ for tick=1,200 do
  if not pending then break end
 end
 assert(coroutine.status(main)=='dead'and TEST_LIBRARY.Toggled,'parallel startup did not finish')
+assert(intro:FindFirstChild('PrimeOmega',true)==bootOmega,'Omega replaced during startup')
 assert(maximum>=4 and maximum<=5,'unbounded/serial requests '..maximum)
 for name,count in pairs(calls)do assert(count==1,'duplicate successful module request '..name..':'..count)end
 TEST_ACTIONS['Unload script']()TEST_DRAIN()

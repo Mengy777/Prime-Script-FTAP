@@ -1,3 +1,9 @@
+# 3.2.1c — 2026-11-05
+
+- Removed the initial white Omega glyph and later symbol replacement. Bootstrap now draws the menu's geometric32-segment Omega immediately, with saturated color from construction and smooth rotation/hue in the existing single render callback.
+- No HTTP/module dependency for the loading symbol, no second emblem connection or geometry rebuild after Obsidian loads. Existing short fades/parallel downloads preserved.
+- Compile, loader/cooperative HTTP tests and startup failure suite passed. Added assertions that Omega is colored/rotating before HTTP completion and retains the same instance afterward. Live smoothness pending.
+
 # 3.2.1b — 2026-11-05
 
 - Rebuilt bootstrap loading screen: pure black backdrop, white Builder Sans status/dots, exact Arcade rainbow menu wordmark and rotating geometric Omega, thin progress bar; short .14s entrance/.18s exit, no minimum display delay.

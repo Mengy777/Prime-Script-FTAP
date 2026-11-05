@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.1b**, tag `v3.2.1b`. Next normal runtime version: **3.2.1c**. Consult Git for the release commit.
+- Published runtime target: **3.2.1c**, tag `v3.2.1c`. Next normal runtime version: **3.2.1ab**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -320,3 +320,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - User explicitly accepted3.2.1 coin icon works.3.2.1a(2026-11-05): replace plane2 with Campfire, helicopter3 FoodMushroomPoison, Boombox5 FoodHotSauce, basketball6 ToiletWhite.27fixedset; allother slotsunchanged inclpallet23. IDs capturedownedverified; no editor restoration or perfchanges. Live replacement approval pending.
 
 - 3.2.1b bootstrap rework: fullscreen plainFrame pureblack, compact CanvasGroup card, whiteBuilderSans status+dots/progress, actualWordmark Arcade24+PrimeIcon Omega (earlyfallbackwhiteglyph). Fade .14/.18, no minimum wait. Four task.defer workers download15common sourcefiles; loadUIModule waits on its record, initialfailure isattempt1; constructors sequential and cancellationchecked beforeexecute/cache. Functionfactory cache expanded (modulesreturnfactories, Librarytable always reconstructed). IntroClose cancels card/backgroundtweens and both renderconnections; normalshutdown nowclosesintro too. No fullscreenCanvasGroup or extra moduleHTTPforbranding. loading.py uses cooperative yieldedHTTP scheduler to testboundedconcurrency/no duplicatefetch and nativepresentation/earlyunload. Actual speed dependsnetwork, notmeasuredinXeno. Preserve retries/cleanup and lazyMannequins. Nextsuffixc.
+
+- 3.2.1c loaderfix: userreports whiteglyph→rainbow swap/hitch. Inline bootstrap uses same32-segment PrimeIcon geometry andinitialHSVcolor BEFOREHTTP; single existing rendercallback rotates35deg/s +12s hue. Removed glyph and latePrimeIconconstructor/secondconnection; sameinstance retainedthroughstartup. Wordmarkstillreusesmodule. Cooperative loading.py checkscoloredrotatingOmega whileHTTPpending andidentityafterfinish. No fullsuite rerun forscopedbootstrap change; compile/loading/startupfailurechecks pass. Nextsuffixab peruserscheme.
