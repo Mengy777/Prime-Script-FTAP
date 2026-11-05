@@ -72,7 +72,15 @@ return function(c)
             if scope.Name=="GrabParts" then
                 local part=scope:FindFirstChild("GrabPart")
                 local weld=part and part:FindFirstChild("WeldConstraint")
-                if weld and weld.Part1 and weld.Part1:IsDescendantOf(world) then return true end
+                -- Released grab containers may retain Part1. Only a live enabled
+                -- constraint joining GrabPart to another world part is evidence.
+                if part and part:IsA("BasePart")and weld and weld:IsA("WeldConstraint")
+                    and weld.Enabled~=false and weld.Active~=false then
+                    local a,b=weld.Part0,weld.Part1
+                    local target=a==part and b or(b==part and a or nil)
+                    if target and target~=part and target:IsA("BasePart")
+                        and part:IsDescendantOf(world)and target:IsDescendantOf(world)then return true end
+                end
             end
         end
         return false
@@ -124,7 +132,7 @@ return function(c)
         local now=os.clock()
         local hitbox,root,humanoid,char=character()
         if char~=boundCharacter or root~=boundRoot or humanoid~=boundHumanoid or hitbox~=boundHitbox then
-            clear() nextAttempt=0
+            clear() nextAttempt=0 spawnGrace=0
             boundCharacter,boundRoot,boundHumanoid,boundHitbox=char,root,humanoid,hitbox
         end
         if not root or not humanoid or humanoid.Health<=0 or not root.Parent or not hitbox then

@@ -1,3 +1,9 @@
+## 3.2.1ab — holding status (pending live check)
+
+- Hold a toy while protection needs recovery: spawn stays deferred and does not interrupt the real grab.
+- Drop/throw it: holding status clears; recovery resumes after the existing short grace without Restore protection button.
+- Repeat drop/grab, item deletion and death: no permanent holding status.
+
 ## 3.2.1c — initial Omega (pending live check)
 
 - Execute: first visible symbol already colored/rotating, no white glyph then replacement.

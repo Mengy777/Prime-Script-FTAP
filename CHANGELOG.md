@@ -1,3 +1,9 @@
+# 3.2.1ab — 2026-11-05
+
+- Corrected holding-object deferral: retained Part1 alone is no longer accepted. Require a live GrabPart/WeldConstraint, enabled/active state, both endpoints and an actual GrabPart-to-world-part connection.
+- Disabled/inactive constraints, detached Part0 and removed targets no longer indefinitely extend spawn grace. Preserve normal1.5s release grace and ongoing genuine-hold deferral; character identity changes clear stale grace.
+- Compile plus AntiKick lifecycle/release variants, long-session and startup failure simulations passed. No change to attachment/remotes or protection-strength claim; live hold/release confirmation pending.
+
 # 3.2.1c — 2026-11-05
 
 - Removed the initial white Omega glyph and later symbol replacement. Bootstrap now draws the menu's geometric32-segment Omega immediately, with saturated color from construction and smooth rotation/hue in the existing single render callback.

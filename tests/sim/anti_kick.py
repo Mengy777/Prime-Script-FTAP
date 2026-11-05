@@ -107,12 +107,30 @@ spawn.InvokeServer=originalInvoke
 protector:Restart()build()assert(#toys:GetChildren()==1)
 local scope=make('Folder','GrabParts',world)
 local grabPart=make('Part','GrabPart',scope)
-local holding=make('WeldConstraint','WeldConstraint',grabPart)holding.Part1=root
+local holding=make('WeldConstraint','WeldConstraint',grabPart)holding.Part0=grabPart holding.Part1=root holding.Enabled=true holding.Active=true
 local before=spawned
 protector:Restart()
 for i=1,30 do tick()end
 assert(spawned==before,'protection spawn interrupted held object')
+-- Leftover Part1 must not keep waiting after any normal release variant.
+for _,release in ipairs({'disabled','inactive','part0missing','targetremoved'})do
+ holding.Enabled=true holding.Active=true holding.Part0=grabPart holding.Part1=root
+ protector:Restart()tick()
+ assert(status=='Waiting: holding an object')
+ local target
+ if release=='disabled'then holding.Enabled=false
+ elseif release=='inactive'then holding.Active=false
+ elseif release=='part0missing'then holding.Part0=nil
+ else target=make('Part','ReleasedTarget',world)holding.Part1=target target:Destroy()end
+ for i=1,9 do tick()end build()
+ assert(status=='Attached','stale holding state '..release)
+end
+-- Dead character resets the old hold grace; stale detached endpoints cannot block respawn.
+holding.Enabled=true holding.Active=true holding.Part0=nil holding.Part1=root
+protector:Restart()human.Health=0 tick()human.Health=100 tick()build()
+assert(status=='Attached')
 scope:Destroy()
+before=spawned-1
 for i=1,9 do tick()end
 build()assert(spawned==before+1)
 local foreign=make('BoolValue','InPlot',player)foreign.Value=true
