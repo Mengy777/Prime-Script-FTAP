@@ -1,6 +1,6 @@
-# Инвентарь Prime Visuals3.0.2
+# Инвентарь Prime Visuals 3.2.1abcf
 
-Снимок2026-11-02: **396 сохраняемых настроек**. Ключи2.4.7 сохранены, добавлены пустые назначения bind_* и оформление/HUD.
+Снимок 2026-11-05: **482 сохраняемых настройки**. Проверено по фактическому реестру в симуляции.
 
 | Ключ | Подпись |
 | --- | --- |
@@ -11,6 +11,7 @@
 | `bhImageEnabled` | Custom image |
 | `bhSound` | Audio ID / MP3 link |
 | `bhSoundEnabled` | Custom sound |
+| `bhSoundPreset` | Sound preset |
 | `bhStay` | Keep visual blackholes |
 | `bhTintEnabled` | Custom color |
 | `bind_antiKickEnabled` | Key |
@@ -45,6 +46,7 @@
 | `bind_characterEnabled` | Key |
 | `bind_characterHat` | Key |
 | `bind_characterRainbow` | Key |
+| `bind_coinIconEnabled` | Key |
 | `bind_crossColorRainbow` | Key |
 | `bind_crossEnabled` | Key |
 | `bind_deathDustEnabled` | Key |
@@ -100,6 +102,23 @@
 | `bind_mannequinGrab` | Key |
 | `bind_mannequinPhysics` | Key |
 | `bind_mannequinSounds` | Key |
+| `bind_mapAppearanceEnabled` | Key |
+| `bind_mapDirtColorRainbow` | Key |
+| `bind_mapDirtTint` | Key |
+| `bind_mapGrassColorRainbow` | Key |
+| `bind_mapGrassTint` | Key |
+| `bind_mapLushGrassColorRainbow` | Key |
+| `bind_mapLushGrassTint` | Key |
+| `bind_mapOceanColorRainbow` | Key |
+| `bind_mapOceanTint` | Key |
+| `bind_mapRockColorRainbow` | Key |
+| `bind_mapRockTint` | Key |
+| `bind_mapSandColorRainbow` | Key |
+| `bind_mapSandTint` | Key |
+| `bind_mapSnowColorRainbow` | Key |
+| `bind_mapSnowTint` | Key |
+| `bind_mapWasteGrassColorRainbow` | Key |
+| `bind_mapWasteGrassTint` | Key |
 | `bind_menu` | Key |
 | `bind_muteAmbience` | Key |
 | `bind_muteBoomboxes` | Key |
@@ -126,10 +145,13 @@
 | `bind_skySunVisible` | Key |
 | `bind_snowColorRainbow` | Key |
 | `bind_snowEnabled` | Key |
+| `bind_soundReplaceEnabled` | Key |
 | `bind_spectateEnabled` | Key |
+| `bind_toyCollectionEnabled` | Key |
 | `bind_traceColorRainbow` | Key |
 | `bind_traceEnabled` | Key |
 | `bind_traceMarker` | Key |
+| `bind_uiActionNotifications` | Key |
 | `bind_visualPresetEnabled` | Key |
 | `bind_waterColorRainbow` | Key |
 | `bind_waterEnabled` | Key |
@@ -183,6 +205,7 @@
 | `characterEnabled` | Forcefield material |
 | `characterHat` | Affect hat |
 | `characterRainbow` | Rainbow |
+| `coinIconEnabled` | Custom coin icon |
 | `collectionSky` | Skybox |
 | `crossColor` | — |
 | `crossColorRainbow` | Rainbow: Color |
@@ -242,6 +265,7 @@
 | `hudClock` | Show time |
 | `hudEnabled` | Status panel |
 | `hudFPS` | Show FPS |
+| `hudOffsetX` | Panel horizontal position |
 | `hudOffsetY` | Panel vertical position |
 | `hudOpacity` | Panel transparency |
 | `hudPlayers` | Show player count |
@@ -315,6 +339,40 @@
 | `mannequinName` | Roblox username |
 | `mannequinPhysics` | Ragdoll physics |
 | `mannequinSounds` | Ragdoll sounds |
+| `mapAppearanceEnabled` | Map materials and colors |
+| `mapDirtColor` | — |
+| `mapDirtColorRainbow` | Rainbow: Surface color |
+| `mapDirtMaterial` | Material |
+| `mapDirtTint` | Override surface color |
+| `mapGrassColor` | — |
+| `mapGrassColorRainbow` | Rainbow: Surface color |
+| `mapGrassMaterial` | Material |
+| `mapGrassTint` | Override surface color |
+| `mapLushGrassColor` | — |
+| `mapLushGrassColorRainbow` | Rainbow: Surface color |
+| `mapLushGrassMaterial` | Material |
+| `mapLushGrassTint` | Override surface color |
+| `mapOceanColor` | — |
+| `mapOceanColorRainbow` | Rainbow: Surface color |
+| `mapOceanMaterial` | Material |
+| `mapOceanTint` | Override surface color |
+| `mapRockColor` | — |
+| `mapRockColorRainbow` | Rainbow: Surface color |
+| `mapRockMaterial` | Material |
+| `mapRockTint` | Override surface color |
+| `mapSandColor` | — |
+| `mapSandColorRainbow` | Rainbow: Surface color |
+| `mapSandMaterial` | Material |
+| `mapSandTint` | Override surface color |
+| `mapSnowColor` | — |
+| `mapSnowColorRainbow` | Rainbow: Surface color |
+| `mapSnowMaterial` | Material |
+| `mapSnowTint` | Override surface color |
+| `mapSurface` | Surface |
+| `mapWasteGrassColor` | — |
+| `mapWasteGrassColorRainbow` | Rainbow: Surface color |
+| `mapWasteGrassMaterial` | Material |
+| `mapWasteGrassTint` | Override surface color |
 | `menuAccent` | — |
 | `menuAccentRainbow` | Rainbow: Menu accent |
 | `menuBackground` | — |
@@ -348,6 +406,32 @@
 | `particleSize` | Size |
 | `particleSpeed` | Max speed |
 | `particleTexture` | Texture |
+| `replaceAudioAmbience` | Audio ID or Roblox link |
+| `replaceAudioBoomboxes` | Audio ID or Roblox link |
+| `replaceAudioDeath` | Audio ID or Roblox link |
+| `replaceAudioExplosions` | Audio ID or Roblox link |
+| `replaceAudioFootsteps` | Audio ID or Roblox link |
+| `replaceAudioGrab` | Audio ID or Roblox link |
+| `replaceAudioInstruments` | Audio ID or Roblox link |
+| `replaceAudioJump` | Audio ID or Roblox link |
+| `replaceAudioNamed` | Audio ID or Roblox link |
+| `replaceAudioRhythm` | Audio ID or Roblox link |
+| `replaceAudioScreams` | Audio ID or Roblox link |
+| `replaceAudioSoundwaves` | Audio ID or Roblox link |
+| `replacePresetAmbience` | Sound preset |
+| `replacePresetBoomboxes` | Sound preset |
+| `replacePresetDeath` | Sound preset |
+| `replacePresetExplosions` | Sound preset |
+| `replacePresetFootsteps` | Sound preset |
+| `replacePresetGrab` | Sound preset |
+| `replacePresetInstruments` | Sound preset |
+| `replacePresetJump` | Sound preset |
+| `replacePresetNamed` | Sound preset |
+| `replacePresetRhythm` | Sound preset |
+| `replacePresetScreams` | Sound preset |
+| `replacePresetSoundwaves` | Sound preset |
+| `replaceSoundCategory` | Sound category |
+| `replaceSoundName` | Exact sound name |
 | `revealInvisible` | Reveal hidden players |
 | `selfESP` | Own outline |
 | `selfESPColor` | — |
@@ -379,14 +463,17 @@
 | `snowSpeed` | Speed |
 | `snowTexture` | Particle |
 | `snowWind` | Wind |
+| `soundReplaceEnabled` | Custom game sounds |
 | `spectateEnabled` | Spectate player |
 | `spectateTarget` | Player |
+| `toyCollectionEnabled` | Custom toy collection |
 | `traceColor` | — |
 | `traceColorRainbow` | Rainbow: Color |
 | `traceEnabled` | Line to player |
 | `traceMarker` | Target marker |
 | `traceMarkerImage` | Marker image |
 | `traceMarkerSize` | Marker size |
+| `uiActionNotifications` | Action notifications |
 | `uiLanguage` | Language |
 | `visualPreset` | Preset |
 | `visualPresetEnabled` | Lighting preset |
@@ -399,5 +486,3 @@
 | `waterSolid` | Non-swimmable water |
 | `waterSpeed` | Wave speed |
 | `waterWaves` | Wave size |
-
-| `hudOffsetX` | Panel horizontal position |

@@ -35,7 +35,7 @@ for k,e in errors: print('EXCEPTION',k,e)
 for w in warnings: print('WARNING',w)
 for n in notices: print('NOTICE',n)
 assert not errors,errors
-assert all(n.endswith(': enabled')or n.endswith(': disabled')or n in {'Original sky restored','Skybox applied'}for n in notices),notices
+assert all(n.endswith(': enabled')or n.endswith(': disabled')or n in {'Original sky restored','Skybox applied','Sound replacement saved'}for n in notices),notices
 assert all(('Executor does not support local image assets' in w or 'native CameraInput unavailable' in w) for w in warnings),warnings
 lua.execute("TEST_ACTIONS['Unload script']()")
 print('PASS all registered controls exercise boolean changes, every dropdown entry, numeric endpoints and colors, then unload; runtime warnings reviewed separately')

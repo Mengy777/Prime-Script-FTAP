@@ -10,10 +10,14 @@ return function(c)
         snowColor="snowEnabled",boxColor="boxEnabled",skeletonColor="skeletonEnabled",traceColor="traceEnabled",selfESPColor="selfESP",
         oceanColor="oceanAppearance",holeColor="holeSprite"}) do c.ColorOwners[key]=owner end
     for _,part in ipairs({"Head","Torso","LeftArm","RightArm","LeftLeg","RightLeg"}) do c.ColorOwners["body"..part.."Color"]="bodyAppearance" end
+    local mapAppearance=c.LoadModule("MapAppearance")({Controls=v,Setters=c.Setters,Widgets=c.Widgets,Patches=c.Patches,
+        Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
+        ColorOwners=c.ColorOwners,Panel=panel,Action=c.Action,TrackCleanup=c.TrackCleanup})
     local dead=false
     local objects,links={},{}
     local teardown=function()
         dead=true
+        mapAppearance:Destroy()
         for con in pairs(links) do pcall(function() con:Disconnect() end) end
         for o in pairs(objects) do pcall(function() o:Destroy() end) end
         pcall(function() R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end)
@@ -926,6 +930,7 @@ return function(c)
     else job("Camera",R.RenderStepped,updateCamera) end
     teardown=function()
         if dead then return end dead=true
+        mapAppearance:Destroy()
         endFree() stopSpectate()
         if bound then R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end
         for con in pairs(links) do con:Disconnect() end links={}

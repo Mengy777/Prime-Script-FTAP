@@ -13,7 +13,7 @@ return function(c)
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
         Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
         Particles={Particles={"Weather","Particles",1},Snowfall={"Weather","Snowfall",2}},
-        World={Water={"Water & FPS","Water",1},["Ocean appearance"]={"Water & FPS","Water",1},Performance={"Water & FPS","Performance",2}},
+        World={["Map surfaces"]={"Surfaces","Map surfaces",1},Water={"Water & FPS","Water",1},["Ocean appearance"]={"Water & FPS","Water",1},Performance={"Water & FPS","Performance",2}},
         Character={
             ["Character finish"]={"Appearance","Body style",1},["Body appearance"]={"Appearance","Body style",1},
             ["Self ESP"]={"Appearance","Accessories",2},["Cone hat"]={"Appearance","Accessories",2},

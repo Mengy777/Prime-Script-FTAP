@@ -1,3 +1,11 @@
+# 3.2.1abcf — 2026-11-05
+
+- Graphics → Map surfaces: default-off local material/color editor for Snow, Sand, Grass, LushGrass, Rock, WasteGrass, Ocean and Dirt. Select a surface, choose Original or one of 23 native materials, optionally set color/rainbow. Reset/disable/unload restores property layers independently. Static Workspace.Map parts only; does not rewrite terrain voxels, toys or avatars.
+- Cached map-part classification uses native names/ancestors, falling back to original materials. Observe streaming/new descendants and map replacement; no repeated map scan on menu opening or every frame. Color rows now support hiding with their surface selector.
+- Custom game sounds: independent Original / Custom ID / researched Creator Store presets for all twelve categories, including new own-grab audio. 23 category presets plus two options in the existing blackhole sound card. Preview/stop buttons, one preview at a time, eight-second cap and delayed load-failure notice. Custom IDs remain stored when choosing presets.
+- Grab sound: replace recognized own native Grab/GrabSound, otherwise local feedback on a valid own-beam/weld grab transition. Foreign origins excluded; sustained hold does not retrigger, released/disabled welds ignored. No server state changes. Actual FTAP audio naming/asset delivery requires live confirmation.
+- 482 persisted settings (+65), backward-compatible keys/default Custom for existing audio IDs. Added actual-module map/audio lifecycle and config tests; full simulation results in docs/Simulation-3.2.1abcf.md. Simulation does not prove Roblox sound permissions, audible quality or live map-category coverage.
+
 # 3.2.1abc — 2026-11-05
 
 - Added Personalization sidebar before the empty Vortex/Settings entries. Moved fixed toy collection from Settings and coin icon from FTAP; moved audio mute/blackhole audio cards from FTAP. Existing keys/configs retained.

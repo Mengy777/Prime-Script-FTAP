@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1abc"
+local VERSION="3.2.1abcf"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -938,6 +938,44 @@ end
 local function buildVisualSystems()
     local player=Players.LocalPlayer
     local Run=RunService
+    ru["Map surfaces"]="Поверхности карты"
+    ru["Map materials and colors"]="Материалы и цвета карты"
+    ru["Audio could not load; check asset permissions or try another preset."]="Звук не загрузился: проверь доступ к ассету или выбери другой пресет."
+    ru["Surface"]="Поверхность"
+    ru["Override surface color"]="Изменить цвет поверхности"
+    ru["Surface color"]="Цвет поверхности"
+    ru["Reset map surfaces"]="Сбросить оформление карты"
+    ru["Original"]="Исходный"
+    ru["Custom"]="Свой"
+    ru["Sound preset"]="Звуковой пресет"
+    ru["Grab sound"]="Звук захвата"
+    ru["Preview selected sound"]="Прослушать выбранный звук"
+    ru["Stop sound preview"]="Остановить прослушивание"
+    ru["Snow"]="Снег"
+    ru["Sand"]="Песок"
+    ru["Grass"]="Трава"
+    ru["LushGrass"]="Густая трава"
+    ru["Rock"]="Камень"
+    ru["WasteGrass"]="Сухая трава"
+    ru["Ocean"]="Океан"
+    ru["Dirt"]="Земля"
+    ru["Forest after rain"]="Лес после дождя"
+    ru["Jungle daylight"]="Дневные джунгли"
+    ru["Short shout"]="Короткий крик"
+    ru["Demon scream"]="Демонический крик"
+    ru["Metallic blast"]="Металлический взрыв"
+    ru["Space explosion"]="Космический взрыв"
+    ru["Synth pulse"]="Синтезаторный пульс"
+    ru["Fuzzy tone"]="Электронный гул"
+    ru["Solo trumpet"]="Соло трубы"
+    ru["Synth chime"]="Электронный звон"
+    ru["Concrete steps"]="Шаги по бетону"
+    ru["Classic jump"]="Классический прыжок"
+    ru["Air swoosh"]="Воздушный взмах"
+    ru["Short death cry"]="Короткий предсмертный крик"
+    ru["Death shout"]="Предсмертный возглас"
+    ru["Sparkle chime"]="Звон искр"
+    ru["Glitch zap"]="Электронный разряд"
     local Terrain=Workspace.Terrain
     local SoundService=game:GetService("SoundService")
     local jobs,owned,patches={}, {}, {}
@@ -1300,6 +1338,10 @@ local function buildVisualSystems()
             end
         end
         setters[key]=set
+        -- Color rows participate in category selectors just like inputs/dropdowns.
+        if widgets[key] and not widgets[key].SetVisible and label and label.SetVisible then
+            widgets[key].SetVisible=function(_,visible)label:SetVisible(visible)end
+        end
         -- ESP fill already has Rainbow fill; all other color fields get a dedicated switch.
         if not legacyRainbowColors[key] and not key:match("^esp.+Fill$") then
             local owner=colorOwners[key]
@@ -2509,54 +2551,97 @@ local function buildVisualSystems()
     do
         local g=group("Audio","Mute categories",1)
         for _,entry in ipairs({{"Ambience","Ambience"},{"Boomboxes","Boomboxes / jukeboxes"},{"Screams","Screams"},{"Explosions","Explosions"},{"Soundwaves","Soundwaves"},{"Rhythm","Rhythm makers"},{"Instruments","Instruments"}}) do toggle(g,"mute"..entry[1],entry[2],false,refreshMutes) end
-        local soundCategories={"Ambience","Boomboxes","Screams","Explosions","Soundwaves","Rhythm","Instruments","Footsteps","Jump","Death","Named"}
-        local soundCategoryNames={"Ambience","Boomboxes / jukeboxes","Screams","Explosions","Soundwaves","Rhythm makers","Instruments","Footsteps","Jump sound","Death sound","By sound name"}
+        local soundCategories={"Ambience","Boomboxes","Screams","Explosions","Soundwaves","Rhythm","Instruments","Footsteps","Jump","Death","Grab","Named"}
+        local soundCategoryNames={"Ambience","Boomboxes / jukeboxes","Screams","Explosions","Soundwaves","Rhythm makers","Instruments","Footsteps","Jump sound","Death sound","Grab sound","By sound name"}
         local function soundMatch(category,o)
+            if category=="Grab"then
+                local name=o.Name:lower()
+                if name~="grabsound"and name~="grab"then return false end
+                if(player.Character and o:IsDescendantOf(player.Character))or(Workspace.CurrentCamera and o:IsDescendantOf(Workspace.CurrentCamera))then return true end
+                local scope=o.Parent
+                while scope and scope~=Workspace and scope.Name~="GrabParts"do scope=scope.Parent end
+                if scope and scope.Name=="GrabParts"then
+                    for _,beam in ipairs(scope:GetDescendants())do if beam:IsA("Beam")and ownGrabBeam(beam)then return true end end
+                end
+                return false
+            end
             if mutePredicates[category]then return mutePredicates[category](o)end
             if category=="Named"then return controls.replaceSoundName~=""and o.Name:lower()==tostring(controls.replaceSoundName):lower()end
             if not player.Character or not o:IsDescendantOf(player.Character)then return false end
             return(category=="Footsteps"and o.Name=="Running")or(category=="Jump"and o.Name=="Jumping")or(category=="Death"and o.Name=="Died")
         end
         soundOverrides=loadUIModule("SoundOverrides")({Roots={Workspace,playerGui,game:GetService("SoundService")},Run=Run,Patch=patch,Unpatch=unpatch,Patches=patches,
-            Categories=soundCategories,Matches=soundMatch,Resolve=imageId,TrackCleanup=function(fn)soundOverrides={Destroy=fn}end})
+            Categories=soundCategories,Matches=soundMatch,Resolve=imageId,Make=make,SoundRoot=game:GetService("SoundService"),OwnBeam=ownGrabBeam,
+            Notify=notify,Translate=function(text)return uiLanguage=="ru"and(ru[text]or text)or text end,TrackCleanup=function(fn)soundOverrides={Destroy=fn}end})
         local audioGroup=group("Audio","Sound replacements",1)
         toggle(audioGroup,"soundReplaceEnabled","Custom game sounds",false,function(on)soundOverrides:SetEnabled(on)end)
         local soundPanel=featureSettings("soundReplaceEnabled")
+        local presets=loadUIModule("SoundPresets")
+        local function selectedCategory()return soundCategories[table.find(soundCategoryNames,controls.replaceSoundCategory)or 1]end
+        local function resolved(category)
+            local preset=controls["replacePreset"..category]or "Custom"
+            if preset=="Original"then return ""end
+            if preset=="Custom"then return controls["replaceAudio"..category]or ""end
+            for _,entry in ipairs(presets[category])do if entry[1]==preset then return entry[2]end end
+            return ""
+        end
         local function showSoundFields()
-            local selected=table.find(soundCategoryNames,controls.replaceSoundCategory)or 1
-            for i,key in ipairs(soundCategories)do if widgets["replaceAudio"..key]and widgets["replaceAudio"..key].SetVisible then widgets["replaceAudio"..key]:SetVisible(i==selected)end end
-            if widgets.replaceSoundName and widgets.replaceSoundName.SetVisible then widgets.replaceSoundName:SetVisible(soundCategories[selected]=="Named")end
+            local selected=selectedCategory()
+            for _,key in ipairs(soundCategories)do
+                for _,prefix in ipairs({"replaceAudio","replacePreset"})do
+                    local widget=widgets[prefix..key]
+                    if widget and widget.SetVisible then widget:SetVisible(key==selected and(prefix=="replacePreset"or(controls["replacePreset"..key]or "Custom")=="Custom"))end
+                end
+            end
+            if widgets.replaceSoundName and widgets.replaceSoundName.SetVisible then widgets.replaceSoundName:SetVisible(selected=="Named")end
         end
         choice(soundPanel,"replaceSoundCategory","Sound category",soundCategoryNames,soundCategoryNames[1],showSoundFields)
         field(soundPanel,"replaceSoundName","Exact sound name","",function()soundOverrides:Refresh()end)
         for _,category in ipairs(soundCategories)do
-            field(soundPanel,"replaceAudio"..category,"Audio ID or Roblox link","",function(value)
-                soundOverrides:SetReplacement(category,value)
-                if value~=""then startup.Notice("Sound replacement saved","Настройка звука сохранена")end
+            local options={"Original","Custom"}for _,entry in ipairs(presets[category])do options[#options+1]=entry[1]end
+            choice(soundPanel,"replacePreset"..category,"Sound preset",options,"Custom",function()
+                soundOverrides:SetReplacement(category,resolved(category))showSoundFields()
+                if resolved(category)~=""then startup.Notice("Sound replacement saved","Настройка звука сохранена")end
+            end)
+            field(soundPanel,"replaceAudio"..category,"Audio ID or Roblox link","",function()
+                soundOverrides:SetReplacement(category,resolved(category))
+                if resolved(category)~=""then startup.Notice("Sound replacement saved","Настройка звука сохранена")end
             end)
         end
         showSoundFields()
+        action(soundPanel,"Preview selected sound",function()
+            local value=resolved(selectedCategory())
+            if value==""then notify(uiLanguage=="ru"and "Сначала выбери пресет или укажи ID"or "Choose a preset or enter an audio ID first")return end
+            soundOverrides:Preview(value)
+        end)
+        action(soundPanel,"Stop sound preview",function()soundOverrides:StopPreview()end)
         action(soundPanel,"Clear selected sound",function()
-            local selected=table.find(soundCategoryNames,controls.replaceSoundCategory)or 1
-            setters["replaceAudio"..soundCategories[selected]]("",true)
+            local category=selectedCategory()
+            setters["replacePreset"..category]("Original",true)setters["replaceAudio"..category]("",true)
             if controls.uiActionNotifications~=false then notify(uiLanguage=="ru"and "Исходный звук восстановлен"or "Original sound restored")end
         end)
         local h=group("Audio","Blackhole sound",2)
+        local function blackholeAudio()
+            for _,entry in ipairs(presets.Blackholes)do if entry[1]==controls.bhSoundPreset then return entry[2]end end
+            return controls.bhSound or "1843529634"
+        end
+        local function refreshBlackholeAudio()
+            if not controls.bhSoundEnabled then return end
+            local value=blackholeAudio()
+            task.spawn(function()
+                local resolved
+                if safe(function()resolved=resolveSound(value)end)and alive and controls.bhSoundEnabled and blackholeAudio()==value then
+                    controls.bhSoundResolved=resolved unpatch("bhsound")blackholeLoop()
+                end
+            end)
+        end
         toggle(h,"bhSoundEnabled","Custom sound",false,function(on)
-            if on then controls.bhSoundResolved=resolveSound(controls.bhSound or "1843529634") end
+            if on then controls.bhSoundResolved=resolveSound(blackholeAudio())end
             blackholeLoop()
         end)
         h=featureSettings("bhSoundEnabled")
-        field(h,"bhSound","Audio ID / MP3 link","1843529634",function(v)
-            if controls.bhSoundEnabled then
-                task.spawn(function()
-                    local resolved
-                    if safe(function() resolved=resolveSound(v) end) and alive and controls.bhSoundEnabled and controls.bhSound==v then
-                        controls.bhSoundResolved=resolved unpatch("bhsound") blackholeLoop()
-                    end
-                end)
-            end
-        end)
+        choice(h,"bhSoundPreset","Sound preset",{"Custom","Space explosion","Synth pulse"},"Custom",refreshBlackholeAudio)
+        field(h,"bhSound","Audio ID / MP3 link","1843529634",refreshBlackholeAudio)
     end
     -- Final category architecture: six clear sections with remembered subtabs.
     do
@@ -2683,7 +2768,7 @@ local function buildVisualSystems()
         local lastWarning={}
         visualExpansion=loadUIModule("VisualExpansion")({
             Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
-            Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
+            LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             RefreshAvatarVisibility=function()avatarVisibility:Refresh()end,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
