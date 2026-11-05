@@ -4,7 +4,7 @@ return function(c)
     local pages={
         View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
-        FTAP={"Grab line","Crosshair","Blackholes","Audio"},["Prime Vortex"]={},Settings={"General","Profiles"},
+        FTAP={"Grab line","Crosshair","Blackholes"},Personalization={"Interface","Audio"},["Prime Vortex"]={},Settings={"General","Profiles"},
     }
     -- Input group -> short subpage, shared card, column. Adjacent single-toggle cards merge.
     local routes={
@@ -24,12 +24,13 @@ return function(c)
             Geometry={"Players","Player overlays",2},
             ["Player visibility"]={"Tools","Player visibility",1},["Target trace"]={"Tools","Player tracker",1},
             ["Local position history"]={"Tools","Position history",2}},
-        Tweaks={["Game interface"]={"Crosshair","Game interface",2},["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
+        Personalization={["Game interface"]={"Interface","Game interface",2},["Toy collection"]={"Interface","Toy collection",1}},
+        Tweaks={["Grab line"]={"Grab line","Grab line",1},Crosshair={"Crosshair","Crosshair",1},
             Blackholes={"Blackholes","Blackholes",1},["Animated blackholes"]={"Blackholes","Blackhole animation",2}},
-        Audio={["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
+        Audio={["Sound replacements"]={"Audio","Sound replacements",1},["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
         Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
     }
-    local categoryFor={Vortex="Prime Vortex",Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="FTAP",Settings="Settings"}
+    local categoryFor={Vortex="Prime Vortex",Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="Personalization",Personalization="Personalization",Settings="Settings"}
     local states,cache={},{} local destroyed=false
     for category in pairs(pages)do
         local tab=c.Tabs[category]

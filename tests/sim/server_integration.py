@@ -29,6 +29,7 @@ print('PASS 25 delayed respawns plus streamed beam destruction/recreation; enabl
 # Real mannequin and R6 ragdoll constructors, deterministic parts/contacts only.
 a.run("TEST_OPTIONS.mannequinEnabled:SetValue(true);TEST_ACTIONS['Spawn mannequin']()")
 a.run("local f=workspace:FindFirstChild('PV_LocalMannequins');assert(f and #f:GetChildren()==1,'mannequin spawn failed')")
+a.run("local found=false for _,n in ipairs(TEST_NOTICES)do if n=='Mannequin created'then found=true end end assert(found,'successful mannequin creation not notified')")
 a.run("TEST_OPTIONS.mannequinName:SetValue('Builderman');TEST_ACTIONS['Apply avatar to last']()")
 a.run("local f=workspace:FindFirstChild('PV_LocalMannequins');assert(#f:GetChildren()==1 and f:GetChildren()[1].SourceUserId==777)")
 b.run("assert(not workspace:FindFirstChild('PV_LocalMannequins'),'local mannequin leaked to peer')")

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1bc"
+local VERSION="3.2.1abc"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -598,6 +598,24 @@ ru["Speed"]="Скорость"
 ru["Thickness"]="Толщина"
 ru["Anti-Kick"]="Защита от кика"
 ru["waiting"]="ожидание"
+ru["Personalization"]="Персонализация"
+ru["Toy collection"]="Коллекция игрушек"
+ru["Sound replacements"]="Замена звуков"
+ru["Custom game sounds"]="Свои игровые звуки"
+ru["Action notifications"]="Уведомления о действиях"
+ru["Sound category"]="Категория звука"
+ru["Exact sound name"]="Точное имя звука"
+ru["Audio ID or Roblox link"]="ID аудио или ссылка Roblox"
+ru["Clear selected sound"]="Вернуть исходный звук"
+ru["Footsteps"]="Шаги"
+ru["Jump sound"]="Звук прыжка"
+ru["Death sound"]="Звук смерти"
+ru["By sound name"]="По имени звука"
+ru["Custom line"]="Своя линия"
+ru["Free camera"]="Свободная камера"
+ru["Third-person camera"]="Камера от третьего лица"
+ru["Lighting preset"]="Пресет освещения"
+ru["Local mannequins"]="Локальные манекены"
 ru["Game interface"]="Игровой интерфейс"
 ru["Custom coin icon"]="Своя иконка монеты"
 ru["Unavailable: FTAP remotes missing"]="Недоступно: игровые события FTAP не найдены"
@@ -913,6 +931,7 @@ local function applyCustomSky(modelId)
         end)
         if not ok then skyFeedback("Could not apply skybox. Try another asset.",true) warn("Prime Visuals Sky: " .. tostring(err)) return end
         skyFeedback("Skybox loaded / six separate textures.",false)
+        if startup.Notice then startup.Notice("Skybox applied","Небо применено")end
         profileChanged()
     end)
 end
@@ -935,7 +954,7 @@ local function buildVisualSystems()
     local maintenance={}
     local rememberedPlayers={}
     -- Install teardown before the first UI/effect is built, including partial startup failures.
-    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility,toyCollection,coinIcon
+    local clearLineSignals,restoreWater,mannequins,visualExpansion,navigation,clearThirdVisibility,antiKick,lightingEditor,majorInterface,avatarVisibility,toyCollection,coinIcon,soundOverrides
     local mutedSounds={}
     cleanupExtra=function()
         if not alive then return end
@@ -948,6 +967,7 @@ local function buildVisualSystems()
         if clearLineSignals then attempt("line",clearLineSignals) end
         if clearThirdVisibility then attempt("third-person visibility",clearThirdVisibility) end
         for _,c in pairs(mutedSounds) do attempt("audio",function() c:Disconnect() end) end mutedSounds={}
+        if soundOverrides then attempt("sound overrides",function()soundOverrides:Destroy()end)end
         if coinIcon then attempt("coin icon",function()coinIcon:Destroy()end)end
         if toyCollection then attempt("toy collection",function()toyCollection:Destroy()end)end
         if avatarVisibility then attempt("avatar visibility",function()avatarVisibility:Destroy()end)end
@@ -1045,7 +1065,8 @@ local function buildVisualSystems()
         {"Graphics","sparkles",{"Lighting","Particles","World"}},
         {"Character","user-round",{"Character"}},
         {"ESP","scan-eye",{"ESP"}},
-        {"FTAP","orbit",{"Tweaks","Audio"}},
+        {"FTAP","orbit",{"Tweaks"}},
+        {"Personalization","palette",{"Personalization","Audio"}},
         {"Prime Vortex","flame",{"Vortex"}},
         {"Settings","settings",{"Settings"}}
     }
@@ -1098,18 +1119,40 @@ local function buildVisualSystems()
                 put(key,previous)
                 pcall(callback,previous)
             end
+            if applied and apply and value~=previous and startup.NotifyChange then startup.NotifyChange(key,value)end
             profileChanged(key)
             return applied
         end
         setters[key]=set
         return set
     end
+    startup.NotifyChange=(function()
+    local labels={camThird="Third-person camera",freeCameraEnabled="Free camera",lineEnabled="Custom line",coinIconEnabled="Custom coin icon",
+        toyCollectionEnabled="Custom toy collection",waterEnabled="Realistic water",fpsEnabled="Boost FPS",visualPresetEnabled="Lighting preset",
+        soundReplaceEnabled="Custom game sounds",mannequinEnabled="Local mannequins",crossEnabled="Custom crosshair"}
+    local times={}
+    return function(key,value)
+        if building or restoringProfile or controls.uiActionNotifications==false or not alive or not labels[key]then return end
+        local now=os.clock()if times[key]and now-times[key]<.5 then return end times[key]=now
+        local label=labels[key]
+        notify((uiLanguage=="ru"and(ru[label]or label)or label)..(uiLanguage=="ru"and(value and ": включено"or ": выключено")or(value and ": enabled"or ": disabled")))
+    end
+    end)()
+    startup.Notice=(function()
+        local lastText,lastTime
+        return function(en,russian)
+            if building or restoringProfile or controls.uiActionNotifications==false then return end
+            local now=os.clock()if en==lastText and lastTime and now-lastTime<.5 then return end
+            lastText,lastTime=en,now notify(uiLanguage=="ru"and russian or en)
+        end
+    end)()
     local function changed(key,callback)
         return function(value)
             if building or suppressed or not alive then return end
             local previous=controls[key]
             put(key,value)
-            if not safe(callback,value) then
+            local succeeded=safe(callback,value)
+            if not succeeded then
                 local wasSuppressed=suppressed
                 suppressed=true
                 if setters[key] then pcall(setters[key],previous,false) end
@@ -1117,10 +1160,11 @@ local function buildVisualSystems()
                 put(key,previous)
                 pcall(callback,previous)
             end
+            if succeeded and value~=previous then startup.NotifyChange(key,value)end
             profileChanged(key)
         end
     end
-    local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Settings="settings"}
+    local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Personalization="palette",Settings="settings"}
     navigation=loadUIModule("Navigation")({Library=Library,Make=make,Listen=listen,Tabs=categoryTabs,Translate=function(text) return ru[text] or text end})
     local function group(tab,title,side)
         return navigation:Group(tab,title,side,groupIcons[tab])
@@ -1327,6 +1371,7 @@ local function buildVisualSystems()
     action(skyGroup,"Reset sky",function()
         restoreSky() setters.skyAsset("",false) skyInput.Text="" setters.skyHaze(false,false)
         for _,key in ipairs({"skySunVisible","skySun","skyClouds"}) do appliedSettings[key]=nil end
+        startup.Notice("Original sky restored","Исходное небо восстановлено")
     end)
     -- CAMERA
     -- First-person transparency can survive Roblox's switch to Classic camera.
@@ -1493,7 +1538,8 @@ local function buildVisualSystems()
         skyLoadGeneration=skyLoadGeneration+1 skyLoadBusy=false
         local sky=ensureSky() skyRecoveryData=nil
         for property,value in pairs(data) do sky[property]=value end
-        customSkyLoaded=true onCustomSkyApplied(data) rememberSky() profileChanged()
+        customSkyLoaded=true onCustomSkyApplied(data) rememberSky()
+        startup.Notice("Skybox applied","Небо применено") profileChanged()
     end
     lightingEditor=loadUIModule("LightingEditor")({
         Lighting=Lighting,Controls=controls,Setters=setters,ColorOwners=colorOwners,Translations=ru,
@@ -1906,6 +1952,7 @@ local function buildVisualSystems()
                     RagdollFactory=loadUIModule("MannequinRagdoll"),
                     MenuOpen=function() return Library.Toggled end,
                     Notify=function(en,russian) notify(uiLanguage=="ru" and russian or en) end,
+                    Success=function(en,russian)if controls.uiActionNotifications~=false then notify(uiLanguage=="ru"and russian or en)end end,
                 })
             end
             if mannequins then mannequins:SetEnabled(on) end
@@ -2402,7 +2449,7 @@ local function buildVisualSystems()
         field(h,"crossImage","Image","9943168532",update)
         color(h,"crossColor","Color",white,update,function(value) crossImage.ImageColor3=value end)
         sliderControl(h,"crossSize","Size",8,128,28,1,update)
-        local coinGroup=group("Tweaks","Game interface",2)
+        local coinGroup=group("Personalization","Game interface",2)
         coinIcon=loadUIModule("CoinIcon")({PlayerGui=playerGui,Run=Run,Patch=patch,Unpatch=unpatch,
             TrackCleanup=function(fn)coinIcon={Destroy=fn}end})
         toggle(coinGroup,"coinIconEnabled","Custom coin icon",false,function(on)coinIcon:SetEnabled(on)end)
@@ -2462,6 +2509,38 @@ local function buildVisualSystems()
     do
         local g=group("Audio","Mute categories",1)
         for _,entry in ipairs({{"Ambience","Ambience"},{"Boomboxes","Boomboxes / jukeboxes"},{"Screams","Screams"},{"Explosions","Explosions"},{"Soundwaves","Soundwaves"},{"Rhythm","Rhythm makers"},{"Instruments","Instruments"}}) do toggle(g,"mute"..entry[1],entry[2],false,refreshMutes) end
+        local soundCategories={"Ambience","Boomboxes","Screams","Explosions","Soundwaves","Rhythm","Instruments","Footsteps","Jump","Death","Named"}
+        local soundCategoryNames={"Ambience","Boomboxes / jukeboxes","Screams","Explosions","Soundwaves","Rhythm makers","Instruments","Footsteps","Jump sound","Death sound","By sound name"}
+        local function soundMatch(category,o)
+            if mutePredicates[category]then return mutePredicates[category](o)end
+            if category=="Named"then return controls.replaceSoundName~=""and o.Name:lower()==tostring(controls.replaceSoundName):lower()end
+            if not player.Character or not o:IsDescendantOf(player.Character)then return false end
+            return(category=="Footsteps"and o.Name=="Running")or(category=="Jump"and o.Name=="Jumping")or(category=="Death"and o.Name=="Died")
+        end
+        soundOverrides=loadUIModule("SoundOverrides")({Roots={Workspace,playerGui,game:GetService("SoundService")},Run=Run,Patch=patch,Unpatch=unpatch,Patches=patches,
+            Categories=soundCategories,Matches=soundMatch,Resolve=imageId,TrackCleanup=function(fn)soundOverrides={Destroy=fn}end})
+        local audioGroup=group("Audio","Sound replacements",1)
+        toggle(audioGroup,"soundReplaceEnabled","Custom game sounds",false,function(on)soundOverrides:SetEnabled(on)end)
+        local soundPanel=featureSettings("soundReplaceEnabled")
+        local function showSoundFields()
+            local selected=table.find(soundCategoryNames,controls.replaceSoundCategory)or 1
+            for i,key in ipairs(soundCategories)do if widgets["replaceAudio"..key]and widgets["replaceAudio"..key].SetVisible then widgets["replaceAudio"..key]:SetVisible(i==selected)end end
+            if widgets.replaceSoundName and widgets.replaceSoundName.SetVisible then widgets.replaceSoundName:SetVisible(soundCategories[selected]=="Named")end
+        end
+        choice(soundPanel,"replaceSoundCategory","Sound category",soundCategoryNames,soundCategoryNames[1],showSoundFields)
+        field(soundPanel,"replaceSoundName","Exact sound name","",function()soundOverrides:Refresh()end)
+        for _,category in ipairs(soundCategories)do
+            field(soundPanel,"replaceAudio"..category,"Audio ID or Roblox link","",function(value)
+                soundOverrides:SetReplacement(category,value)
+                if value~=""then startup.Notice("Sound replacement saved","Настройка звука сохранена")end
+            end)
+        end
+        showSoundFields()
+        action(soundPanel,"Clear selected sound",function()
+            local selected=table.find(soundCategoryNames,controls.replaceSoundCategory)or 1
+            setters["replaceAudio"..soundCategories[selected]]("",true)
+            if controls.uiActionNotifications~=false then notify(uiLanguage=="ru"and "Исходный звук восстановлен"or "Original sound restored")end
+        end)
         local h=group("Audio","Blackhole sound",2)
         toggle(h,"bhSoundEnabled","Custom sound",false,function(on)
             if on then controls.bhSoundResolved=resolveSound(controls.bhSound or "1843529634") end
@@ -2482,6 +2561,7 @@ local function buildVisualSystems()
     -- Final category architecture: six clear sections with remembered subtabs.
     do
         local g=group("Settings","Interface",1)
+        toggle(g,"uiActionNotifications","Action notifications",true,function()end)
         choice(g,"uiLanguage","Language",{"English","Русский"},"English",function(value)
             setLanguage(value=="Русский" and "ru" or "en")
         end)
@@ -2490,7 +2570,7 @@ local function buildVisualSystems()
             CaptureDiagnostic=function()return loadUIModule("ToyMenuDiagnostics")()end,
             Warn=function(message)warn("Prime Visuals / toy collection: "..tostring(message))end})
         toyCollection:SetOrder(toyCollection:DefaultOrder())
-        toggle(g,"toyCollectionEnabled","Custom toy collection",false,function(on)toyCollection:SetEnabled(on)end)
+        toggle(group("Personalization","Toy collection",1),"toyCollectionEnabled","Custom toy collection",false,function(on)toyCollection:SetEnabled(on)end)
         local resetting=false
         action(g,"Reset all settings",function()
             if resetting then return end

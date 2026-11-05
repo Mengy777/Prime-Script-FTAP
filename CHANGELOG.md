@@ -1,3 +1,10 @@
+# 3.2.1abc — 2026-11-05
+
+- Added Personalization sidebar before the empty Vortex/Settings entries. Moved fixed toy collection from Settings and coin icon from FTAP; moved audio mute/blackhole audio cards from FTAP. Existing keys/configs retained.
+- Added default-off local SoundId replacement by11 categories: ambience, boombox/jukebox, screams, explosions, soundwaves, rhythm makers, instruments, own footsteps/jump/death, or exact sound name. Each category keeps its own audio ID/Roblox URL; blank/clear restores current native sound. New/recreated sounds tracked; original volume/playback/remote state untouched.
+- Added native top notifications for selected toggles, applied/reset sky, successful mannequin creation/avatar update, and audio setup. Existing config reports retained. Success notices optional via Settings → Action notifications; no slider/profile-restore flood and repeated identical actions debounced. Errors remain visible.
+- Added17 persisted settings (417 total), audio/notification/navigation/config tests. Roblox audio asset permission/availability and actual audible results require live testing.
+
 # 3.2.1bc — 2026-11-05
 
 - Improved third-person/Freecam cold-start appearance recovery. Incomplete applied descriptions or default face data can fall back to the player's UserId HumanoidDescription, rather than permanently accepting missing hair/classic face as final.

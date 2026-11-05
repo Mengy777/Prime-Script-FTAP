@@ -22,8 +22,8 @@ assert(not workspace:FindFirstChild('PV_ExperimentalGraphics'))
 TEST_OPTIONS.lightContrast:SetValue(.39)TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(doc['payload']['values'])==400
+assert len(doc['payload']['values'])==417
 assert all(key not in doc['payload']['values'] for key in removed)
 assert not (ROOT/'lib/ExperimentalGraphics.lua').exists()
 assert 'ExperimentalGraphics' not in source
-print('PASS experiment UI/module removed; old 353-key settings load without reset, preserve manual lighting and resave 400 keys')
+print('PASS experiment UI/module removed; old 353-key settings load without reset, preserve manual lighting and resave 417 keys')

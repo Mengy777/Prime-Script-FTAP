@@ -1,3 +1,11 @@
+## 3.2.1abc — notifications, audio, Personalization (pending live check)
+
+1. Personalization sidebar: toy collection + coin icon + mutes/blackhole sound present; original functions/config values retained, Settings still last.
+2. Create mannequin: success notification only after it appears. Toggle line/camera/water/etc: short on/off notice. No sliders/startup notification flood. Settings → Action notifications disables success toasts.
+3. Personalization → Custom game sounds: enable, open gear, choose category, paste permitted Roblox audio ID/link, commit by blur/Enter. Only selected category changes; footsteps/jump/death apply to own avatar, exact-name rule matches that sound name.
+4. Different category retains its own audio ID. Clear selected/disable/unload restores native audio; mute volume still works independently. New toys/respawn keep enabled replacements.
+5. Reload: replacement IDs, master switch and notification preference persist. Audio permission/accessibility must be verified with real assets in Roblox.
+
 ## 3.2.1bc — startup issue provisionally accepted (2026-11-05)
 
 - User provisionally accepts the reported startup hair/custom-face disappearance as fixed. No separate exact replay steps claimed. Asset/API fallback may complete asynchronously.

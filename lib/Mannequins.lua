@@ -133,6 +133,9 @@ return function(context)
             if candidateActor then candidateActor:Destroy() end
             if candidate then self.Actors[candidate]=nil candidate:Destroy() end
             if self.Serial==id then self.Busy=false end
+            if ok and validRequest(id) and context.Success then
+                context.Success(replacement and "Mannequin appearance updated"or "Mannequin created",replacement and "Внешность манекена обновлена"or "Манекен создан")
+            end
             if not ok and validRequest(id) then
                 warn("Prime Visuals mannequins: "..tostring(err))
                 message("Could not create avatar. Check the username and try again.","Не удалось создать аватар. Проверь ник и попробуй ещё раз.")

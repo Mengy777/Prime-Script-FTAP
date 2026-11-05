@@ -24,6 +24,7 @@ function TEST_LISTENERS(beam)
 end
 ''')
 lua.execute(source)
+lua.execute("TEST_OPTIONS.uiActionNotifications:SetValue(false)")
 lua.execute(r'''
 TEST_OPTIONS.lineEnabled:SetValue(true)
 TEST_OPTIONS.lineRainbow:SetValue(true)
@@ -74,6 +75,7 @@ TEST_OPTIONS.lineEnabled:SetValue(true);TEST_DRAIN()
 ''')
 # Restart in the same game, leaving stale duplicate/nested folders in place.
 lua.execute(source)
+lua.execute("TEST_OPTIONS.uiActionNotifications:SetValue(false)")
 lua.execute(r'''
 assert(TEST_OPTIONS.lineEnabled.Value and BEAM.Texture==EXPECTED,'reload still required a game rejoin')
 TEST_ACTIONS['Unload script']()
@@ -89,6 +91,7 @@ TEST_SERVICES.Workspace.CurrentCamera.CFrame=CFrame.new()
 local head=Instance.new('Part');head.Name='Head';head.Position=Vector3.new();head.Parent=TEST_SERVICES.Players.LocalPlayer.Character
 ''')
 lu.execute(s)
+lu.execute("TEST_OPTIONS.uiActionNotifications:SetValue(false)")
 lu.execute(r'''
 TEST_OPTIONS.cameraFOV:SetValue(93)
 TEST_OPTIONS.camDistance:SetValue(23);TEST_OPTIONS.camThird:SetValue(true)
@@ -145,6 +148,7 @@ end)
 s=s.replace('    -- HOME: profile',injection+'    -- HOME: profile',1)
 lu.execute('TEST_CLOCK=0;os.clock=function()return TEST_CLOCK end')
 lu.execute(s)
+lu.execute("TEST_OPTIONS.uiActionNotifications:SetValue(false)")
 lu.execute(r'''
 TEST_SERVICES.RunService.Heartbeat:Fire(0.01)
 assert(TEST_RETRIES==1)
