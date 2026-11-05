@@ -6,7 +6,8 @@ TEST_CLOCK=0 os.clock=function()return TEST_CLOCK end
 Color3.fromHSV=function(h,s,v)return Color3.new(h,s,v)end
 ColorSequence.new=function(c)return {Keypoints={{Time=0,Value=c},{Time=1,Value=c}}}end
 function TEST_BEAM(root)
- local beam=Instance.new('Beam') beam.Texture='native';beam.TextureSpeed=2;beam.Color=ColorSequence.new(Color3.new(1,1,1));beam.Segments=3;beam.Parent=root
+ local origin=Instance.new('Attachment')origin.Parent=TEST_SERVICES.Players.LocalPlayer.Character
+ local beam=Instance.new('Beam')beam.Attachment0=origin beam.Texture='native';beam.TextureSpeed=2;beam.Color=ColorSequence.new(Color3.new(1,1,1));beam.Segments=3;beam.Parent=root
  return beam
 end
 STALE=Instance.new('Folder') STALE.Name='GrabParts' STALE.Parent=workspace
@@ -43,7 +44,7 @@ for i=1,60 do
  TEST_DRAIN()
  TEST_TICK(1.01)
  assert(BEAM.Texture==EXPECTED and BEAM.Segments==3,'respawn lost line')
- assert(TEST_LISTENERS(BEAM)==3,'duplicate beam listeners')
+ assert(TEST_LISTENERS(BEAM)==4,'duplicate beam listeners')
  BEAM.Texture='game rewrite';BEAM.TextureSpeed=-8
  assert(BEAM.Texture==EXPECTED and BEAM.TextureSpeed==1,'late rewrite not repaired')
 end
@@ -53,7 +54,7 @@ LIVE.Name='GrabParts';TEST_TICK(1.01)
 assert(BEAM.Texture==EXPECTED,'renamed nested scope did not recover')
 local before=BEAM.Color.Keypoints[1].Value.R
 for i=1,1800 do TEST_TICK(0.2) end
-assert(BEAM.Texture==EXPECTED and BEAM.Color.Keypoints[1].Value.R~=before and TEST_LISTENERS(BEAM)==3)
+assert(BEAM.Texture==EXPECTED and BEAM.Color.Keypoints[1].Value.R~=before and TEST_LISTENERS(BEAM)==4)
 TEST_OPTIONS.lineRainbow:SetValue(false)
 local red=Color3.new(1,0,0);TEST_OPTIONS.lineColor:SetValueRGB(red)
 BEAM.Texture='temporary conflicting hook'

@@ -1,3 +1,10 @@
+# 3.2.1ac — 2026-11-05
+
+- Restricted Custom Line styling to the local player's beam origin rather than every Beam under GrabParts. Foreign-character origins are excluded even when their grabbed target is the local avatar; unknown/unassigned origins stay native.
+- Native standalone BeamPart origin uses conservative attribution: local avatar must be within8 studs and at least.5stud closer than every other live avatar. Camera/own-character origins are direct matches. Ambiguous close-range origins stay unmodified.
+- Ownership change restores previous texture/color/speed immediately; regular recovery rechecks late/recreated beams. Preserve rainbow, death/reload recovery and native remote-player updates.
+- Added multi-player origin-isolation regression and updated old fixtures to identify local source attachments. Live own/foreign line appearance remains pending user check.
+
 # 3.2.1ab — 2026-11-05
 
 - Corrected holding-object deferral: retained Part1 alone is no longer accepted. Require a live GrabPart/WeldConstraint, enabled/active state, both endpoints and an actual GrabPart-to-world-part connection.

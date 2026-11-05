@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1ab"
+local VERSION="3.2.1ac"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2165,6 +2165,34 @@ local function buildVisualSystems()
             node=node.Parent
         end
     end
+    local function ownGrabBeam(beam)
+        -- Ownership comes from the START of the beam, never the grabbed target.
+        local origin=beam.Attachment0 local char=player.Character
+        if not origin or not origin.Parent or not char then return false end
+        if origin:IsDescendantOf(char)then return true end
+        local camera=Workspace.CurrentCamera
+        if camera and origin:IsDescendantOf(camera)then return true end
+        local roster=Players:GetPlayers()
+        for _,other in ipairs(roster)do
+            if other~=player and other.Character and origin:IsDescendantOf(other.Character)then return false end
+        end
+        -- Native BeamPart can be outside the character. Attribute its world origin
+        -- only when one live avatar is unambiguously closest (within8 studs).
+        local sourcePart=origin.Parent
+        if not sourcePart:IsA("BasePart")then return false end
+        local point=origin.WorldPosition or sourcePart.Position
+        if not point then return false end
+        local localDistance,otherDistance=math.huge,math.huge
+        for _,candidate in ipairs(roster)do
+            local model=candidate.Character
+            local body=model and(model:FindFirstChild("Head")or model:FindFirstChild("HumanoidRootPart"))
+            if body then
+                local distance=(point-body.Position).Magnitude
+                if candidate==player then localDistance=distance else otherDistance=math.min(otherDistance,distance)end
+            end
+        end
+        return localDistance<=8 and localDistance+.5<otherDistance
+    end
     local function releaseBeam(beam)
         for _,connection in ipairs(lineSignals[beam] or {}) do connection:Disconnect() end
         lineSignals[beam]=nil lineBeams[beam]=nil
@@ -2174,7 +2202,7 @@ local function buildVisualSystems()
     local function enforceBeam(beam,entry)
         if not alive or not controls.lineEnabled then return true end
         local root=grabRoot(beam)
-        if not root then return false end
+        if not root or not ownGrabBeam(beam)then return false end
         lineRoots[root]=true
         if beam.Enabled==false then return true end
         if entry.applying then return true end
@@ -2189,15 +2217,16 @@ local function buildVisualSystems()
         return true
     end
     local function observeBeam(beam)
-        if not grabRoot(beam) then pendingBeams[beam]=true return end
+        if not grabRoot(beam)or not ownGrabBeam(beam)then pendingBeams[beam]=true return end
         pendingBeams[beam]=nil
         local entry=lineBeams[beam]
         if not entry then
             entry={applying=false} lineBeams[beam]=entry
             local signals={} lineSignals[beam]=signals
-            for _,property in ipairs({"Texture","Color","TextureSpeed"}) do
+            for _,property in ipairs({"Texture","Color","TextureSpeed","Attachment0"}) do
                 table.insert(signals,beam:GetPropertyChangedSignal(property):Connect(function()
                     if entry.applying or not alive or not controls.lineEnabled then return end
+                    if property=="Attachment0"and not ownGrabBeam(beam)then releaseBeam(beam)return end
                     -- One failed or destroyed beam must not disable the whole line manager.
                     pcall(enforceBeam,beam,entry)
                 end))

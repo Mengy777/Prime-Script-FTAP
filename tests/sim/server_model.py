@@ -110,7 +110,8 @@ function SERVER_REMOVE(id)
 end
 function SERVER_BEAM()
  local f=Instance.new('Folder')f.Name='GrabParts';f.Parent=workspace
- local b=Instance.new('Beam')b.Texture='native';b.TextureSpeed=2;b.Color=ColorSequence.new(Color3.new(1,1,1));b.Segments=3;b.Parent=f
+ local origin=Instance.new('Attachment')origin.Parent=ME.Character
+ local b=Instance.new('Beam')b.Attachment0=origin b.Texture='native';b.TextureSpeed=2;b.Color=ColorSequence.new(Color3.new(1,1,1));b.Segments=3;b.Parent=f
  workspace.DescendantAdded:Fire(b)
 end
 function SERVER_CLEAR_BEAM()local f=workspace:FindFirstChild('GrabParts')if f then f:Destroy()end end

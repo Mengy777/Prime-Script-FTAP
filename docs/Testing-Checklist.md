@@ -1,3 +1,9 @@
+## 3.2.1ac — own Custom Line only (pending live check)
+
+- Enable own texture/color/rainbow: your line changes, nearby other players keep their real game lines.
+- Another player grabs you: their line still stays native. Change your line options while both are grabbing.
+- Drop/regrab, respawn and reload: own styling recovers; disable restores native appearance. Report if your own line stops styling near other players (ambiguous standalone origin is deliberately skipped).
+
 ## 3.2.1ab — holding status (pending live check)
 
 - Hold a toy while protection needs recovery: spawn stays deferred and does not interrupt the real grab.

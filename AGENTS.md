@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.1ab**, tag `v3.2.1ab`. Next normal runtime version: **3.2.1ac**. Consult Git for the release commit.
+- Published runtime target: **3.2.1ac**, tag `v3.2.1ac`. Next normal runtime version: **3.2.1bc**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -324,3 +324,5 @@ node C:/Users/User/Documents/Codex/2026-10-24/new-chat/work/compile_obsidian.mjs
 - 3.2.1c loaderfix: userreports whiteglyph→rainbow swap/hitch. Inline bootstrap uses same32-segment PrimeIcon geometry andinitialHSVcolor BEFOREHTTP; single existing rendercallback rotates35deg/s +12s hue. Removed glyph and latePrimeIconconstructor/secondconnection; sameinstance retainedthroughstartup. Wordmarkstillreusesmodule. Cooperative loading.py checkscoloredrotatingOmega whileHTTPpending andidentityafterfinish. No fullsuite rerun forscopedbootstrap change; compile/loading/startupfailurechecks pass. Nextsuffixab peruserscheme.
 
 - User confirmed3.2.1c loading.3.2.1ab fixes lingering holdingstatus: old detector trusted any retainedPart1. Now require GrabPartBasePart +WeldConstraint enabled/active(notfalse), validPart0/Part1joinGrabPart and liveotherBasePart. Release casesdisabled/inactive/nilPart0/deletedtarget covered; trueholdcontinuesdefer,1.5sgracepreserved. Charidentitychangeresetsoldgrace. No inputbuttonheuristic/forcedtimeoutspawn/gameobject deletion. Compile AntiKick/longsession/startupchecks; exactlivecause stillrequiresuserconfirmation. Nextac.
+
+- 3.2.1ac fixesCustomLine touchingotherplayers: ownGrabBeam checksAttachment0START origin localchar/currentcamera, rejectsforeignchar. StandaloneBeamPart fallbackworldposition: nearestlocalbody<=8 and .5closer thanallothers; ambiguous/unassignedskip. Never inferowner fromtargetAttachment1. enforce/observebothfilter, originchange4thsignal releasespatchimmediately; recoveryrechecks. Longsession/serverfixtures nowhaveproperlocalsourceattachments; line_ownership.py testsforeigntargetingself/nativeupdates/unowned/spatialforeign/reassignment. Nativeunknownhierarchylimit: ambiguousorigin defaults togameappearance, notblanketapply. No change to serverstates. Nextbc.
