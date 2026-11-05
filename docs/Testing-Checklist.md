@@ -1,6 +1,7 @@
-## 3.2.1bc — saved third-person startup (pending live check)
+## 3.2.1bc — startup issue provisionally accepted (2026-11-05)
 
-- Save enabled third person, unload/re-execute: hair and custom face recover without reset. Asset/API fallback may complete asynchronously.
+- User provisionally accepts the reported startup hair/custom-face disappearance as fixed. No separate exact replay steps claimed. Asset/API fallback may complete asynchronously.
+- Other scenarios below remain independent follow-up checks, not inferred as tested.
 - Wheel into first person and back: head hides near, full avatar returns far; Freecam retains genuine hair without gray/keyboard helpers.
 - Death/reload and several minutes of play: appearance stays correct. If hair objects are actually deleted by the game, this scoped reference repair does not recreate them.
 
