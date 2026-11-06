@@ -1,3 +1,9 @@
+# 3.2.2c removal check
+
+- Custom texture editor/themes absent.
+- Standard Roblox map materials, colors and classic palettes work.
+- Existing profiles retain unrelated settings.
+
 ## 3.2.2b — полная замена кастомных текстур (ожидает проверки)
 
 1. Графика → Поверхности карты → Кастомные текстуры. Выбрать новый набор и Применить. Сначала проверить Dreamcore Atrium, Rose Quartz Palace, Emerald Temple, Cyberpunk Station, Forest Sanctuary. Первый запуск материала скачивает его карты; старая поверхность остаётся до готовности.

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2b"
+local VERSION="3.2.2c"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","MapTextures","MapTextureCatalog","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -1004,14 +1004,6 @@ local function buildVisualSystems()
     ru["Obsidian"]="Обсидиан"
     ru["Arctic"]="Арктика"
     ru["Sakura"]="Сакура"
-    ru["Map appearance mode"]="Режим оформления карты"
-    ru["Classic materials"]="Стандартные материалы"
-    ru["Custom textures"]="Кастомные текстуры"
-    ru["Texture theme"]="Текстурный пресет"
-    ru["Image ID"]="ID изображения"
-    ru["Texture scale"]="Масштаб текстуры"
-    ru["Override texture color"]="Изменить цвет текстуры"
-    ru["Texture color"]="Цвет текстуры"
     ru["Asphalt"]="Асфальт"
     ru["Basalt"]="Базальт"
     ru["Brick"]="Кирпич"
@@ -1041,63 +1033,6 @@ local function buildVisualSystems()
     ru["Slate"]="Сланец"
     ru["Wood"]="Дерево"
     ru["WoodPlanks"]="Доски"
-    ru["PBR images could not load. Original surfaces are kept; check executor file support or retry loading."]="Не удалось загрузить PBR-карты. Сохранено исходное оформление. Проверь файловые функции executor или повтори загрузку."
-    ru["Retry texture loading"]="Повторить загрузку текстур"
-    ru["Alpine Expedition"]="Альпийская экспедиция"
-    ru["Forest Sanctuary"]="Лесное убежище"
-    ru["Tropical Coast"]="Тропический берег"
-    ru["Dreamcore Atrium"]="Дримкор-атриум"
-    ru["Medieval Town"]="Средневековый город"
-    ru["Industrial Hangar"]="Индустриальный ангар"
-    ru["Abandoned Factory"]="Заброшенный завод"
-    ru["Cyberpunk Station"]="Киберпанк-станция"
-    ru["Timber Lodge"]="Деревянный дом"
-    ru["Volcanic Citadel"]="Вулканическая цитадель"
-    ru["Emerald Temple"]="Изумрудный храм"
-    ru["Rose Quartz Palace"]="Дворец розового кварца"
-    ru["Deep Rock Cavern"]="Каменная пещера"
-    ru["Modern Art Gallery"]="Галерея современного искусства"
-    ru["Terracotta Courtyard"]="Терракотовый двор"
-    ru["Urban District"]="Городской район"
-    ru["Armored Foundry"]="Металлическая кузница"
-    ru["Festive Workshop"]="Праздничная мастерская"
-    ru["Rainbow Atelier"]="Радужное ателье"
-    ru["Blue Porcelain Garden"]="Сад голубого фарфора"
-    ru["Weathered Rock"]="Выветренный камень"
-    ru["Forest Floor"]="Лесная почва"
-    ru["Detailed Snow"]="Детализированный снег"
-    ru["Coastal Sand"]="Прибрежный песок"
-    ru["Natural Marble"]="Натуральный мрамор"
-    ru["Old Cobblestone"]="Старая брусчатка"
-    ru["Weathered Brick"]="Старый кирпич"
-    ru["Industrial Steel"]="Промышленная сталь"
-    ru["Blue Steel"]="Синяя сталь"
-    ru["Aged Timber"]="Старое дерево"
-    ru["Worn Concrete"]="Изношенный бетон"
-    ru["Mossy Rock"]="Камень со мхом"
-    ru["Volcanic Stone"]="Вулканический камень"
-    ru["Road Asphalt"]="Дорожный асфальт"
-    ru["Aged Tiles"]="Старая плитка"
-    ru["Blue Ceramic"]="Голубая керамика"
-    ru["Mossy Brick"]="Кирпич со мхом"
-    ru["Terracotta"]="Терракота"
-    ru["Terrazzo"]="Терраццо"
-    ru["Brown Leather"]="Коричневая кожа"
-    ru["Cliff Rock"]="Скальный камень"
-    ru["Veined Stone Tiles"]="Каменная плитка с прожилками"
-    ru["Black Veined Marble"]="Чёрный мрамор с прожилками"
-    ru["Decorative Steel"]="Декоративная сталь"
-    ru["Detailed White Plaster"]="Детализированная белая штукатурка"
-    ru["Orange Brick"]="Оранжевый кирпич"
-    ru["Lush Forest Ground"]="Зелёная лесная почва"
-    ru["Sculpted Silver Plates"]="Рельефные серебристые пластины"
-    ru["Festive Gilded Paper"]="Праздничное покрытие с позолотой"
-    ru["Blue Decorative Ceramic"]="Рельефная голубая керамика"
-    ru["Jade Marble"]="Нефритовый мрамор"
-    ru["Pink Granite"]="Розовый гранит"
-    ru["Pink Terrazzo"]="Розовый терраццо"
-    ru["Colorful Spangles"]="Разноцветные блёстки"
-    ru["White Veined Marble"]="Белый мрамор с прожилками"
     local Terrain=Workspace.Terrain
     local SoundService=game:GetService("SoundService")
     local jobs,owned,patches={}, {}, {}
@@ -2936,7 +2871,7 @@ local function buildVisualSystems()
         local lastWarning={}
         visualExpansion=loadUIModule("VisualExpansion")({
             Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
-            MapAssetBase="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/map-pbr/",LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
+            LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             RefreshAvatarVisibility=function()avatarVisibility:Refresh()end,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,

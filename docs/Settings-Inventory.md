@@ -1,6 +1,6 @@
-# Инвентарь Prime Visuals 3.2.2b
+# Инвентарь Prime Visuals 3.2.2c
 
-Снимок2026-11-06: **586 сохраняемых настроек**. Фактический реестр симуляции.
+Снимок2026-11-06: **520 сохраняемых настроек**. Фактический реестр симуляции.
 
 | Ключ | Подпись |
 | --- | --- |
@@ -121,22 +121,6 @@
 | `bind_mapSandTint` | Key |
 | `bind_mapSnowColorRainbow` | Key |
 | `bind_mapSnowTint` | Key |
-| `bind_mapTextureDirtColorRainbow` | Key |
-| `bind_mapTextureDirtTint` | Key |
-| `bind_mapTextureGrassColorRainbow` | Key |
-| `bind_mapTextureGrassTint` | Key |
-| `bind_mapTextureLushGrassColorRainbow` | Key |
-| `bind_mapTextureLushGrassTint` | Key |
-| `bind_mapTextureOceanColorRainbow` | Key |
-| `bind_mapTextureOceanTint` | Key |
-| `bind_mapTextureRockColorRainbow` | Key |
-| `bind_mapTextureRockTint` | Key |
-| `bind_mapTextureSandColorRainbow` | Key |
-| `bind_mapTextureSandTint` | Key |
-| `bind_mapTextureSnowColorRainbow` | Key |
-| `bind_mapTextureSnowTint` | Key |
-| `bind_mapTextureWasteGrassColorRainbow` | Key |
-| `bind_mapTextureWasteGrassTint` | Key |
 | `bind_mapWasteGrassColorRainbow` | Key |
 | `bind_mapWasteGrassTint` | Key |
 | `bind_menu` | Key |
@@ -381,7 +365,6 @@
 | `mapLushGrassColorRainbow` | Rainbow: Surface color |
 | `mapLushGrassMaterial` | Material |
 | `mapLushGrassTint` | Override surface color |
-| `mapMode` | Map appearance mode |
 | `mapOceanColor` | — |
 | `mapOceanColorRainbow` | Rainbow: Surface color |
 | `mapOceanMaterial` | Material |
@@ -400,55 +383,6 @@
 | `mapSnowMaterial` | Material |
 | `mapSnowTint` | Override surface color |
 | `mapSurface` | Surface |
-| `mapTextureDirtColor` | — |
-| `mapTextureDirtColorRainbow` | Rainbow: Texture color |
-| `mapTextureDirtImage` | Image ID |
-| `mapTextureDirtScale` | Texture scale |
-| `mapTextureDirtStyle` | Texture |
-| `mapTextureDirtTint` | Override texture color |
-| `mapTextureGrassColor` | — |
-| `mapTextureGrassColorRainbow` | Rainbow: Texture color |
-| `mapTextureGrassImage` | Image ID |
-| `mapTextureGrassScale` | Texture scale |
-| `mapTextureGrassStyle` | Texture |
-| `mapTextureGrassTint` | Override texture color |
-| `mapTextureLushGrassColor` | — |
-| `mapTextureLushGrassColorRainbow` | Rainbow: Texture color |
-| `mapTextureLushGrassImage` | Image ID |
-| `mapTextureLushGrassScale` | Texture scale |
-| `mapTextureLushGrassStyle` | Texture |
-| `mapTextureLushGrassTint` | Override texture color |
-| `mapTextureOceanColor` | — |
-| `mapTextureOceanColorRainbow` | Rainbow: Texture color |
-| `mapTextureOceanImage` | Image ID |
-| `mapTextureOceanScale` | Texture scale |
-| `mapTextureOceanStyle` | Texture |
-| `mapTextureOceanTint` | Override texture color |
-| `mapTexturePreset` | Texture theme |
-| `mapTextureRockColor` | — |
-| `mapTextureRockColorRainbow` | Rainbow: Texture color |
-| `mapTextureRockImage` | Image ID |
-| `mapTextureRockScale` | Texture scale |
-| `mapTextureRockStyle` | Texture |
-| `mapTextureRockTint` | Override texture color |
-| `mapTextureSandColor` | — |
-| `mapTextureSandColorRainbow` | Rainbow: Texture color |
-| `mapTextureSandImage` | Image ID |
-| `mapTextureSandScale` | Texture scale |
-| `mapTextureSandStyle` | Texture |
-| `mapTextureSandTint` | Override texture color |
-| `mapTextureSnowColor` | — |
-| `mapTextureSnowColorRainbow` | Rainbow: Texture color |
-| `mapTextureSnowImage` | Image ID |
-| `mapTextureSnowScale` | Texture scale |
-| `mapTextureSnowStyle` | Texture |
-| `mapTextureSnowTint` | Override texture color |
-| `mapTextureWasteGrassColor` | — |
-| `mapTextureWasteGrassColorRainbow` | Rainbow: Texture color |
-| `mapTextureWasteGrassImage` | Image ID |
-| `mapTextureWasteGrassScale` | Texture scale |
-| `mapTextureWasteGrassStyle` | Texture |
-| `mapTextureWasteGrassTint` | Override texture color |
 | `mapWasteGrassColor` | — |
 | `mapWasteGrassColorRainbow` | Rainbow: Surface color |
 | `mapWasteGrassMaterial` | Material |

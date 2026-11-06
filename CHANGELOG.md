@@ -1,3 +1,7 @@
+# 3.2.2c — 2026-11-06
+
+- Removed custom map textures, texture presets/editor, binary downloads and PBR library. Standard Roblox materials/colors and classic palettes retained. Old texture config keys are ignored without discarding other settings.
+
 # 3.2.2b — 2026-11-06
 
 - Removed the rejected8 generated textures, their generator, old Roblox-map catalogue and all20 custom themes from the current release. Classic native materials and8 approved palettes remain.
