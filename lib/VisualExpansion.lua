@@ -11,7 +11,7 @@ return function(c)
         oceanColor="oceanAppearance",holeColor="holeSprite"}) do c.ColorOwners[key]=owner end
     for _,part in ipairs({"Head","Torso","LeftArm","RightArm","LeftLeg","RightLeg"}) do c.ColorOwners["body"..part.."Color"]="bodyAppearance" end
     local mapAppearance=c.LoadModule("MapAppearance")({Controls=v,Setters=c.Setters,Widgets=c.Widgets,Patches=c.Patches,
-        LoadModule=c.LoadModule,Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
+        AssetBase=c.MapAssetBase,MaterialService=game:GetService("MaterialService"),Make=make,Slider=slider,Field=field,ImageId=c.ImageId,Notify=c.Notify,Translate=c.Translate,Warn=c.WarnOnce,LoadModule=c.LoadModule,Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
         ColorOwners=c.ColorOwners,Panel=panel,Action=c.Action,TrackCleanup=c.TrackCleanup})
     local dead=false
     local objects,links={},{}

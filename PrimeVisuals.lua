@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2"
+local VERSION="3.2.2a"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","MapTextures","MapTextureCatalog","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -1004,6 +1004,72 @@ local function buildVisualSystems()
     ru["Obsidian"]="Обсидиан"
     ru["Arctic"]="Арктика"
     ru["Sakura"]="Сакура"
+    ru["Map appearance mode"]="Режим оформления карты"
+    ru["Classic materials"]="Стандартные материалы"
+    ru["Custom textures"]="Кастомные текстуры"
+    ru["Texture theme"]="Текстурный пресет"
+    ru["Image ID"]="ID изображения"
+    ru["Texture scale"]="Масштаб текстуры"
+    ru["Override texture color"]="Изменить цвет текстуры"
+    ru["Texture color"]="Цвет текстуры"
+    ru["Some custom images could not load; Roblox texture fallbacks are active."]="Часть изображений не загрузилась. Временно используются текстуры Roblox."
+    ru["Dreamcore"]="Дримкор"
+    ru["Rainbow World"]="Разноцветный мир"
+    ru["Rose Quartz"]="Розовый кварц"
+    ru["Neon Tokyo"]="Неоновый Токио"
+    ru["Cyberpunk"]="Киберпанк"
+    ru["Vaporwave"]="Вейпорвейв"
+    ru["Cotton Clouds"]="Воздушные облака"
+    ru["Candyland"]="Конфетный мир"
+    ru["Liminal Hotel"]="Лиминальный отель"
+    ru["Lunar Outpost"]="Лунная станция"
+    ru["Frozen Palace"]="Ледяной дворец"
+    ru["Volcanic Forge"]="Вулканическая кузница"
+    ru["Emerald Ruins"]="Изумрудные руины"
+    ru["Atlantis"]="Атлантида"
+    ru["Solar Desert"]="Солнечная пустыня"
+    ru["Space Arcade"]="Космическая аркада"
+    ru["Monochrome Lab"]="Монохромная лаборатория"
+    ru["Royal Amethyst"]="Королевский аметист"
+    ru["Enchanted Grove"]="Зачарованная роща"
+    ru["Retro Playground"]="Ретро-площадка"
+    ru["Dream checker"]="Дримкор-клетка"
+    ru["Arcade grid"]="Аркадная сетка"
+    ru["Circuit traces"]="Дорожки микросхем"
+    ru["Hologram hex"]="Голографические соты"
+    ru["Soft clouds"]="Мягкие облака"
+    ru["Rose pattern"]="Цветочный узор"
+    ru["Candy stripes"]="Конфетные полосы"
+    ru["Pixel stars"]="Пиксельные звёзды"
+    ru["Asphalt"]="Асфальт"
+    ru["Basalt"]="Базальт"
+    ru["Brick"]="Кирпич"
+    ru["Carpet"]="Ковёр"
+    ru["CeramicTiles"]="Керамическая плитка"
+    ru["Cobblestone"]="Брусчатка"
+    ru["Concrete"]="Бетон"
+    ru["CorrodedMetal"]="Ржавый металл"
+    ru["CrackedLava"]="Застывшая лава"
+    ru["DiamondPlate"]="Рифлёный металл"
+    ru["Fabric"]="Ткань"
+    ru["Glacier"]="Ледник"
+    ru["Granite"]="Гранит"
+    ru["Ground"]="Грунт"
+    ru["Ice"]="Лёд"
+    ru["LeafyGrass"]="Листва"
+    ru["Limestone"]="Известняк"
+    ru["Marble"]="Мрамор"
+    ru["Metal"]="Металл"
+    ru["Mud"]="Грязь"
+    ru["Pavement"]="Мощение"
+    ru["Pebble"]="Галька"
+    ru["Plaster"]="Штукатурка"
+    ru["Rubber"]="Резина"
+    ru["Salt"]="Соль"
+    ru["Sandstone"]="Песчаник"
+    ru["Slate"]="Сланец"
+    ru["Wood"]="Дерево"
+    ru["WoodPlanks"]="Доски"
     local Terrain=Workspace.Terrain
     local SoundService=game:GetService("SoundService")
     local jobs,owned,patches={}, {}, {}
@@ -2842,7 +2908,7 @@ local function buildVisualSystems()
         local lastWarning={}
         visualExpansion=loadUIModule("VisualExpansion")({
             Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
-            LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
+            MapAssetBase="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/map-textures/",LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             RefreshAvatarVisibility=function()avatarVisibility:Refresh()end,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,

@@ -1,3 +1,11 @@
+# 3.2.2a — 2026-11-06
+
+- Separated the map editor into Classic materials and Custom textures. Original material/color keys and8 palettes retained, default Classic mode preserves previous configuration. Shared compact settings show only selected mode/surface fields, plus a texture preview.
+- Added20 editable texture themes across41 texture choices: Dreamcore, Rainbow World, Rose Quartz, Neon Tokyo, Cyberpunk, Vaporwave, Cotton Clouds, Candyland, Liminal Hotel, Lunar Outpost, Frozen Palace, Volcanic Forge, Emerald Ruins, Atlantis, Solar Desert, Space Arcade, Monochrome Lab, Royal Amethyst, Enchanted Grove, Retro Playground.
+-33 documented Roblox PBR sets plus8 new authored512px procedural patterns. Texture mode uses local MaterialVariant instances with native BaseMaterial, does not change part materials/physics or global overrides. Per-surface image/style, tile scale1–64, tint/rainbow; configuration persistence. Existing mesh textures/decals/SurfaceAppearance temporarily layered away and restored, not destroyed.
+- Lazy pinned PNG downloads with local cache, bounded binary transport/request fallback and unload cancellation. If custom file APIs/images fail, use Roblox texture fallbacks and report once. Shared variants updated in place; streaming/map replacement/recreation handled.
+- Added66 persisted keys (586 total). All Lua compile;40 simulation scenarios /122 groups passed. Actual PBR/image rendering and asset access await user confirmation. Other3.2.2 features and shaders unchanged. Minecraft intentionally not included pending reference.
+
 # 3.2.2 — 2026-11-06
 
 - Expanded Custom Line with opt-in advanced styling: width .05–10, texture length .1–30, signed curve -20–20, transparency0–1, pulsing with speed .1–5 and strength0–1. Separate property layer restores native geometry/transparency when advanced mode, line, ownership or script is disabled. Native line geometry remains unchanged by default; own-beam origin filtering retained.
