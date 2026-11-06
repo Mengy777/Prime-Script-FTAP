@@ -1,0 +1,482 @@
+[
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Detailed Snow",
+      "Mossy Rock",
+      "Cliff Rock",
+      "Detailed Snow",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Alpine Expedition",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Forest Floor",
+      "Lush Forest Ground",
+      "Mossy Rock",
+      "Forest Floor",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Forest Sanctuary",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Coastal Sand",
+      "Old Cobblestone",
+      "Weathered Rock",
+      "Coastal Sand",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Tropical Coast",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "White Veined Marble",
+      "Pink Granite",
+      "Detailed White Plaster",
+      "White Veined Marble",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Dreamcore Atrium",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Old Cobblestone",
+      "Aged Timber",
+      "Weathered Brick",
+      "Old Cobblestone",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Medieval Town",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Industrial Steel",
+      "Blue Steel",
+      "Worn Concrete",
+      "Industrial Steel",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Industrial Hangar",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Weathered Brick",
+      "Mossy Brick",
+      "Aged Tiles",
+      "Weathered Brick",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Abandoned Factory",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Blue Steel",
+      "Sculpted Silver Plates",
+      "Black Veined Marble",
+      "Blue Steel",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Cyberpunk Station",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Aged Timber",
+      "Brown Leather",
+      "Weathered Rock",
+      "Aged Timber",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Timber Lodge",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Volcanic Stone",
+      "Black Veined Marble",
+      "Cliff Rock",
+      "Volcanic Stone",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Volcanic Citadel",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Jade Marble",
+      "Veined Stone Tiles",
+      "Mossy Brick",
+      "Jade Marble",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Emerald Temple",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Pink Terrazzo",
+      "Pink Granite",
+      "White Veined Marble",
+      "Pink Terrazzo",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Rose Quartz Palace",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Cliff Rock",
+      "Weathered Rock",
+      "Mossy Rock",
+      "Cliff Rock",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Deep Rock Cavern",
+    "Scale": 12
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Veined Stone Tiles",
+      "Terrazzo",
+      "Detailed White Plaster",
+      "Veined Stone Tiles",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Modern Art Gallery",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Terracotta",
+      "Coastal Sand",
+      "Orange Brick",
+      "Terracotta",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Terracotta Courtyard",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Road Asphalt",
+      "Decorative Steel",
+      "Worn Concrete",
+      "Road Asphalt",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Urban District",
+    "Scale": 10
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Sculpted Silver Plates",
+      "Industrial Steel",
+      "Decorative Steel",
+      "Sculpted Silver Plates",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Armored Foundry",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Festive Gilded Paper",
+      "Terracotta",
+      "Aged Timber",
+      "Festive Gilded Paper",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Festive Workshop",
+    "Scale": 8
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Colorful Spangles",
+      "Pink Terrazzo",
+      "White Veined Marble",
+      "Colorful Spangles",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Rainbow Atelier",
+    "Scale": 6
+  },
+  {
+    "Styles": [
+      "Detailed Snow",
+      "Coastal Sand",
+      "Blue Decorative Ceramic",
+      "Blue Ceramic",
+      "Mossy Brick",
+      "Blue Decorative Ceramic",
+      "Original",
+      "Forest Floor"
+    ],
+    "Colors": [
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff",
+      "ffffff"
+    ],
+    "Name": "Blue Porcelain Garden",
+    "Scale": 8
+  }
+]

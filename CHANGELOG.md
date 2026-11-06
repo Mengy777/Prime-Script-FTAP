@@ -1,3 +1,11 @@
+# 3.2.2b — 2026-11-06
+
+- Removed the rejected8 generated textures, their generator, old Roblox-map catalogue and all20 custom themes from the current release. Classic native materials and8 approved palettes remain.
+- Downloaded35 external PBR materials from3 libraries:20 Poly Haven,7 ambientCG,8 TextureCan.110 original1K map files (83.4MiB), covering albedo, OpenGL normal, roughness and optional metalness. Source/licence/byte count/SHA256 manifest and reproducible fetch/build tools included.
+- Rebuilt20 themes with20 different principal ground materials and supporting surface assignments; presets preserve natural albedo instead of recoloring one pattern. Compact per-surface editing and autosave retained. Removed style names migrate to Original and old theme selections migrate to the corresponding new recipe, preserving unrelated saved settings. Minecraft deferred, shaders unchanged.
+- Rebuilt image transport for multi-map PBR: three-worker lazy queue, JPEG/PNG support, verified local cache, HTTP/request retry and cancellation. Wait for all required maps before replacing a surface. Failed assets keep the native surface rather than silently using generic stock maps; Retry texture loading added. Restore original colors/decorations on pending/failure. Remove eight known rejected generated cache files when supported.
+-586 settings retained. All Lua compile;40 scenarios /123 groups pass, including required-map readiness, no fake fallback, bounded download workers, retry, persistence and restore. Every downloaded file hash/dimension verified. Actual FTAP lighting/PBR rendering and executor local-URI compatibility remain for user testing.
+
 # 3.2.2a — 2026-11-06
 
 - Separated the map editor into Classic materials and Custom textures. Original material/color keys and8 palettes retained, default Classic mode preserves previous configuration. Shared compact settings show only selected mode/surface fields, plus a texture preview.

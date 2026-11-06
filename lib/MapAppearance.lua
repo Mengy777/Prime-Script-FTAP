@@ -1,11 +1,11 @@
 -- Local map parts only. Cached classification never depends on our edited material.
 return function(c)
  local v=c.Controls local root,dead,enabled=nil,false,false local parts,links,buckets={},{},{}
- local updatePreview
+ local updatePreview,refresh
  local catalog=c.LoadModule("MapTextureCatalog")
  local textures=c.LoadModule("MapTextures")({Catalog=catalog,MaterialService=c.MaterialService,Patch=c.Patch,Unpatch=c.Unpatch,
   AssetBase=c.AssetBase,ImageId=c.ImageId,Notify=c.Notify,Translate=c.Translate,Warn=c.Warn,
-  OnReady=function()if updatePreview then updatePreview()end end})
+  OnReady=function()if not dead then if refresh then refresh()end if updatePreview then updatePreview()end end end})
  local categories={"Snow","Sand","Grass","LushGrass","Rock","WasteGrass","Ocean","Dirt"}
  local names={}for _,name in ipairs(categories)do names[name:lower()]=name end
  local materials={Snow="Snow",Sand="Sand",Grass="Grass",LeafyGrass="LushGrass",Rock="Rock",Slate="Rock",Ground="Dirt",Mud="Dirt"}
@@ -28,8 +28,8 @@ return function(c)
   if v.mapMode=="Custom textures"then
    c.Unpatch("mapMaterial",o)c.Unpatch("mapTint",o)
    local prefix="mapTexture"..key
-   textures:Apply(o,key,v[prefix.."Style"]or "Original",v[prefix.."Scale"]or 12,v[prefix.."Image"])
-   if v[prefix.."Tint"]and v[prefix.."Style"]~="Original"then c.Patch("mapTextureTint",o,"Color",v[prefix.."Color"])else c.Unpatch("mapTextureTint",o)end
+   local ready=textures:Apply(o,key,v[prefix.."Style"]or "Original",v[prefix.."Scale"]or 12,v[prefix.."Image"])
+   if ready and v[prefix.."Tint"]and v[prefix.."Style"]~="Original"then c.Patch("mapTextureTint",o,"Color",v[prefix.."Color"])else c.Unpatch("mapTextureTint",o)end
   else
    textures:Remove(o)c.Unpatch("mapTextureTint",o)
    local prefix="map"..key
@@ -44,7 +44,7 @@ return function(c)
  local function track(o)
   local key=classify(o)if key then parts[o]=key buckets[key]=buckets[key]or{}buckets[key][o]=true apply(o,key)end
  end
- local function refresh(category)
+ refresh=function(category)
   for o in pairs(category and(buckets[category]or{})or parts)do
    if not o.Parent or not o:IsDescendantOf(root)then forget(o)else apply(o,parts[o])end
   end
@@ -89,7 +89,7 @@ return function(c)
  for _,entry in ipairs(presets)do presetNames[#presetNames+1]=entry[1]end
  c.Choice(panel,"mapPreset","Map palette",presetNames,"Obsidian",function()end)
  local themeNames={}for _,theme in ipairs(catalog.Themes)do themeNames[#themeNames+1]=theme.Name end
- c.Choice(panel,"mapTexturePreset","Texture theme",themeNames,"Dreamcore",function()end)
+ c.Choice(panel,"mapTexturePreset","Texture theme",themeNames,catalog.Themes[1].Name,function()end,catalog.LegacyThemeAliases)
  c.Action(panel,"Apply map palette",function()
   if v.mapMode=="Custom textures"then
    for _,theme in ipairs(catalog.Themes)do if theme.Name==v.mapTexturePreset then
@@ -125,13 +125,14 @@ return function(c)
  for _,key in ipairs(categories)do
   local prefix="mapTexture"..key
   local function changed()refresh(key)updatePreview()end
-  c.Choice(panel,prefix.."Style","Texture",styleNames,"Original",function()changed()visible()end)
+  c.Choice(panel,prefix.."Style","Texture",styleNames,"Original",function()changed()visible()end,catalog.LegacyStyleAliases)
   c.Field(panel,prefix.."Image","Image ID","",changed)
   c.Slider(panel,prefix.."Scale","Texture scale",1,64,12,1,changed)
   c.Toggle(panel,prefix.."Tint","Override texture color",false,changed)
   c.ColorOwners[prefix.."Color"]=prefix.."Tint"
   c.Color(panel,prefix.."Color","Texture color",Color3.new(1,1,1),changed,changed)
  end
+ c.Action(panel,"Retry texture loading",function()textures:RetryFailed()end)
  c.Action(panel,"Reset map surfaces",function()
   for _,key in ipairs(categories)do c.Setters["mapTexture"..key.."ColorRainbow"](false,true)c.Setters["mapTexture"..key.."Tint"](false,true)c.Setters["mapTexture"..key.."Style"]("Original",true)c.Setters["map"..key.."Material"]("Original",true)c.Setters["map"..key.."Tint"](false,true)c.Setters["map"..key.."ColorRainbow"](false,true)end
  end)
