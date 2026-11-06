@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.2ac**, tag `v3.2.2ac`. Next normal runtime version: **3.2.2bc**. Consult Git for the release commit.
+- Published runtime target: **3.2.2bc**, tag `v3.2.2bc`. Next normal runtime version: **3.2.2abc**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -354,3 +354,6 @@ User removed all custom map textures/editor/themes. MapTextures/MapTextureCatalo
 
 ## 3.2.2ac input display
 InputOverlay.lua: Personalization/Input display toggle defaultoff; spatial WASD/E/Space/Shift/Ctrl + mouse L/R/middle and wheel directions. Read-only UIS input, processed events observed, dual modifier held state, exponential Color3 lerp, focus-loss clear. Drag commits final XY once, scale/opacity/3colors and their rainbow options persist. ScreenGui ResetOnSpawn=false, IgnoreGuiInset; viewport-clamped position. Cleanup in BOTH early and final VisualExpansion teardown.537 keys. No live rendering test.
+
+## 3.2.2bc navigation override
+User removed empty Prime Vortex category from Visuals. Freecam stays View. Standalone Vortex and Settings launcher unchanged. Proposed future mixed-function category name: Hybrids; do not add empty placeholder until actual feature request.

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2ac"
+local VERSION="3.2.2bc"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1169,7 +1169,6 @@ local function buildVisualSystems()
         {"ESP","scan-eye",{"ESP"}},
         {"FTAP","orbit",{"Tweaks"}},
         {"Personalization","palette",{"Personalization","Audio"}},
-        {"Prime Vortex","flame",{"Vortex"}},
         {"Settings","settings",{"Settings"}}
     }
     for _,category in ipairs(categories) do

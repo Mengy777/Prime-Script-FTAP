@@ -1,3 +1,7 @@
+# 3.2.2bc — 2026-11-06
+
+- Removed empty Prime Vortex sidebar category and unused navigation route. Freecam stays in View; standalone Vortex launcher unchanged.
+
 # 3.2.2ac — 2026-11-06
 
 - Added optional compact keyboard/mouse input display under Personalization. WASD/E/Space/Shift/Ctrl only; mouse left/right/middle buttons and separate wheel directions, smoothly animated press/release.

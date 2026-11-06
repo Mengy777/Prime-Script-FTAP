@@ -10,9 +10,9 @@ assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera')
 assert(TEST_GROUPS['Camera tools'].NavigationCategory=='View')
 assert(TEST_OPTIONS.freeCameraEnabled and TEST_OPTIONS.freeCameraSpeed)
 for _,g in pairs(TEST_GROUPS)do assert(g.NavigationCategory~='Prime Vortex','Prime Vortex should remain empty')end
-assert(TEST_TAB_OBJECTS['Prime Vortex'],'empty Prime Vortex tab was removed')
+assert(not TEST_TAB_OBJECTS['Prime Vortex'],'removed Prime Vortex tab remains')
 """)
-print('PASS merged sections display all cards without section bars; Freecam moved to View camera tools and Prime Vortex remains empty')
+print('PASS merged sections display all cards without section bars; Freecam moved to View camera tools and Prime Vortex tab removed')
 lua.execute('TEST_DRAIN()')
 before=D.writes
 lua.execute(r"""
