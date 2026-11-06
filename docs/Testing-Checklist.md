@@ -1,3 +1,10 @@
+# 3.2.2ac input display — pending user test
+
+- Personalization: enable Keyboard and mouse (default off); check WASD/E/Space, both Shift/Ctrl sides.
+- Check LMB/RMB/middle press and scroll both ways; smooth release, no stuck highlight after alt-tab.
+- Drag by background, resize, change three colors/opacity; reload and verify exact saved layout.
+- Disable/unload hides/removes panel; movement and mouse game actions continue normally.
+
 # 3.2.2c removal check
 
 - Custom texture editor/themes absent.

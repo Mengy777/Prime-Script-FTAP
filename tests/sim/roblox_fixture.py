@@ -30,7 +30,7 @@ UDim={new=function(s,o) return {Scale=s or 0,Offset=o or 0} end}
 UDim2={new=function(xs,xo,ys,yo) return {X=UDim.new(xs,xo),Y=UDim.new(ys,yo)} end}
 UDim2.fromOffset=function(x,y) return UDim2.new(0,x,0,y) end
 UDim2.fromScale=function(x,y) return UDim2.new(x,0,y,0) end
-Color3={new=function(r,g,b) return {R=r or 0,G=g or 0,B=b or 0} end}
+Color3={new=function(r,g,b) return {R=r or 0,G=g or 0,B=b or 0,Lerp=function(a,b,t)return Color3.new(a.R+(b.R-a.R)*t,a.G+(b.G-a.G)*t,a.B+(b.B-a.B)*t)end} end}
 Color3.fromRGB=function(r,g,b) return Color3.new(r/255,g/255,b/255) end
 Color3.fromHSV=function() return Color3.new(1,0,1) end
 for _,n in ipairs({'NumberRange','NumberSequence','ColorSequence'}) do _G[n]={new=function(...) return {...} end} end
@@ -178,7 +178,7 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
+for module in ("InputOverlay","CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
  lua.globals().TEST_VISUAL_SOURCE=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  lua.execute("local source=TEST_VISUAL_SOURCE; local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('"+module+".lua',1,true) then return source end return previous(self,url) end")
 

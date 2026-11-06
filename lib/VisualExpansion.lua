@@ -13,11 +13,13 @@ return function(c)
     local mapAppearance=c.LoadModule("MapAppearance")({Controls=v,Setters=c.Setters,Widgets=c.Widgets,Patches=c.Patches,
         Make=make,Slider=slider,Field=field,ImageId=c.ImageId,Notify=c.Notify,Translate=c.Translate,Warn=c.WarnOnce,LoadModule=c.LoadModule,Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
         ColorOwners=c.ColorOwners,Panel=panel,Action=c.Action,TrackCleanup=c.TrackCleanup})
+    local inputOverlay=c.LoadModule("InputOverlay")(c)
     local dead=false
     local objects,links={},{}
     local teardown=function()
         dead=true
         mapAppearance:Destroy()
+        inputOverlay:Destroy()
         for con in pairs(links) do pcall(function() con:Disconnect() end) end
         for o in pairs(objects) do pcall(function() o:Destroy() end) end
         pcall(function() R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end)
@@ -939,6 +941,7 @@ return function(c)
     teardown=function()
         if dead then return end dead=true
         mapAppearance:Destroy()
+        inputOverlay:Destroy()
         endFree() stopSpectate()
         if bound then R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end
         for con in pairs(links) do con:Disconnect() end links={}

@@ -1,6 +1,6 @@
-# Инвентарь Prime Visuals 3.2.2ab
+# Инвентарь Prime Visuals 3.2.2ac
 
-Снимок2026-11-06: **522 сохраняемых настроек**. Фактический реестр симуляции.
+Снимок2026-11-06: **537 сохраняемых настроек**. Фактический реестр симуляции.
 
 | Ключ | Подпись |
 | --- | --- |
@@ -526,3 +526,18 @@
 | `waterWaves` | Wave size |
 | `playerSessionNotifications` | Player join / leave notifications |
 | `bind_playerSessionNotifications` | Key |
+| `inputOverlayEnabled` | Keyboard and mouse |
+| `bind_inputOverlayEnabled` | Key |
+| `inputOverlayScale` | Size |
+| `inputOverlayTransparency` | Background transparency |
+| `inputOverlayX` | Horizontal position |
+| `inputOverlayY` | Vertical position |
+| `inputOverlayAccent` | Pressed keys |
+| `inputOverlayAccentRainbow` | Rainbow: Pressed keys |
+| `bind_inputOverlayAccentRainbow` | Key |
+| `inputOverlayBackground` | Panel background |
+| `inputOverlayBackgroundRainbow` | Rainbow: Panel background |
+| `bind_inputOverlayBackgroundRainbow` | Key |
+| `inputOverlayText` | Key text |
+| `inputOverlayTextRainbow` | Rainbow: Key text |
+| `bind_inputOverlayTextRainbow` | Key |

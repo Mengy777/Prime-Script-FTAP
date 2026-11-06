@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2ab"
+local VERSION="3.2.2ac"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -1033,6 +1033,13 @@ local function buildVisualSystems()
     ru["Slate"]="Сланец"
     ru["Wood"]="Дерево"
     ru["WoodPlanks"]="Доски"
+    ru["Input display"]="Отображение нажатий"
+    ru["Keyboard and mouse"]="Клавиатура и мышь"
+    ru["Pressed keys"]="Нажатые клавиши"
+    ru["Panel background"]="Фон панели"
+    ru["Key text"]="Текст клавиш"
+    ru["Horizontal position"]="Положение по горизонтали"
+    ru["Vertical position"]="Положение по вертикали"
     local Terrain=Workspace.Terrain
     local SoundService=game:GetService("SoundService")
     local jobs,owned,patches={}, {}, {}

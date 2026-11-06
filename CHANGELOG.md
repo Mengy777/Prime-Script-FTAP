@@ -1,3 +1,9 @@
+# 3.2.2ac — 2026-11-06
+
+- Added optional compact keyboard/mouse input display under Personalization. WASD/E/Space/Shift/Ctrl only; mouse left/right/middle buttons and separate wheel directions, smoothly animated press/release.
+- Drag to reposition; configurable size, background opacity and pressed/text/background colors with existing rainbow controls. Autosave/config slots preserve appearance and position. Default disabled; no input sinking/game bindings. Focus loss clears held keys; unload removes screen and listeners.
+- Compilation and mocked input/config/lifecycle regressions checked; actual appearance and interaction need live FTAP confirmation.
+
 # 3.2.2ab — 2026-11-06
 
 - Optional player join/leave notifications in Settings > Interface; disabled by default, persisted in profiles. Display name and username, Russian/English messages, no initial roster spam; listeners disconnect on unload.
