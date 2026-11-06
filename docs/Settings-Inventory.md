@@ -1,6 +1,6 @@
-# Инвентарь Prime Visuals 3.2.2c
+# Инвентарь Prime Visuals 3.2.2ab
 
-Снимок2026-11-06: **520 сохраняемых настроек**. Фактический реестр симуляции.
+Снимок2026-11-06: **522 сохраняемых настроек**. Фактический реестр симуляции.
 
 | Ключ | Подпись |
 | --- | --- |
@@ -524,3 +524,5 @@
 | `waterSolid` | Non-swimmable water |
 | `waterSpeed` | Wave speed |
 | `waterWaves` | Wave size |
+| `playerSessionNotifications` | Player join / leave notifications |
+| `bind_playerSessionNotifications` | Key |

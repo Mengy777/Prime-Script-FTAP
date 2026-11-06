@@ -1,3 +1,7 @@
+# 3.2.2ab — 2026-11-06
+
+- Optional player join/leave notifications in Settings > Interface; disabled by default, persisted in profiles. Display name and username, Russian/English messages, no initial roster spam; listeners disconnect on unload.
+
 # 3.2.2c — 2026-11-06
 
 - Removed custom map textures, texture presets/editor, binary downloads and PBR library. Standard Roblox materials/colors and classic palettes retained. Old texture config keys are ignored without discarding other settings.

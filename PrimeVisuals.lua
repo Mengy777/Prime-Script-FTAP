@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2c"
+local VERSION="3.2.2ab"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2750,6 +2750,17 @@ local function buildVisualSystems()
     do
         local g=group("Settings","Interface",1)
         toggle(g,"uiActionNotifications","Action notifications",true,function()end)
+        ru["Player join / leave notifications"]="Уведомления о входе и выходе игроков"
+        toggle(g,"playerSessionNotifications","Player join / leave notifications",false,function()end)
+        local function sessionNotice(p,joined)
+            if not controls.playerSessionNotifications or p==player then return end
+            local username=tostring(p.Name)
+            local display=p.DisplayName or username
+            local label=display~=username and(display.." (@"..username..")")or("@"..username)
+            notify(label..(uiLanguage=="ru"and(joined and" зашёл на сервер"or" вышел с сервера")or(joined and" joined the server"or" left the server")))
+        end
+        listen(Players.PlayerAdded,function(p)sessionNotice(p,true)end)
+        listen(Players.PlayerRemoving,function(p)sessionNotice(p,false)end)
         choice(g,"uiLanguage","Language",{"English","Русский"},"English",function(value)
             setLanguage(value=="Русский" and "ru" or "en")
         end)
