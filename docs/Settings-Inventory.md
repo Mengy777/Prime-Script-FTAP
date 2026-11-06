@@ -1,6 +1,6 @@
-# Инвентарь Prime Visuals 3.2.1abcf
+# Инвентарь Prime Visuals 3.2.2
 
-Снимок 2026-11-05: **482 сохраняемых настройки**. Проверено по фактическому реестру в симуляции.
+Снимок 2026-11-06: **520 сохраняемых настроек**. Проверено по фактическому реестру в симуляции.
 
 | Ключ | Подпись |
 | --- | --- |
@@ -11,7 +11,9 @@
 | `bhImageEnabled` | Custom image |
 | `bhSound` | Audio ID / MP3 link |
 | `bhSoundEnabled` | Custom sound |
+| `bhSoundGain` | Category volume |
 | `bhSoundPreset` | Sound preset |
+| `bhSoundSpeed` | Playback speed |
 | `bhStay` | Keep visual blackholes |
 | `bhTintEnabled` | Custom color |
 | `bind_antiKickEnabled` | Key |
@@ -93,10 +95,12 @@
 | `bind_lightShadows` | Key |
 | `bind_lightTintRainbow` | Key |
 | `bind_lightUpperRainbow` | Key |
+| `bind_lineAdvanced` | Key |
 | `bind_lineEnabled` | Key |
 | `bind_lineGradient` | Key |
 | `bind_lineGradientEndRainbow` | Key |
 | `bind_lineGradientStartRainbow` | Key |
+| `bind_linePulse` | Key |
 | `bind_lineRainbow` | Key |
 | `bind_mannequinEnabled` | Key |
 | `bind_mannequinGrab` | Key |
@@ -212,6 +216,7 @@
 | `crossEnabled` | Custom crosshair |
 | `crossImage` | Image |
 | `crossSize` | Size |
+| `crossStyle` | Crosshair preset |
 | `deathDustEnabled` | Disintegration dust |
 | `espAllPlayers` | All players |
 | `espPlayers` | Players |
@@ -323,7 +328,10 @@
 | `lightTintRainbow` | Rainbow: Tint |
 | `lightUpper` | — |
 | `lightUpperRainbow` | Rainbow: Upper light color |
+| `lineAdvanced` | Advanced line styling |
+| `lineAlpha` | Line transparency |
 | `lineColor` | — |
+| `lineCurve` | Line curve |
 | `lineEnabled` | Grab line style |
 | `lineGradient` | Gradient |
 | `lineGradientEnd` | — |
@@ -331,9 +339,14 @@
 | `lineGradientStart` | — |
 | `lineGradientStartRainbow` | Rainbow: Gradient start |
 | `lineImage` | Custom image |
+| `linePulse` | Pulse transparency |
+| `linePulseAmount` | Pulse strength |
+| `linePulseSpeed` | Pulse speed |
 | `lineRainbow` | Rainbow |
 | `lineSpeed` | Texture speed |
 | `lineTexture` | Texture |
+| `lineTextureLength` | Texture length |
+| `lineWidth` | Line width |
 | `mannequinEnabled` | Local mannequins |
 | `mannequinGrab` | Local grab |
 | `mannequinName` | Roblox username |
@@ -356,6 +369,7 @@
 | `mapOceanColorRainbow` | Rainbow: Surface color |
 | `mapOceanMaterial` | Material |
 | `mapOceanTint` | Override surface color |
+| `mapPreset` | Map palette |
 | `mapRockColor` | — |
 | `mapRockColorRainbow` | Rainbow: Surface color |
 | `mapRockMaterial` | Material |
@@ -418,6 +432,18 @@
 | `replaceAudioRhythm` | Audio ID or Roblox link |
 | `replaceAudioScreams` | Audio ID or Roblox link |
 | `replaceAudioSoundwaves` | Audio ID or Roblox link |
+| `replaceGainAmbience` | Category volume |
+| `replaceGainBoomboxes` | Category volume |
+| `replaceGainDeath` | Category volume |
+| `replaceGainExplosions` | Category volume |
+| `replaceGainFootsteps` | Category volume |
+| `replaceGainGrab` | Category volume |
+| `replaceGainInstruments` | Category volume |
+| `replaceGainJump` | Category volume |
+| `replaceGainNamed` | Category volume |
+| `replaceGainRhythm` | Category volume |
+| `replaceGainScreams` | Category volume |
+| `replaceGainSoundwaves` | Category volume |
 | `replacePresetAmbience` | Sound preset |
 | `replacePresetBoomboxes` | Sound preset |
 | `replacePresetDeath` | Sound preset |
@@ -432,6 +458,18 @@
 | `replacePresetSoundwaves` | Sound preset |
 | `replaceSoundCategory` | Sound category |
 | `replaceSoundName` | Exact sound name |
+| `replaceSpeedAmbience` | Playback speed |
+| `replaceSpeedBoomboxes` | Playback speed |
+| `replaceSpeedDeath` | Playback speed |
+| `replaceSpeedExplosions` | Playback speed |
+| `replaceSpeedFootsteps` | Playback speed |
+| `replaceSpeedGrab` | Playback speed |
+| `replaceSpeedInstruments` | Playback speed |
+| `replaceSpeedJump` | Playback speed |
+| `replaceSpeedNamed` | Playback speed |
+| `replaceSpeedRhythm` | Playback speed |
+| `replaceSpeedScreams` | Playback speed |
+| `replaceSpeedSoundwaves` | Playback speed |
 | `revealInvisible` | Reveal hidden players |
 | `selfESP` | Own outline |
 | `selfESPColor` | — |

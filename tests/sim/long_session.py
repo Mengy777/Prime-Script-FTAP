@@ -45,7 +45,7 @@ for i=1,60 do
  TEST_DRAIN()
  TEST_TICK(1.01)
  assert(BEAM.Texture==EXPECTED and BEAM.Segments==3,'respawn lost line')
- assert(TEST_LISTENERS(BEAM)==4,'duplicate beam listeners')
+ assert(TEST_LISTENERS(BEAM)==10,'duplicate beam listeners')
  BEAM.Texture='game rewrite';BEAM.TextureSpeed=-8
  assert(BEAM.Texture==EXPECTED and BEAM.TextureSpeed==1,'late rewrite not repaired')
 end
@@ -55,7 +55,7 @@ LIVE.Name='GrabParts';TEST_TICK(1.01)
 assert(BEAM.Texture==EXPECTED,'renamed nested scope did not recover')
 local before=BEAM.Color.Keypoints[1].Value.R
 for i=1,1800 do TEST_TICK(0.2) end
-assert(BEAM.Texture==EXPECTED and BEAM.Color.Keypoints[1].Value.R~=before and TEST_LISTENERS(BEAM)==4)
+assert(BEAM.Texture==EXPECTED and BEAM.Color.Keypoints[1].Value.R~=before and TEST_LISTENERS(BEAM)==10)
 TEST_OPTIONS.lineRainbow:SetValue(false)
 local red=Color3.new(1,0,0);TEST_OPTIONS.lineColor:SetValueRGB(red)
 BEAM.Texture='temporary conflicting hook'

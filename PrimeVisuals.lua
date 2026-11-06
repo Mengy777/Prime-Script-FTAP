@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.1abcf"
+local VERSION="3.2.2"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -976,6 +976,34 @@ local function buildVisualSystems()
     ru["Death shout"]="Предсмертный возглас"
     ru["Sparkle chime"]="Звон искр"
     ru["Glitch zap"]="Электронный разряд"
+    ru["Advanced line styling"]="Расширенное оформление линии"
+    ru["Line width"]="Толщина линии"
+    ru["Texture length"]="Длина текстуры"
+    ru["Line curve"]="Изгиб линии"
+    ru["Line transparency"]="Прозрачность линии"
+    ru["Pulse transparency"]="Пульсация прозрачности"
+    ru["Pulse speed"]="Скорость пульсации"
+    ru["Pulse strength"]="Сила пульсации"
+    ru["Crosshair preset"]="Пресет прицела"
+    ru["Custom image"]="Своя картинка"
+    ru["Precision dot"]="Точная точка"
+    ru["Halo"]="Ореол"
+    ru["Tactical cross"]="Тактический крест"
+    ru["Diamond sight"]="Ромб"
+    ru["Target ring"]="Кольцо с рисками"
+    ru["Corner brackets"]="Угловые скобки"
+    ru["Map palette"]="Палитра карты"
+    ru["Apply map palette"]="Применить палитру карты"
+    ru["Category volume"]="Громкость категории"
+    ru["Playback speed"]="Скорость воспроизведения"
+    ru["Cyber Violet"]="Киберфиолетовый"
+    ru["Solar Ember"]="Солнечные угли"
+    ru["Moonstone"]="Лунный камень"
+    ru["Emerald"]="Изумруд"
+    ru["Candy Circuit"]="Конфетная схема"
+    ru["Obsidian"]="Обсидиан"
+    ru["Arctic"]="Арктика"
+    ru["Sakura"]="Сакура"
     local Terrain=Workspace.Terrain
     local SoundService=game:GetService("SoundService")
     local jobs,owned,patches={}, {}, {}
@@ -2206,6 +2234,7 @@ local function buildVisualSystems()
         crossImage=make("ImageLabel",{Name="Crosshair",AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromOffset(28,28),Image="rbxassetid://9943168532",BackgroundTransparency=1},crossGui)
     end
     ensureCrosshair()
+    startup.CrosshairStyles=loadUIModule("CrosshairStyles")(make)
     local function crosshair(on)
         ensureCrosshair()
         crossGui.Enabled=on and not menuOpen
@@ -2214,6 +2243,8 @@ local function buildVisualSystems()
         crossImage.Image=imageId(controls.crossImage or "9943168532")
         crossImage.Size=UDim2.fromOffset(controls.crossSize or 28,controls.crossSize or 28)
         crossImage.ImageColor3=controls.crossColor or white
+        crossImage.ImageTransparency=(controls.crossStyle or "Custom image")=="Custom image"and 0 or 1
+        startup.CrosshairStyles:Draw(crossImage,controls.crossStyle or "Custom image",controls.crossColor or white)
         local gameCross=playerGui:FindFirstChild("Crosshairs")
         if gameCross and gameCross:IsA("ScreenGui") then
             patch("crosshair",gameCross,"Enabled",false)
@@ -2240,7 +2271,8 @@ local function buildVisualSystems()
     end
     local function sameLineValue(property,current,wanted)
         if current==wanted then return true end
-        if property~="Color" then return false end
+        if current==nil or wanted==nil then return false end
+        if property~="Color"and property~="Transparency"then return false end
         local a,b=current.Keypoints,wanted.Keypoints
         if not a or not b or #a~=#b then return false end
         for i,point in ipairs(a) do if point.Time~=b[i].Time or point.Value~=b[i].Value then return false end end
@@ -2286,7 +2318,7 @@ local function buildVisualSystems()
         for _,connection in ipairs(lineSignals[beam] or {}) do connection:Disconnect() end
         lineSignals[beam]=nil lineBeams[beam]=nil
         if alive and controls.lineEnabled and beam:IsDescendantOf(Workspace) then pendingBeams[beam]=true end
-        unpatch("line",beam)
+        unpatch("line",beam)unpatch("lineShape",beam)
     end
     local function enforceBeam(beam,entry)
         if not alive or not controls.lineEnabled then return true end
@@ -2300,6 +2332,11 @@ local function buildVisualSystems()
             for property,value in pairs(lineDesired) do
                 if not sameLineValue(property,beam[property],value) then patch("line",beam,property,value) end
             end
+            if controls.lineAdvanced then
+                for property,value in pairs(startup.LineShape or {})do
+                    if not sameLineValue(property,beam[property],value)then patch("lineShape",beam,property,value)end
+                end
+            else unpatch("lineShape",beam)end
         end)
         entry.applying=false
         if not ok then error(message,0) end
@@ -2312,7 +2349,7 @@ local function buildVisualSystems()
         if not entry then
             entry={applying=false} lineBeams[beam]=entry
             local signals={} lineSignals[beam]=signals
-            for _,property in ipairs({"Texture","Color","TextureSpeed","Attachment0"}) do
+            for _,property in ipairs({"Texture","Color","TextureSpeed","Attachment0","Width0","Width1","TextureLength","CurveSize0","CurveSize1","Transparency"}) do
                 table.insert(signals,beam:GetPropertyChangedSignal(property):Connect(function()
                     if entry.applying or not alive or not controls.lineEnabled then return end
                     if property=="Attachment0"and not ownGrabBeam(beam)then releaseBeam(beam)return end
@@ -2342,11 +2379,14 @@ local function buildVisualSystems()
     local function applyLine()
         if not controls.lineEnabled then
             job("Grab line") job("Grab line lifecycle")
-            clearLineSignals() unpatch("line")
+            clearLineSignals() unpatch("line")unpatch("lineShape")
             return
         end
         lineDesired={Texture=lineTextures[controls.lineTexture] or imageId(controls.lineImage),
             Color=controls.lineRainbow and lineRainbowColor() or (controls.lineGradient and ColorSequence.new(controls.lineGradientStart or white,controls.lineGradientEnd or purple) or ColorSequence.new(controls.lineColor or white)),TextureSpeed=controls.lineSpeed or 1}
+        startup.LineShape={Width0=controls.lineWidth or 1,Width1=controls.lineWidth or 1,TextureLength=controls.lineTextureLength or 2,
+            CurveSize0=controls.lineCurve or 0,CurveSize1=-(controls.lineCurve or 0),Segments=32,FaceCamera=true,
+            Transparency=NumberSequence.new(controls.lineAlpha or 0)}
         if not lineRunning then
             lineRunning=true
             -- Full discovery only on enable/reload; ongoing recovery scans known grab scopes.
@@ -2362,10 +2402,14 @@ local function buildVisualSystems()
             job("Grab line lifecycle",Run.Heartbeat,function(dt)
                 recoveryElapsed=recoveryElapsed+dt enforceElapsed=enforceElapsed+dt
                 if recoveryElapsed>=1 then recoveryElapsed=recoveryElapsed%1 discoverLines(false) end
-                local interval=controls.lineRainbow and 1/30 or 0.1
+                local interval=(controls.lineRainbow or(controls.lineAdvanced and controls.linePulse))and 1/30 or 0.1
                 if enforceElapsed<interval then return end
                 enforceElapsed=enforceElapsed%interval
                 if controls.lineRainbow then lineDesired.Color=lineRainbowColor() end
+                if controls.lineAdvanced and controls.linePulse then
+                    local wave=(math.sin(os.clock()*(controls.linePulseSpeed or 1)*math.pi*2)+1)*.5
+                    startup.LineShape.Transparency=NumberSequence.new(math.clamp((controls.lineAlpha or 0)+(1-(controls.lineAlpha or 0))*(controls.linePulseAmount or .6)*wave,0,1))
+                end
                 for beam,entry in pairs(lineBeams) do
                     local ok,valid=pcall(enforceBeam,beam,entry)
                     if ok and not valid then releaseBeam(beam) end
@@ -2431,7 +2475,12 @@ local function buildVisualSystems()
                                 if o.Name=="Small" then patch("blackhole",o,"Visible",false) end
                             end
                             if controls.bhTintEnabled then patch("blackhole",o,"ImageColor3",controls.bhColor or white) end
-                        elseif o:IsA("Sound") and controls.bhSoundEnabled then patch("bhsound",o,"SoundId",controls.bhSoundResolved or imageId(controls.bhSound or "1843529634")) end
+                        elseif o:IsA("Sound") and controls.bhSoundEnabled then
+                            patch("bhsound",o,"SoundId",controls.bhSoundResolved or imageId(controls.bhSound or "1843529634"))
+                            local properties=patches[o]or{} local volume=properties.Volume and properties.Volume.original or o.Volume or 1
+                            local speed=properties.PlaybackSpeed and properties.PlaybackSpeed.original or o.PlaybackSpeed or 1
+                            patch("bhsound",o,"Volume",math.clamp(volume*(controls.bhSoundGain or 1),0,10))patch("bhsound",o,"PlaybackSpeed",speed*(controls.bhSoundSpeed or 1))
+                        end
                     end
                     if controls.bhImageEnabled and hole:IsA("BasePart") then patch("blackhole",hole,"Transparency",1) end
                     if controls.bhStay and model.Name=="BlackHoleKick" and not bhClones[model] then
@@ -2477,6 +2526,14 @@ local function buildVisualSystems()
         color(lineSettings,"lineGradientStart","Gradient start",white,applyLine)
         color(lineSettings,"lineGradientEnd","Gradient end",purple,applyLine)
         sliderControl(lineSettings,"lineSpeed","Texture speed",-10,10,1,0.25,applyLine)
+        toggle(lineSettings,"lineAdvanced","Advanced line styling",false,applyLine)
+        sliderControl(lineSettings,"lineWidth","Line width",.05,10,1,.05,applyLine)
+        sliderControl(lineSettings,"lineTextureLength","Texture length",.1,30,2,.1,applyLine)
+        sliderControl(lineSettings,"lineCurve","Line curve",-20,20,0,.1,applyLine)
+        sliderControl(lineSettings,"lineAlpha","Line transparency",0,1,0,.01,applyLine)
+        toggle(lineSettings,"linePulse","Pulse transparency",false,applyLine)
+        sliderControl(lineSettings,"linePulseSpeed","Pulse speed",.1,5,1,.1,applyLine)
+        sliderControl(lineSettings,"linePulseAmount","Pulse strength",0,1,.6,.01,applyLine)
         toggle(g,"grabInfo","Grabbed object info",false,function(on)
             grabbedInfo.Enabled=on job("Grab info")
             if on then
@@ -2488,9 +2545,19 @@ local function buildVisualSystems()
         toggle(h,"crossEnabled","Custom crosshair",false,crosshair)
         h=featureSettings("crossEnabled")
         local function update() if controls.crossEnabled then crosshair(true) end end
-        field(h,"crossImage","Image","9943168532",update)
-        color(h,"crossColor","Color",white,update,function(value) crossImage.ImageColor3=value end)
-        sliderControl(h,"crossSize","Size",8,128,28,1,update)
+        local previewRow=h:AddImage("crossPreview",{Image="rbxassetid://9943168532",Height=68,Transparency=1})
+        local preview=make("ImageLabel",{Name="PV_CrossPreview",BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(40,40),ZIndex=((previewRow.Holder or previewRow.ImageLabel).ZIndex or 1)+2},previewRow.Holder or previewRow.ImageLabel)
+        local function updateStyle()
+            preview.Image=imageId(controls.crossImage or "9943168532")preview.ImageColor3=controls.crossColor or white
+            preview.ImageTransparency=(controls.crossStyle or "Custom image")=="Custom image"and 0 or 1
+            startup.CrosshairStyles:Draw(preview,controls.crossStyle or "Custom image",controls.crossColor or white)
+            update()
+        end
+        choice(h,"crossStyle","Crosshair preset",{"Custom image","Precision dot","Halo","Tactical cross","Diamond sight","Target ring","Corner brackets"},"Custom image",updateStyle)
+        field(h,"crossImage","Image","9943168532",updateStyle)
+        color(h,"crossColor","Color",white,updateStyle,function(value) crossImage.ImageColor3=value startup.CrosshairStyles:Draw(crossImage,controls.crossStyle or "Custom image",value)preview.ImageColor3=value startup.CrosshairStyles:Draw(preview,controls.crossStyle or "Custom image",value)end)
+        sliderControl(h,"crossSize","Size",8,128,28,1,updateStyle)
+        updateStyle()
         local coinGroup=group("Personalization","Game interface",2)
         coinIcon=loadUIModule("CoinIcon")({PlayerGui=playerGui,Run=Run,Patch=patch,Unpatch=unpatch,
             TrackCleanup=function(fn)coinIcon={Destroy=fn}end})
@@ -2534,9 +2601,10 @@ local function buildVisualSystems()
         for o,c in pairs(mutedSounds) do c:Disconnect() mutedSounds[o]=nil end
         unpatch("mutes")
         local active=false for name in pairs(mutePredicates) do if controls["mute"..name] then active=true break end end
-        if not active then return end
+        if not active then if soundOverrides then soundOverrides:Refresh()end return end
         scan(Workspace,muteSound)
         job("New audio",Workspace.DescendantAdded,muteSound)
+        if soundOverrides then soundOverrides:Refresh()end
     end
     local function resolveSound(value)
         if not tostring(value):match("^https?://") or tostring(value):find("roblox.com",1,true) then return imageId(value) end
@@ -2572,6 +2640,7 @@ local function buildVisualSystems()
         end
         soundOverrides=loadUIModule("SoundOverrides")({Roots={Workspace,playerGui,game:GetService("SoundService")},Run=Run,Patch=patch,Unpatch=unpatch,Patches=patches,
             Categories=soundCategories,Matches=soundMatch,Resolve=imageId,Make=make,SoundRoot=game:GetService("SoundService"),OwnBeam=ownGrabBeam,
+            IsMuted=function(o)for key,predicate in pairs(mutePredicates)do if controls["mute"..key]and predicate(o)then return true end end return false end,
             Notify=notify,Translate=function(text)return uiLanguage=="ru"and(ru[text]or text)or text end,TrackCleanup=function(fn)soundOverrides={Destroy=fn}end})
         local audioGroup=group("Audio","Sound replacements",1)
         toggle(audioGroup,"soundReplaceEnabled","Custom game sounds",false,function(on)soundOverrides:SetEnabled(on)end)
@@ -2588,9 +2657,9 @@ local function buildVisualSystems()
         local function showSoundFields()
             local selected=selectedCategory()
             for _,key in ipairs(soundCategories)do
-                for _,prefix in ipairs({"replaceAudio","replacePreset"})do
+                for _,prefix in ipairs({"replaceAudio","replacePreset","replaceGain","replaceSpeed"})do
                     local widget=widgets[prefix..key]
-                    if widget and widget.SetVisible then widget:SetVisible(key==selected and(prefix=="replacePreset"or(controls["replacePreset"..key]or "Custom")=="Custom"))end
+                    if widget and widget.SetVisible then widget:SetVisible(key==selected and(prefix~="replaceAudio"or(controls["replacePreset"..key]or "Custom")=="Custom"))end
                 end
             end
             if widgets.replaceSoundName and widgets.replaceSoundName.SetVisible then widgets.replaceSoundName:SetVisible(selected=="Named")end
@@ -2607,12 +2676,15 @@ local function buildVisualSystems()
                 soundOverrides:SetReplacement(category,resolved(category))
                 if resolved(category)~=""then startup.Notice("Sound replacement saved","Настройка звука сохранена")end
             end)
+            local function tune()soundOverrides:SetTuning(category,controls["replaceGain"..category],controls["replaceSpeed"..category])end
+            sliderControl(soundPanel,"replaceGain"..category,"Category volume",0,2,1,.05,tune)
+            sliderControl(soundPanel,"replaceSpeed"..category,"Playback speed",.25,3,1,.05,tune)
         end
         showSoundFields()
         action(soundPanel,"Preview selected sound",function()
             local value=resolved(selectedCategory())
             if value==""then notify(uiLanguage=="ru"and "Сначала выбери пресет или укажи ID"or "Choose a preset or enter an audio ID first")return end
-            soundOverrides:Preview(value)
+            soundOverrides:Preview(value,selectedCategory())
         end)
         action(soundPanel,"Stop sound preview",function()soundOverrides:StopPreview()end)
         action(soundPanel,"Clear selected sound",function()
@@ -2642,6 +2714,8 @@ local function buildVisualSystems()
         h=featureSettings("bhSoundEnabled")
         choice(h,"bhSoundPreset","Sound preset",{"Custom","Space explosion","Synth pulse"},"Custom",refreshBlackholeAudio)
         field(h,"bhSound","Audio ID / MP3 link","1843529634",refreshBlackholeAudio)
+        sliderControl(h,"bhSoundGain","Category volume",0,2,1,.05,blackholeLoop)
+        sliderControl(h,"bhSoundSpeed","Playback speed",.25,3,1,.05,blackholeLoop)
     end
     -- Final category architecture: six clear sections with remembered subtabs.
     do

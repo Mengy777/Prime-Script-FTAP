@@ -11,7 +11,7 @@ return function(c)
         oceanColor="oceanAppearance",holeColor="holeSprite"}) do c.ColorOwners[key]=owner end
     for _,part in ipairs({"Head","Torso","LeftArm","RightArm","LeftLeg","RightLeg"}) do c.ColorOwners["body"..part.."Color"]="bodyAppearance" end
     local mapAppearance=c.LoadModule("MapAppearance")({Controls=v,Setters=c.Setters,Widgets=c.Widgets,Patches=c.Patches,
-        Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
+        LoadModule=c.LoadModule,Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
         ColorOwners=c.ColorOwners,Panel=panel,Action=c.Action,TrackCleanup=c.TrackCleanup})
     local dead=false
     local objects,links={},{}
@@ -214,9 +214,17 @@ return function(c)
         connect(P.PlayerRemoving,function(p) if v.deathDustEnabled then dustCharacter(p.Character) end end)
     end
     -- Three source snow layers, not a replacement for the existing generic particles.
-    local snow={}
+    local snow={} local snowSignature
     local function updateSnow()
-        if not v.snowEnabled then for _,e in ipairs(snow) do destroy(e.part) end snow={} return end
+        if not v.snowEnabled then for _,e in ipairs(snow) do destroy(e.part) end snow={}snowSignature=nil return end
+        local signature=table.concat({v.snowSize,v.snowDensity,v.snowSpeed,v.snowWind,v.snowArea,v.snowTexture},"|")
+        local intact=#snow==3
+        for _,e in ipairs(snow)do if not e.part.Parent or not e.emitter.Parent or not e.emitter.Enabled then intact=false break end end
+        if intact and signature==snowSignature then
+            for _,e in ipairs(snow)do if e.tint~=v.snowColor then e.emitter.Color=ColorSequence.new(v.snowColor)e.tint=v.snowColor end end
+            return
+        end
+        snowSignature=signature
         for i=1,3 do
             local e=snow[i]
             if not e or not e.part.Parent or not e.emitter.Parent then
@@ -229,7 +237,7 @@ return function(c)
             local em=e.emitter local size=v.snowSize*({1,0.72,0.48})[i]
             e.part.Size=Vector3.new(v.snowArea,2,v.snowArea) em.Enabled=true
             em.Texture=v.snowTexture=="Classic" and "rbxasset://textures/particles/sparkles_main.dds" or "rbxasset://textures/particles/smoke_main.dds"
-            em.Rate=math.max(2,v.snowDensity/3)*({1,0.65,0.38})[i] em.Color=ColorSequence.new(v.snowColor)
+            em.Rate=math.max(2,v.snowDensity/3)*({1,0.65,0.38})[i] em.Color=ColorSequence.new(v.snowColor)e.tint=v.snowColor
             em.Speed=NumberRange.new(v.snowSpeed*0.45,v.snowSpeed*(1.05+i*0.08)) em.Acceleration=Vector3.new(v.snowWind*(0.7+i*0.15),-v.snowSpeed*0.92,0)
             em.Size=seq({{0,0},{0.13,size},{0.86,size*0.86},{1,0}}) em.Transparency=seq({{0,1},{0.16,0.08},{0.86,0.22},{1,1}})
         end

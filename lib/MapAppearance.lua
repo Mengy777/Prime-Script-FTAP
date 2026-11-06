@@ -51,8 +51,21 @@ return function(c)
    local widget=c.Widgets["map"..key..suffix]if widget and widget.SetVisible then widget:SetVisible(v.mapSurface==key)end
   end end
  end
+ local presets=c.LoadModule("MapPresets")local presetNames={}
+ for _,entry in ipairs(presets)do presetNames[#presetNames+1]=entry[1]end
+ c.Choice(panel,"mapPreset","Map palette",presetNames,"Obsidian",function()end)
+ c.Action(panel,"Apply map palette",function()
+  for _,entry in ipairs(presets)do if entry[1]==v.mapPreset then
+   for i,key in ipairs(categories)do
+    local hex=entry[3][i]local tint=Color3.fromRGB(tonumber(hex:sub(1,2),16),tonumber(hex:sub(3,4),16),tonumber(hex:sub(5,6),16))
+    c.Setters["map"..key.."ColorRainbow"](false,true)c.Setters["map"..key.."Material"](entry[2][i],true)
+    c.Setters["map"..key.."Color"](tint,true)c.Setters["map"..key.."Tint"](true,true)
+   end
+   c.Setters.mapAppearanceEnabled(true,true)break
+  end end
+ end)
  c.Choice(panel,"mapSurface","Surface",categories,"Grass",visible)
- local choices={"Original","SmoothPlastic","Plastic","Neon","ForceField","Glass","Ice","Snow","Sand","Sandstone","Grass","LeafyGrass","Rock","Slate","Concrete","Brick","Cobblestone","Wood","WoodPlanks","Metal","Marble","Granite","Ground","Mud"}
+ local choices={"Original","SmoothPlastic","Plastic","Neon","ForceField","Glass","Ice","Snow","Sand","Sandstone","Grass","LeafyGrass","Rock","Slate","Concrete","Brick","Cobblestone","Wood","WoodPlanks","Metal","Basalt","Marble","Granite","Ground","Mud"}
  for _,key in ipairs(categories)do
   local prefix="map"..key
   c.Choice(panel,prefix.."Material","Material",choices,"Original",function()refresh(key)end)
