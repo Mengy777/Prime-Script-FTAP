@@ -1,3 +1,9 @@
+## 3.2.3b — reference hand
+
+- Compare the hand to the supplied PNG: same silhouette and texture.
+- Change FOV between 30 and 120: hand size/pose must stay unchanged.
+- Check size, walking bob, disable/unload. Approved hotbar unchanged.
+
 ## 3.2.3a — hand reference follow-up
 
 - Compare idle hand silhouette and visible faces against supplied reference.

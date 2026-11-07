@@ -22,25 +22,25 @@ TEST_OPTIONS.bind_camThird:SetValue('K') TEST_LIBRARY:Toggle(false)
 local notices=#TEST_NOTICES
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.K},false)
 assert(not TEST_OPTIONS.camThird.Value,'Minecraft bind gate failed');assert(#TEST_NOTICES==notices,'blocked bind dispatched')
-local arm=TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm')
-assert(arm and not arm.CanCollide and not arm.CanTouch and not arm.CanQuery)
+
 local gui=player:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft')
+local arm=gui:FindFirstChild('PrimeSteveArm');assert(arm and arm:IsA('ImageLabel'))
 local bar=gui and gui:FindFirstChild("Hotbar");assert(bar and bar:FindFirstChild("Slot9"):FindFirstChild("DiamondSword"))
 for i=1,8 do assert(not bar:FindFirstChild('Slot'..i):FindFirstChild('DiamondSword'))end
 for i=1,10 do TEST_SERVICES.RunService.RenderStepped:Fire(1/60)end
 assert(bar.Image:find('hotbar.png',1,true))
-assert(math.abs(arm.Size.X-arm.Size.Z)<1e-9,'hand depth distorted')
-assert(math.abs(arm.Size.Y/arm.Size.X-3)<1e-9,'not original 4x12x4 proportions')
 local initialFov=TEST_SERVICES.Workspace.CurrentCamera.FieldOfView
+TEST_OPTIONS.minecraftBobbing:SetValue(0)
+TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
+local width,height=arm.Size.X.Offset,arm.Size.Y.Offset
+local x,y=arm.Position.X.Offset,arm.Position.Y.Offset
 for _,fov in ipairs({30,70,120})do
  TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=fov
  TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
- assert(math.abs(arm.Size.X-arm.Size.Z)<1e-9)
- assert(math.abs(arm.Size.Y/arm.Size.X-3)<1e-9)
+ assert(arm.Size.X.Offset==width and arm.Size.Y.Offset==height,'FOV changed sprite size')
+ assert(arm.Position.X.Offset==x and arm.Position.Y.Offset==y,'FOV moved sprite')
 end
 TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=initialFov
-TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
-assert(arm.Size.Y<1.56*math.tan(math.rad(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView/2))/math.tan(math.rad(35)))
 humanoid.Health=50 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(bar:FindFirstChild('Heart5'):FindFirstChild('Fill').Visible)
 assert(not bar:FindFirstChild('Heart6'):FindFirstChild('Fill').Visible)
@@ -55,7 +55,7 @@ local replacement=Instance.new('Camera') replacement.Parent=TEST_SERVICES.Worksp
 replacement.CFrame=old.CFrame replacement.FieldOfView=old.FieldOfView replacement.ViewportSize=old.ViewportSize
 TEST_SERVICES.Workspace.CurrentCamera=replacement old:Destroy()
 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
-assert(TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm')==arm,'camera replacement destroyed viewmodel')
+assert(gui:FindFirstChild('PrimeSteveArm')==arm,'camera replacement destroyed sprite')
 TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])

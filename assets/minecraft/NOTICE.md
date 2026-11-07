@@ -8,3 +8,5 @@ Original PNG files obtained from https://github.com/InventivetalentDev/minecraft
 - HUD: 1.21.5/assets/minecraft/textures/gui/sprites/hud/ — hotbar.png, hotbar_selection.png, heart/container.png, heart/full.png, heart/half.png, food_full.png, food_empty.png, experience_bar_background.png.
 
 MinecraftAssets.lua stores filenames, byte lengths and original right-arm UV coordinates. PNG files are cached locally and displayed pixelated, without procedural recoloring.
+
+steve_hand.png is the exact transparent reference supplied by the user (Minecraft hand artwork); no image generation or alteration was applied.

@@ -1,3 +1,9 @@
+## 3.2.3b — 2026-11-07
+
+- Replace the 3D Steve arm with the exact transparent PNG supplied by the user, without redrawing or image generation.
+- Screen-space presentation preserves the reference silhouette and ignores FOV entirely. Size and walking bob remain adjustable; accepted hotbar unchanged.
+- Simulated checks cover FOV-independent sprite size/position, health HUD and lifecycle. Live appearance awaits user verification.
+
 ## 3.2.3a — 2026-11-07
 
 - Steve arm: preserve original 4x12x4 proportions at all supported FOV values; depth now scales with width/height instead of flattening at high FOV.
