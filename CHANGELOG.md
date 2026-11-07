@@ -1,3 +1,11 @@
+## 3.2.3abcf — 2026-11-07
+
+- Experimental Native contact (test) hit method defaults on: a nearby LMB hit sends normal native grab input, waits for an owned local grab constraint on the same assembly, sends native drop input, then applies the hit only after release is confirmed.
+- Designed to test the user's observed need for manual line contact after another player's grab. No direct game remotes or forced ownership changes; FTAP can reject native contact. Brief native line visibility is possible.
+- Confirmation timeouts, aim mismatch, wrong held target, existing user grab, UI, focus loss, death, respawn and disable cancel the attempt. No impulse without confirmed contact/release in native mode. Local impulse comparison method retained explicitly.
+- Stronger horizontal mass-normalized hit with lift (18horizontal+4vertical at strength1), sword exactly2x. No downward shove into ground. Click retry cooldown .1s is independent from .35s visual swing. Characters no longer excluded; native eligibility/authority still applies.
+- Hand strength settings preserved;545 persisted keys. Exact physical shared result is experimental and must be tested live, not inferred from simulations.
+
 ## 3.2.3abc — 2026-11-07
 
 - Remove Minecraft Shift sprint entirely: no Shift action, WalkSpeed patches or sprint hand lean. Native FTAP crouch remains available inside Minecraft mode.

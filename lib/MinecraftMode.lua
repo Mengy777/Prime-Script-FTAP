@@ -4,6 +4,7 @@ return function(c)
  local dead=false local screen,arm,sword,handView,handCamera local blend=0 local selected=1
  local age,swing,step,pitch=0,1,0,0
  local swordScale
+ local pendingHit local hitCooldown=0 local hitNotice=false
  local lagPitch,lagYaw,lastCamera
  local crosshair,unlocker
  local actions=game:GetService("ContextActionService")
@@ -45,6 +46,8 @@ return function(c)
  local selection local data local images local hearts={} local previousHealth
  local function clear()
   c.Job("Minecraft presentation")
+  c.Job("Minecraft native hit")
+  pendingHit=nil hitCooldown=0 hitNotice=false
   nativeButton(false)
   actions:UnbindAction(attackAction)
   actions:UnbindAction(grabAction)
@@ -164,7 +167,7 @@ return function(c)
      local a,b=weld.Part0,weld.Part1 local target=a==part and b or b==part and a or nil
      if target and target~=part and target:IsA("BasePart")and target:IsDescendantOf(c.Workspace)then
       for _,beam in ipairs(scope:GetDescendants())do
-       if beam:IsA("Beam")and beam.Enabled~=false and c.IsLocalGrabBeam(beam)then return true end
+       if beam:IsA("Beam")and beam.Enabled~=false and c.IsLocalGrabBeam(beam)then return target end
       end
      end
     end
@@ -174,40 +177,46 @@ return function(c)
  end
  local hitParams=RaycastParams.new()
  hitParams.FilterType=Enum.RaycastFilterType.Exclude
+ local function sameAssembly(a,b)
+  return a and b and(a==b or(a.AssemblyRootPart or a)==(b.AssemblyRootPart or b))
+ end
+ local function cancelHit()
+  pendingHit=nil nativeButton(false)
+ end
+ local function applyHit(hit)
+  local root=hit.target.AssemblyRootPart or hit.target
+  if not root:IsDescendantOf(c.Workspace)or root.Anchored or(me.Character and root:IsDescendantOf(me.Character))then return end
+  local mass=root.AssemblyMass
+  if type(mass)~="number"or mass<=0 or mass>=math.huge or mass~=mass then return end
+  -- Standard assembly impulse after native contact; no network ownership overrides.
+  local flat=Vector3.new(hit.direction.X,0,hit.direction.Z)
+  if flat.Magnitude<.001 then flat=Vector3.new(0,0,-1)end
+  root:ApplyImpulse((flat.Unit*18+Vector3.new(0,4,0))*(mass*hit.power))
+ end
  local function hitObject()
-  if v.freeCameraEnabled or v.spectateEnabled then return end
+  if pendingHit or v.freeCameraEnabled or v.spectateEnabled then return end
   local character=me.Character local camera=c.Workspace.CurrentCamera
   local humanoid=character and character:FindFirstChildOfClass("Humanoid")
   local head=character and(character:FindFirstChild("Head")or character:FindFirstChild("HumanoidRootPart"))
   if not head or not camera or not humanoid or humanoid.Health<=0 then return end
   hitParams.FilterDescendantsInstances={character}
   local direction=camera.CFrame.LookVector
-  local hit=c.Workspace:Raycast(camera.CFrame.Position,direction*8,hitParams)
-  local target=hit and hit.Instance
+  local result=c.Workspace:Raycast(camera.CFrame.Position,direction*8,hitParams)
+  local target=result and result.Instance
   if not target or not target:IsA("BasePart")or not target:IsDescendantOf(c.Workspace)
-   or (hit.Position-head.Position).Magnitude>8 then return end
-  -- Objects only: no player/NPC character damage or forced ownership changes.
-  local ancestor=target
-  while ancestor and ancestor~=c.Workspace do
-   if ancestor:IsA("Model")and ancestor:FindFirstChildOfClass("Humanoid")then return end
-   ancestor=ancestor.Parent
-  end
-  local root=target.AssemblyRootPart or target
-  if root.Anchored then return end
-  ancestor=root
-  while ancestor and ancestor~=c.Workspace do
-   if ancestor:IsA("Model")and ancestor:FindFirstChildOfClass("Humanoid")then return end
-   ancestor=ancestor.Parent
-  end
-  local mass=root.AssemblyMass
+   or (result.Position-head.Position).Magnitude>8 or(target.AssemblyRootPart or target).Anchored then return end
   local strength=v.minecraftHitStrength or 1
-  if type(mass)~="number"or mass<=0 or mass>=math.huge or mass~=mass
-   or type(strength)~="number"or strength~=strength then return end
+  if type(strength)~="number"or strength~=strength then return end
   local power=math.clamp(strength,0,5)*(selected==9 and 2 or 1)
   if power<=0 then return end
-  -- J=m*deltaV: matching settings feel consistent across different object masses.
-  -- Server/other-client-owned assemblies may ignore client impulses normally.
-  root:ApplyImpulse(direction*(mass*6*power))
+  local hit={target=target,point=result.Position,startPosition=target.Position,direction=direction,power=power,character=character,elapsed=0,stage="grab"}
+  if v.minecraftHitMethod~="Native contact (test)"then applyHit(hit)return end
+  -- Never take over an object the user is already holding or switch to a changed aim.
+  if holdingObject()or me:GetMouse().Target~=target then return end
+  local ok,ping=pcall(function()return me:GetNetworkPing()end)
+  hit.settle=ok and type(ping)=="number"and ping==ping and math.clamp(.06+ping*2,.12,.35)or .12
+  pendingHit=hit
+  if not nativeButton(true)then cancelHit()return end
  end
  local function update()
   if dead then return end
@@ -225,17 +234,49 @@ return function(c)
   c.Patch("minecraftCamera",me,"CameraMaxZoomDistance",.5)
   if screen then return end
   local scale=build()
+  c.Job("Minecraft native hit",c.Run.Heartbeat,function(dt)
+   local hit=pendingHit if not hit then return end
+   hit.elapsed=hit.elapsed+math.min(dt,.2)
+   local h=me.Character and me.Character:FindFirstChildOfClass("Humanoid")
+   if dead or not v.minecraftEnabled or me.Character~=hit.character or not h or h.Health<=0
+    or v.freeCameraEnabled or v.spectateEnabled or overInterface()or not hit.target:IsDescendantOf(c.Workspace)then cancelHit()return end
+   local held=holdingObject()
+   if held and not sameAssembly(held,hit.target)then cancelHit()return end
+   if hit.stage=="grab"and held then
+    hit.stage="settle"hit.elapsed=0
+   elseif hit.stage=="settle"and not held then cancelHit()return
+   elseif hit.stage=="settle"and hit.elapsed>=hit.settle then
+    hit.stage="release"hit.elapsed=0
+    nativeButton(false)
+   elseif hit.stage=="release"and held and hit.elapsed>=.04 and not hit.dropClicked then
+    -- Some native handlers release on button-up, others toggle on a second click.
+    hit.dropClicked=true
+    if not nativeButton(true)then cancelHit()return end
+    nativeButton(false)
+   elseif hit.stage=="release"and not held and hit.elapsed>=.03 then
+    pendingHit=nil
+    local head=me.Character:FindFirstChild("Head")or me.Character:FindFirstChild("HumanoidRootPart")
+    if head and (hit.point+hit.target.Position-hit.startPosition-head.Position).Magnitude<=12 then
+     local ok,err=pcall(applyHit,hit)if not ok then c.WarnOnce("Minecraft hit",err)end
+    end
+   elseif hit.elapsed>(hit.stage=="grab"and .6 or .35)then
+    cancelHit()
+    if not hitNotice then hitNotice=true c.Notify(c.Translate("Native hit could not confirm grab/release. No impulse was applied."))end
+   end
+  end)
   actions:BindActionAtPriority(attackAction,function(_,state)
    if forwardedEvent(state)or dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
-   if state==Enum.UserInputState.Begin and swing>=1 then
+   if state==Enum.UserInputState.Begin then
     swing=0
-    local ok,err=pcall(hitObject)if not ok then c.WarnOnce("Minecraft hit",err)end
+    if hitCooldown<=0 then hitCooldown=.1 local ok,err=pcall(hitObject)if not ok then cancelHit()c.WarnOnce("Minecraft hit",err)end end
    end
+   if pendingHit and state==Enum.UserInputState.End then return Enum.ContextActionResult.Sink end
    -- End passes through so an object held before enabling can still be released.
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then return Enum.ContextActionResult.Pass end
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
   actions:BindActionAtPriority(grabAction,function(_,state)
+   if state==Enum.UserInputState.Begin and pendingHit then cancelHit()end
    -- Keep the complete native throw gesture intact after the constraint disappears.
    if throwing then
     if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then throwing=false end
@@ -299,6 +340,7 @@ return function(c)
    local moving=visible and direction and direction.Magnitude>.05 and 1 or 0
    blend=blend+(moving-blend)*(1-math.exp(-12*math.min(dt,.1)))
    local delta=math.min(dt,.1)
+   hitCooldown=math.max(0,hitCooldown-delta)
    age=age+delta swing=math.min(1,swing+delta/.35)
    -- Minecraft's distance-based view bob; standing still freezes walking phase.
    local root=character and character:FindFirstChild("HumanoidRootPart")
@@ -368,6 +410,7 @@ return function(c)
  local panel=c.Panel("minecraftEnabled")
  c.Choice(panel,"minecraftMode","Mode",{"Interactive (test)"},"Interactive (test)",function()end)
  c.Slider(panel,"minecraftHandScale","Hand size",.45,1.1,.7,.05,function()end)
+ c.Choice(panel,"minecraftHitMethod","Hit method",{"Native contact (test)","Local impulse"},"Native contact (test)",function()cancelHit()end)
  c.Slider(panel,"minecraftHitStrength","Hand hit strength",0,5,1,.1,function()end)
  c.Slider(panel,"minecraftBobbing","Hand bobbing",0,1,.7,.05,function()end)
  c.Slider(panel,"minecraftHotbarScale","Hotbar size",.6,1.6,1,.05,function()if screen then update()end end)
@@ -377,6 +420,6 @@ return function(c)
   if not index or dead or not v.minecraftEnabled or processed or c.MenuOpen()or c.Input:GetFocusedTextBox()then return end
   if index and selected~=index then selected=index age=0 swing=1 if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
  end)
- local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false nativeButton(false)end)
+ local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false cancelHit()end)
  return {Destroy=function()if dead then return end dead=true input:Disconnect()focus:Disconnect()clear()end}
 end

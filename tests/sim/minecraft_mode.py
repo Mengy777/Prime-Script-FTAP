@@ -162,7 +162,8 @@ assert((sword.lastPose.Position-swordPose).Magnitude>.01,'sword did not swing')
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 assert(arm.Parent==view and sword.Parent==nil,'empty hand not restored')
--- Local physics adapter: exact mass-normalized hand/sword impulse ratio.
+-- Local comparison path: exact mass-normalized hand/sword impulse ratio.
+TEST_OPTIONS.minecraftHitMethod:SetValue("Local impulse")
 local head=Instance.new('Part')head.Name='Head'head.Position=Vector3.new(0,0,0)head.Parent=player.Character
 local punchTarget=Instance.new('Part')punchTarget.Position=Vector3.new(0,0,-3)punchTarget.AssemblyMass=2;punchTarget.Parent=TEST_SERVICES.Workspace
 local impulses={}
@@ -174,11 +175,12 @@ end
 TEST_OPTIONS.minecraftHitStrength:SetValue(1.5)
 TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
-assert(#impulses==1 and math.abs(impulses[1].Magnitude-18)<1e-9)
+assert(#impulses==1 and math.abs(impulses[1].Magnitude-math.sqrt(54^2+12^2))<1e-9)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==1,'click spam repeated impulse inside one swing')
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Nine},false)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
-assert(#impulses==2 and math.abs(impulses[2].Magnitude-36)<1e-9,'sword is not exactly double')
+assert(#impulses==2 and math.abs(impulses[2].Magnitude-2*impulses[1].Magnitude)<1e-9,'sword is not exactly double')
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 -- Anchored world geometry cannot be moved.
 punchTarget.Anchored=true
@@ -195,8 +197,43 @@ TEST_OPTIONS.minecraftHitStrength:SetValue(1.5)
 local npc=Instance.new('Model')npc.Parent=TEST_SERVICES.Workspace
 local npcHumanoid=Instance.new('Humanoid')npcHumanoid.Parent=npc punchTarget.Parent=npc
 for i=1,4 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
-attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2,'object hit affected character')
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==3,'character excluded from test')
 punchTarget.Parent=TEST_SERVICES.Workspace npc:Destroy()
+-- Native-contact experiment: grab same target, confirm drop, then impulse exactly once.
+TEST_OPTIONS.minecraftHitMethod:SetValue('Native contact (test)')
+mouse.Target=punchTarget
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+local beforeNative=#impulses
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+assert(#impulses==beforeNative,'native test applied before contact')
+local nativeScope=Instance.new('Folder')nativeScope.Name='GrabParts'nativeScope.Parent=TEST_SERVICES.Workspace
+local nativePart=Instance.new('Part')nativePart.Name='GrabPart'nativePart.Parent=nativeScope
+local nativeWeld=Instance.new('WeldConstraint')nativeWeld.Part0=nativePart nativeWeld.Part1=punchTarget nativeWeld.Enabled=true nativeWeld.Active=true nativeWeld.Parent=nativePart
+local nativeOrigin=Instance.new('Attachment')nativeOrigin.Parent=player.Character
+local nativeBeam=Instance.new('Beam')nativeBeam.Attachment0=nativeOrigin nativeBeam.Enabled=true nativeBeam.Parent=nativeScope
+TEST_SERVICES.RunService.Heartbeat:Fire(.04)
+assert(#impulses==beforeNative,'native test hit before release')
+TEST_SERVICES.RunService.Heartbeat:Fire(.15)
+local afterUp=#synthetic
+TEST_SERVICES.RunService.Heartbeat:Fire(.05)
+assert(#synthetic==afterUp+2 and #impulses==beforeNative,'toggle-drop fallback missing')
+nativeWeld:Destroy()
+TEST_SERVICES.RunService.Heartbeat:Fire(.04)
+assert(#impulses==beforeNative+1,'native contact/drop did not apply hit')
+TEST_SERVICES.RunService.Heartbeat:Fire(.04)assert(#impulses==beforeNative+1,'native hit repeated')
+nativeScope:Destroy()
+-- No server/local grab confirmation: timeout is inert, never fake an impulse.
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+for i=1,5 do TEST_SERVICES.RunService.Heartbeat:Fire(.2)end
+assert(#impulses==beforeNative+1,'timeout hit an unconfirmed target')
+-- Focus loss cancels a pending attempt without a later impulse.
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
+TEST_SERVICES.RunService.Heartbeat:Fire(.2)
+assert(#impulses==beforeNative+1)
 TEST_SERVICES.Workspace.Raycast=function()return nil end
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
 TEST_SERVICES.RunService.RenderStepped:Fire(0)
@@ -210,7 +247,7 @@ TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
 assert doc['payload']['values']['minecraftEnabled'] is True
-assert len(doc['payload']['values'])==544
+assert len(doc['payload']['values'])==545
 lua.execute("""
 local h=TEST_SERVICES.Players.LocalPlayer.Character:FindFirstChild('Humanoid')
 TEST_OPTIONS.minecraftEnabled:SetValue(false)

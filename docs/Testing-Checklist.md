@@ -1,3 +1,14 @@
+## 3.2.3abcf — automatic native contact experiment
+
+1. Minecraft settings → Hit method = Native contact (test), strength1–1.5 first.
+2. Hit a free object without manually touching it with your line: contact/drop should happen automatically, then push. Brief line flash may be visible.
+3. Let another player touch it with their line; repeat your LMB hit. Confirm from their view whether movement remains shared and does not snap back.
+4. Test a nearby other-owned free cube and the bottom cube of a stack. Check only legitimate grabbable objects; static map parts stay anchored.
+5. Compare hand strength1.5 and sword3; quick separate clicks should work without waiting for the full animation.
+6. E UI/RMB manual pickup/throw unchanged. Failed native contact must notify once instead of faking a local hit. Focus loss/disable stops pending input.
+
+Still experimental: game may reject contact, and release does not guarantee lasting ownership. Live confirmation required; this release does not claim guaranteed pushes on arbitrary players/objects.
+
 ## 3.2.3abc — crouch and object hits
 
 1. In Minecraft mode, Shift crouches normally; no sprint or leftover speed after release/off.

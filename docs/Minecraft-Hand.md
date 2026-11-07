@@ -37,3 +37,17 @@ Shift sprint is removed completely; native FTAP crouch input is untouched. No Hu
 Physical LMB hit uses one 8stud raycast from the real camera, excluding own character, and verifies actual hit is within8studs of character head/root. It only attempts unanchored non-character world assemblies. ApplyImpulse uses mass-normalized6stud/s base delta velocity times persisted hand strength0–5 (default1), doubled when slot9 is selected. Swing cadence limits attempts to one per .35s animation. UI/freecam/spectate/death cases are excluded.
 
 No direct game remote calls, SetNetworkOwner or ownership acquisition. Client-owned/free local assemblies can react; server/other-client-owned assemblies may ignore the local request. This limitation follows native Roblox ApplyImpulse authority: https://create.roblox.com/docs/reference/engine/classes/BasePart#ApplyImpulse . Simulation checks exact impulse ratios and routing, not actual FTAP replication/physics.
+
+## 3.2.3abcf — automatic native-contact experiment
+
+User live report: own spawned objects are visibly pushed for other players, another player's grab stops that effect, and manual local line contact restores it until the next foreign grab. This is consistent with an ownership transition, but identity was not measured directly.
+
+New persisted `minecraftHitMethod`: Native contact (test) default; Local impulse retained as an explicit comparison path. Native mode checks the same nearby raycast/Mouse.Target, refuses pre-existing manual grabs, sends ordinary native LMB grab press/release, observes active local GrabParts constraint + shared ownGrabBeam resolver, then sends ordinary LMB drop. Only after the same grab disappears is the impulse attempted. No game remotes or ownership APIs are called. A transient native grab line can be visible.
+
+A .6s acquisition/.35s release deadline cancels without impulse if native state is not confirmed. Wrong target, menus, death/respawn, focus loss and disable cancel pending work and release synthetic buttons. Existing RMB actions cancel the automatic attempt before resuming normal manual logic. Only one attempt may be pending. The short .1s hit gate is independent from visual swing duration.
+
+Impulse uses horizontal aiming direction (vertical look fallback forward), mass*(18horizontal+4up)*strength; sword strength2x. This improves ground contact without inventing network authority. Selected strength and direction are captured at click time. Characters are eligible if native FTAP contact accepts them; anchored parts and own avatar assembly excluded.545settings.
+
+Mock checks cover successful local-constraint handshake, no hit before confirmed drop, exactly one hit, timeout without impulse, cancellation, normal manual grab/throw and2x ratio. Shared physics/ownership persistence is NOT established by mocks; peer-view testing after foreign contact remains required.
+
+Native contact follow-up: hold until local grab is confirmed, wait .12–.35s based on available GetNetworkPing before releasing to allow normal game contact to settle. First try button-up release, then a second native click for toggle-style drop if still held. This is a bounded input state machine, not proof that the server granted lasting ownership.

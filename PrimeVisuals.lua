@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.3abc"
+local VERSION="3.2.3abcf"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -997,6 +997,10 @@ local function buildVisualSystems()
     ru["Pulse speed"]="Скорость пульсации"
     ru["Pulse strength"]="Сила пульсации"
     ru["Minecraft grab input is unavailable in this executor."]="Захват Minecraft недоступен: executor не поддерживает нужный ввод."
+    ru["Hit method"]="Способ удара"
+    ru["Native contact (test)"]="Игровой контакт (тест)"
+    ru["Local impulse"]="Локальный импульс"
+    ru["Native hit could not confirm grab/release. No impulse was applied."]="Не подтверждён захват или отпускание. Удар отменён."
     ru["Hand hit strength"]="Сила удара рукой"
     ru["Crosshair preset"]="Пресет прицела"
     ru["Custom image"]="Своя картинка"
