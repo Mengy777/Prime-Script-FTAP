@@ -29,6 +29,17 @@ local bar=gui and gui:FindFirstChild("Hotbar");assert(bar and bar:FindFirstChild
 for i=1,8 do assert(not bar:FindFirstChild('Slot'..i):FindFirstChild('DiamondSword'))end
 for i=1,10 do TEST_SERVICES.RunService.RenderStepped:Fire(1/60)end
 assert(bar.Image:find('hotbar.png',1,true))
+assert(math.abs(arm.Size.X-arm.Size.Z)<1e-9,'hand depth distorted')
+assert(math.abs(arm.Size.Y/arm.Size.X-3)<1e-9,'not original 4x12x4 proportions')
+local initialFov=TEST_SERVICES.Workspace.CurrentCamera.FieldOfView
+for _,fov in ipairs({30,70,120})do
+ TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=fov
+ TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
+ assert(math.abs(arm.Size.X-arm.Size.Z)<1e-9)
+ assert(math.abs(arm.Size.Y/arm.Size.X-3)<1e-9)
+end
+TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=initialFov
+TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(arm.Size.Y<1.56*math.tan(math.rad(TEST_SERVICES.Workspace.CurrentCamera.FieldOfView/2))/math.tan(math.rad(35)))
 humanoid.Health=50 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(bar:FindFirstChild('Heart5'):FindFirstChild('Fill').Visible)

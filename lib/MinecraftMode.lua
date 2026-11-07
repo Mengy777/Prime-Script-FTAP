@@ -58,10 +58,10 @@ return function(c)
   selection=c.Make("ImageLabel",{Name="Selection",BackgroundTransparency=1,Position=UDim2.fromOffset((selected-1)*40-2,-2),
    Size=UDim2.fromOffset(48,46),Image=images.Selection,ResampleMode=Enum.ResamplerMode.Pixelated,ZIndex=3},bar)
   arm=c.Make("Part",{Name="PrimeSteveArm",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,CastShadow=false,
-   Size=Vector3.new(.52,1.56,.52),Color=Color3.fromRGB(171,125,100),Material=Enum.Material.SmoothPlastic},c.Workspace)
+   Size=Vector3.new(.52,1.56,.52),Color=Color3.new(1,1,1),Material=Enum.Material.SmoothPlastic},c.Workspace)
   for face,rect in pairs(data.Arm)do
    local surface=c.Make("SurfaceGui",{Name=face,Face=Enum.NormalId[face],CanvasSize=Vector2.new(rect[3]*16,rect[4]*16),
-    LightInfluence=0,AlwaysOnTop=false},arm)
+    LightInfluence=0,Brightness=1,AlwaysOnTop=false},arm)
    c.Make("ImageLabel",{Name="SteveSkin",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),Image=images.Skin,
     ImageRectOffset=Vector2.new(rect[1],rect[2]),ImageRectSize=Vector2.new(rect[3],rect[4]),ResampleMode=Enum.ResamplerMode.Pixelated},surface)
   end
@@ -110,9 +110,12 @@ return function(c)
    local fov=math.clamp(camera.FieldOfView,30,120)
    local projection=math.tan(math.rad(fov/2))/math.tan(math.rad(35))
    local handScale=v.minecraftHandScale or .7
-   arm.Size=Vector3.new(.52*projection*handScale,1.56*projection*handScale,.52*handScale)
+   -- Uniform projection compensation preserves the original 4x12x4 cuboid.
+   -- Scaling only X/Y flattened its depth at wide FOV and skewed the silhouette.
+   local unit=.13*projection*handScale
+   arm.Size=Vector3.new(4*unit,12*unit,4*unit)
    arm.CFrame=camera.CFrame*CFrame.new((.86+math.sin(phase)*.025*amount)*projection,(-.86+math.cos(phase*2)*.025*amount)*projection,-1.2)
-    *CFrame.Angles(math.rad(-18)+math.sin(phase)*.025*amount,math.rad(-20),math.rad(172)+math.sin(phase)*.035*amount)
+    *CFrame.Angles(math.rad(-12)+math.sin(phase)*.025*amount,math.rad(-28),math.rad(180)+math.sin(phase)*.035*amount)
    scale.Scale=v.minecraftHotbarScale or 1
   end)
  end

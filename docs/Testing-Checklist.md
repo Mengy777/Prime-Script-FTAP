@@ -1,3 +1,9 @@
+## 3.2.3a — hand reference follow-up
+
+- Compare idle hand silhouette and visible faces against supplied reference.
+- Check FOV 70/120: depth should remain proportional, no flattened hand.
+- Verify walking bob and Hand size. HUD is unchanged and user-approved in 3.2.3.
+
 ## 3.2.3 — Minecraft checks
 
 - Smaller arm, adjustable Hand size, original Steve texture.

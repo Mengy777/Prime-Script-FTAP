@@ -1,3 +1,10 @@
+## 3.2.3a — 2026-11-07
+
+- Steve arm: preserve original 4x12x4 proportions at all supported FOV values; depth now scales with width/height instead of flattening at high FOV.
+- Straightened idle roll and adjusted pitch/yaw toward supplied fist reference; retained approved HUD and size setting.
+- Neutral base color and explicit SurfaceGui brightness preserve original skin colors.
+- Compilation and mocked lifecycle/HUD tests run; live silhouette comparison remains pending.
+
 ## 3.2.3 — 2026-11-07
 
 - Minecraft: smaller lower-right Steve arm, adjustable size, original classic skin UV textures.
