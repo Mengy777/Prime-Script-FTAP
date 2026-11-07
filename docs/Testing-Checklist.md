@@ -1,3 +1,11 @@
+## 3.2.3abc — crouch and object hits
+
+1. In Minecraft mode, Shift crouches normally; no sprint or leftover speed after release/off.
+2. Nearby free object + LMB with empty hand: slight push in aiming direction, while swing animates.
+3. Set Hand hit strength1.5: sword uses3 automatically; strength1 uses2. Strength0 leaves cosmetic swing only.
+4. Sky/wall/anchored object or >8studs: no remote/distant movement. Native ownership may prevent motion on server/other-player-owned objects.
+5. Existing RMB pickup/throw and E cursor still work. Disable/unload removes Minecraft input handling.
+
 ## 3.2.3bc — native menu and Shift
 
 1. Minecraft mode, E open: ordinary cursor visible and movable, toy buttons clickable, Minecraft crosshair hidden.

@@ -1,4 +1,4 @@
--- Local Minecraft presentation. No remotes/damage; mode-scoped LMB sink blocks native grabbing.
+-- Minecraft viewmodel and nearby object impulses. No damage/remotes/ownership changes.
 return function(c)
  local v=c.Controls local me=c.Players.LocalPlayer
  local dead=false local screen,arm,sword,handView,handCamera local blend=0 local selected=1
@@ -6,8 +6,6 @@ return function(c)
  local swordScale
  local lagPitch,lagYaw,lastCamera
  local crosshair,unlocker
- local sprintKeys={}local sprintHumanoid,sprintBase
- local sprintAction="PrimeMinecraftSprint"
  local actions=game:GetService("ContextActionService")
  local attackAction="PrimeMinecraftAttack"
  local grabAction="PrimeMinecraftGrab"
@@ -50,9 +48,7 @@ return function(c)
   nativeButton(false)
   actions:UnbindAction(attackAction)
   actions:UnbindAction(grabAction)
-  actions:UnbindAction(sprintAction)
-  c.Unpatch("minecraftSprint")c.Unpatch("minecraftPointer")c.Unpatch("minecraftLook")
-  sprintKeys={}sprintHumanoid=nil sprintBase=nil
+  c.Unpatch("minecraftPointer")c.Unpatch("minecraftLook")
   inputWarned=false forwardedEvents={}throwing=false
   c.Unpatch("minecraftCursor")
   if screen then screen:Destroy()screen=nil end
@@ -149,7 +145,7 @@ return function(c)
   return true
  end
  local function overInterface()
-  if c.MenuOpen()or nativeMenuOpen()or c.Input:GetFocusedTextBox()then return true end
+  if c.MenuOpen()or nativeMenuOpen()or c.Input:GetFocusedTextBox()or game:GetService("GuiService").MenuIsOpen==true then return true end
   if type(c.PlayerGui.GetGuiObjectsAtPosition)=="function"and type(c.Input.GetMouseLocation)=="function"then
    local pointer=c.Input:GetMouseLocation()
    for _,object in ipairs(c.PlayerGui:GetGuiObjectsAtPosition(pointer.X,pointer.Y))do
@@ -176,6 +172,43 @@ return function(c)
   end
   return false
  end
+ local hitParams=RaycastParams.new()
+ hitParams.FilterType=Enum.RaycastFilterType.Exclude
+ local function hitObject()
+  if v.freeCameraEnabled or v.spectateEnabled then return end
+  local character=me.Character local camera=c.Workspace.CurrentCamera
+  local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+  local head=character and(character:FindFirstChild("Head")or character:FindFirstChild("HumanoidRootPart"))
+  if not head or not camera or not humanoid or humanoid.Health<=0 then return end
+  hitParams.FilterDescendantsInstances={character}
+  local direction=camera.CFrame.LookVector
+  local hit=c.Workspace:Raycast(camera.CFrame.Position,direction*8,hitParams)
+  local target=hit and hit.Instance
+  if not target or not target:IsA("BasePart")or not target:IsDescendantOf(c.Workspace)
+   or (hit.Position-head.Position).Magnitude>8 then return end
+  -- Objects only: no player/NPC character damage or forced ownership changes.
+  local ancestor=target
+  while ancestor and ancestor~=c.Workspace do
+   if ancestor:IsA("Model")and ancestor:FindFirstChildOfClass("Humanoid")then return end
+   ancestor=ancestor.Parent
+  end
+  local root=target.AssemblyRootPart or target
+  if root.Anchored then return end
+  ancestor=root
+  while ancestor and ancestor~=c.Workspace do
+   if ancestor:IsA("Model")and ancestor:FindFirstChildOfClass("Humanoid")then return end
+   ancestor=ancestor.Parent
+  end
+  local mass=root.AssemblyMass
+  local strength=v.minecraftHitStrength or 1
+  if type(mass)~="number"or mass<=0 or mass>=math.huge or mass~=mass
+   or type(strength)~="number"or strength~=strength then return end
+  local power=math.clamp(strength,0,5)*(selected==9 and 2 or 1)
+  if power<=0 then return end
+  -- J=m*deltaV: matching settings feel consistent across different object masses.
+  -- Server/other-client-owned assemblies may ignore client impulses normally.
+  root:ApplyImpulse(direction*(mass*6*power))
+ end
  local function update()
   if dead then return end
   if not v.minecraftEnabled then
@@ -194,20 +227,14 @@ return function(c)
   local scale=build()
   actions:BindActionAtPriority(attackAction,function(_,state)
    if forwardedEvent(state)or dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
-   if state==Enum.UserInputState.Begin then if swing>=1 then swing=0 end end
+   if state==Enum.UserInputState.Begin and swing>=1 then
+    swing=0
+    local ok,err=pcall(hitObject)if not ok then c.WarnOnce("Minecraft hit",err)end
+   end
    -- End passes through so an object held before enabling can still be released.
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then return Enum.ContextActionResult.Pass end
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
-  actions:BindActionAtPriority(sprintAction,function(_,state,input)
-   if dead or not v.minecraftEnabled then return Enum.ContextActionResult.Pass end
-   local key=input and input.KeyCode
-   if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
-    if key then sprintKeys[key]=nil else sprintKeys={}end
-   elseif state==Enum.UserInputState.Begin and key and not overInterface()then sprintKeys[key]=true end
-   if c.Input:GetFocusedTextBox()then return Enum.ContextActionResult.Pass end
-   return Enum.ContextActionResult.Sink
-  end,false,10000,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift)
   actions:BindActionAtPriority(grabAction,function(_,state)
    -- Keep the complete native throw gesture intact after the constraint disappears.
    if throwing then
@@ -265,13 +292,6 @@ return function(c)
    end
    if visible and not pointer then c.Patch("minecraftCursor",c.Input,"MouseIconEnabled",false)
    else c.Unpatch("minecraftCursor",c.Input)end
-   local sprinting=visible and not pointer and(sprintKeys[Enum.KeyCode.LeftShift]or sprintKeys[Enum.KeyCode.RightShift])
-   if sprinting then
-    if sprintHumanoid~=humanoid then
-     c.Unpatch("minecraftSprint")sprintHumanoid=humanoid sprintBase=humanoid.WalkSpeed
-    end
-    c.Patch("minecraftSprint",humanoid,"WalkSpeed",sprintBase*1.3)
-   elseif sprintHumanoid then c.Unpatch("minecraftSprint")sprintHumanoid=nil sprintBase=nil end
    local nativeCross=c.PlayerGui:FindFirstChild("Crosshairs")
    if nativeCross and nativeCross:IsA("ScreenGui")then c.Patch("minecraftCursor",nativeCross,"Enabled",false)end
 
@@ -286,14 +306,13 @@ return function(c)
    local speed=velocity and math.sqrt(velocity.X^2+velocity.Z^2)or moving*16
    -- One gentle walking cycle per ~1.33 seconds at standard WalkSpeed16.
    step=step+math.min(speed,24)*delta/10.6666667
-   local amount=(v.minecraftBobbing or .7)*blend*(sprinting and .12 or .1)
+   local amount=(v.minecraftBobbing or .7)*blend*.1
    local walk=-step*math.pi
    local targetPitch=velocity and math.clamp(-velocity.Y*.35,-10,10)or 0
    pitch=pitch+(targetPitch-pitch)*(1-math.exp(-10*delta))
    local bob=CFrame.new(math.sin(walk)*amount*.5,-math.abs(math.cos(walk))*amount,0)
     *CFrame.Angles(0,0,math.rad(math.sin(walk)*amount*3))
     *CFrame.Angles(math.rad(math.abs(math.cos(walk-.2)*amount)*5+pitch),0,0)
-   if sprinting then bob=bob*CFrame.new(0,-.025*blend,0)*CFrame.Angles(-.06*blend,0,0)end
    local attack=math.sin(math.sqrt(swing)*math.pi)
    local attackTwist=math.sin(swing*swing*math.pi)
    local equip=math.max(0,1-age/.25)
@@ -349,6 +368,7 @@ return function(c)
  local panel=c.Panel("minecraftEnabled")
  c.Choice(panel,"minecraftMode","Mode",{"Interactive (test)"},"Interactive (test)",function()end)
  c.Slider(panel,"minecraftHandScale","Hand size",.45,1.1,.7,.05,function()end)
+ c.Slider(panel,"minecraftHitStrength","Hand hit strength",0,5,1,.1,function()end)
  c.Slider(panel,"minecraftBobbing","Hand bobbing",0,1,.7,.05,function()end)
  c.Slider(panel,"minecraftHotbarScale","Hotbar size",.6,1.6,1,.05,function()if screen then update()end end)
  local numbers={One=1,Two=2,Three=3,Four=4,Five=5,Six=6,Seven=7,Eight=8,Nine=9}
@@ -357,6 +377,6 @@ return function(c)
   if not index or dead or not v.minecraftEnabled or processed or c.MenuOpen()or c.Input:GetFocusedTextBox()then return end
   if index and selected~=index then selected=index age=0 swing=1 if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
  end)
- local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false sprintKeys={}c.Unpatch("minecraftSprint")sprintHumanoid=nil sprintBase=nil nativeButton(false)end)
+ local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false nativeButton(false)end)
  return {Destroy=function()if dead then return end dead=true input:Disconnect()focus:Disconnect()clear()end}
 end

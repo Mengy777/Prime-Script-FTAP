@@ -1,3 +1,11 @@
+## 3.2.3abc — 2026-11-07
+
+- Remove Minecraft Shift sprint entirely: no Shift action, WalkSpeed patches or sprint hand lean. Native FTAP crouch remains available inside Minecraft mode.
+- New persisted Hand hit strength0–5, default1. One physical impulse per LMB swing to the first nearby raycast hit (8stud limit, excluding own avatar); sword automatically doubles hand strength, no separate sword setting.
+- Mass-normalized J=m*6*strength, along camera direction. Skip anchored assemblies, characters/NPCs, invalid mass, distant/no hit, menus, freecam and spectate. No damage, direct game remotes or ownership manipulation.
+- Client physics authority remains native: server/other-client-owned objects can ignore the impulse. Live knockback is not guaranteed by the simulation.
+- 544 persisted settings; compile and targeted exact ratio/cooldown/anchored/range tests pass. See validation report for full suite.
+
 ## 3.2.3bc — 2026-11-07
 
 - Minecraft E menu cursor follows actual MenuGui/Menu visibility, including ancestor Enabled/Visible guards; no key-toggle desynchronization or enabled-shell false positive.

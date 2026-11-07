@@ -22,6 +22,7 @@ end
 TEST_SERVICES.Workspace.CurrentCamera.CFrame=CFrame.new()
 local player=TEST_SERVICES.Players.LocalPlayer
 local mouse={Target=nil}player.GetMouse=function()return mouse end
+TEST_SERVICES.Workspace.Raycast=function()return nil end
 local synthetic={}
 TEST_SERVICES.VirtualInputManager={SendMouseButtonEvent=function(self,x,y,button,down)
  local callback=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack
@@ -96,14 +97,8 @@ assert(not gui:FindFirstChild('MinecraftCursorUnlocker').Visible and gui:FindFir
 menu.Visible=true shell.Enabled=false TEST_SERVICES.RunService.RenderStepped:Fire(0)
 assert(gui:FindFirstChild('MinecraftCrosshair').Visible,'disabled menu shell released pointer')
 menu.Visible=false shell.Enabled=true
-local sprint=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint
-assert(sprint('PrimeMinecraftSprint',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.LeftShift})==Enum.ContextActionResult.Sink)
-TEST_SERVICES.RunService.RenderStepped:Fire(.1)
-assert(math.abs(humanoid.WalkSpeed-20.8)<1e-9)
-menu.Visible=true TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(humanoid.WalkSpeed==16)
-menu.Visible=false TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(math.abs(humanoid.WalkSpeed-20.8)<1e-9)
-sprint('PrimeMinecraftSprint',Enum.UserInputState.End,{KeyCode=Enum.KeyCode.LeftShift})
-TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(humanoid.WalkSpeed==16)
+assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint,'Shift crouch is intercepted')
+assert(humanoid.WalkSpeed==16)
 local idle=arm.CFrame.Position
 local attack=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack
 assert(attack and attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
@@ -167,6 +162,44 @@ assert((sword.lastPose.Position-swordPose).Magnitude>.01,'sword did not swing')
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 assert(arm.Parent==view and sword.Parent==nil,'empty hand not restored')
+-- Local physics adapter: exact mass-normalized hand/sword impulse ratio.
+local head=Instance.new('Part')head.Name='Head'head.Position=Vector3.new(0,0,0)head.Parent=player.Character
+local punchTarget=Instance.new('Part')punchTarget.Position=Vector3.new(0,0,-3)punchTarget.AssemblyMass=2;punchTarget.Parent=TEST_SERVICES.Workspace
+local impulses={}
+punchTarget.ApplyImpulse=function(self,impulse)impulses[#impulses+1]=impulse end
+TEST_SERVICES.Workspace.Raycast=function(self,origin,ray,params)
+ assert(math.abs(ray.Magnitude-8)<1e-9 and params.FilterDescendantsInstances[1]==player.Character)
+ return {Instance=punchTarget,Position=punchTarget.Position}
+end
+TEST_OPTIONS.minecraftHitStrength:SetValue(1.5)
+TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+assert(#impulses==1 and math.abs(impulses[1].Magnitude-18)<1e-9)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==1,'click spam repeated impulse inside one swing')
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Nine},false)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+assert(#impulses==2 and math.abs(impulses[2].Magnitude-36)<1e-9,'sword is not exactly double')
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+-- Anchored world geometry cannot be moved.
+punchTarget.Anchored=true
+for i=1,4 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2)
+punchTarget.Anchored=false punchTarget.Position=Vector3.new(0,0,-20)
+for i=1,4 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2,'distant surface hit')
+punchTarget.Position=Vector3.new(0,0,-3)
+TEST_OPTIONS.minecraftHitStrength:SetValue(0)
+for i=1,4 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2,'zero strength moved object')
+TEST_OPTIONS.minecraftHitStrength:SetValue(1.5)
+local npc=Instance.new('Model')npc.Parent=TEST_SERVICES.Workspace
+local npcHumanoid=Instance.new('Humanoid')npcHumanoid.Parent=npc punchTarget.Parent=npc
+for i=1,4 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2,'object hit affected character')
+punchTarget.Parent=TEST_SERVICES.Workspace npc:Destroy()
+TEST_SERVICES.Workspace.Raycast=function()return nil end
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
+TEST_SERVICES.RunService.RenderStepped:Fire(0)
 local old=TEST_SERVICES.Workspace.CurrentCamera
 local replacement=Instance.new('Camera') replacement.Parent=TEST_SERVICES.Workspace
 replacement.CFrame=old.CFrame replacement.FieldOfView=old.FieldOfView replacement.ViewportSize=old.ViewportSize
@@ -177,13 +210,11 @@ TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
 assert doc['payload']['values']['minecraftEnabled'] is True
-assert len(doc['payload']['values'])==543
+assert len(doc['payload']['values'])==544
 lua.execute("""
 local h=TEST_SERVICES.Players.LocalPlayer.Character:FindFirstChild('Humanoid')
-TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint('PrimeMinecraftSprint',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.RightShift})
-TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(math.abs(h.WalkSpeed-20.8)<1e-9)
 TEST_OPTIONS.minecraftEnabled:SetValue(false)
-assert(h.WalkSpeed==16 and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint,'sprint not restored on disable')
+assert(h.WalkSpeed==16 and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint)
 assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftGrab)
 assert(not TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm'))
 assert(not TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft'))

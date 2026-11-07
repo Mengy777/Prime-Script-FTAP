@@ -29,3 +29,11 @@ RMB passes native throwing only when a live GrabPart constraint has an owned loc
 
 ## 3.2.3bc
 Native FTAP MenuGui/Menu effective visibility (not E press parity or enabled ScreenGui alone) controls pointer release. A zero-size modal TextButton unlocks first-person input while menu is visible; explicit layered MouseBehavior/MouseIconEnabled changes restore on exit. Either Shift is consumed by a mode-only sprint action. Active sprint captures current Humanoid WalkSpeed and patches1.3x; release, menus, focus loss, death, respawn and disable restore baseline. Hand bob/lean increases gently; FOV untouched. Native E action remains untouched.
+
+## 3.2.3abc — supersedes sprint
+
+Shift sprint is removed completely; native FTAP crouch input is untouched. No Humanoid WalkSpeed writes remain in MinecraftMode.
+
+Physical LMB hit uses one 8stud raycast from the real camera, excluding own character, and verifies actual hit is within8studs of character head/root. It only attempts unanchored non-character world assemblies. ApplyImpulse uses mass-normalized6stud/s base delta velocity times persisted hand strength0–5 (default1), doubled when slot9 is selected. Swing cadence limits attempts to one per .35s animation. UI/freecam/spectate/death cases are excluded.
+
+No direct game remote calls, SetNetworkOwner or ownership acquisition. Client-owned/free local assemblies can react; server/other-client-owned assemblies may ignore the local request. This limitation follows native Roblox ApplyImpulse authority: https://create.roblox.com/docs/reference/engine/classes/BasePart#ApplyImpulse . Simulation checks exact impulse ratios and routing, not actual FTAP replication/physics.
