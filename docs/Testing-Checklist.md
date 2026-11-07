@@ -1,3 +1,10 @@
+## 3.2.3bc — native menu and Shift
+
+1. Minecraft mode, E open: ordinary cursor visible and movable, toy buttons clickable, Minecraft crosshair hidden.
+2. E or close button: native pointer hides, centered Minecraft crosshair and mouse look return. Repeat several times.
+3. Hold Shift walking: sprint/run-hand motion, no FTAP crouch. Release: normal movement.
+4. Open menu/lose focus while sprinting: no stuck speed. Disable Minecraft: original crouch/normal controls and speed return.
+
 ## 3.2.3ac — RMB throw
 
 - Grab an object, lift it, aim into sky, RMB: ordinary FTAP throw.

@@ -5,7 +5,9 @@ return function(c)
  local age,swing,step,pitch=0,1,0,0
  local swordScale
  local lagPitch,lagYaw,lastCamera
- local crosshair
+ local crosshair,unlocker
+ local sprintKeys={}local sprintHumanoid,sprintBase
+ local sprintAction="PrimeMinecraftSprint"
  local actions=game:GetService("ContextActionService")
  local attackAction="PrimeMinecraftAttack"
  local grabAction="PrimeMinecraftGrab"
@@ -48,12 +50,15 @@ return function(c)
   nativeButton(false)
   actions:UnbindAction(attackAction)
   actions:UnbindAction(grabAction)
+  actions:UnbindAction(sprintAction)
+  c.Unpatch("minecraftSprint")c.Unpatch("minecraftPointer")c.Unpatch("minecraftLook")
+  sprintKeys={}sprintHumanoid=nil sprintBase=nil
   inputWarned=false forwardedEvents={}throwing=false
   c.Unpatch("minecraftCursor")
   if screen then screen:Destroy()screen=nil end
   if arm then arm:Destroy()arm=nil end
   if sword then sword:Destroy()sword=nil end
-  swordScale=nil selection=nil crosshair=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
+  swordScale=nil selection=nil crosshair=nil unlocker=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
   c.Unpatch("minecraftCamera")
  end
  local function loadImages()
@@ -81,6 +86,9 @@ return function(c)
  end
  local function build()
   screen=c.Make("ScreenGui",{Name="PrimeMinecraft",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=20},c.PlayerGui)
+  -- A visible Modal button unlocks Roblox's first-person camera cursor; zero-size never blocks clicks.
+  unlocker=c.Make("TextButton",{Name="MinecraftCursorUnlocker",Size=UDim2.fromOffset(0,0),
+   BackgroundTransparency=1,Text="",Modal=true,Visible=false,AutoButtonColor=false},screen)
   crosshair=c.Make("ImageLabel",{Name="MinecraftCrosshair",BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,.5),
    Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(30,30),Image=images.Crosshair,
    ResampleMode=Enum.ResamplerMode.Pixelated,ZIndex=5},screen)
@@ -127,8 +135,21 @@ return function(c)
   sword.WorldPivot=CFrame.new()
   return scale
  end
+ local function nativeMenuOpen()
+  -- Verified FTAP hierarchy; the ScreenGui shell stays enabled when Menu closes.
+  local shell=c.PlayerGui:FindFirstChild("MenuGui")
+  local panel=shell and shell:FindFirstChild("Menu")
+  if not panel then return false end
+  local object=panel
+  while object and object~=c.PlayerGui do
+   if object:IsA("GuiObject")and object.Visible==false then return false end
+   if object:IsA("ScreenGui")and object.Enabled==false then return false end
+   object=object.Parent
+  end
+  return true
+ end
  local function overInterface()
-  if c.MenuOpen()or c.Input:GetFocusedTextBox()then return true end
+  if c.MenuOpen()or nativeMenuOpen()or c.Input:GetFocusedTextBox()then return true end
   if type(c.PlayerGui.GetGuiObjectsAtPosition)=="function"and type(c.Input.GetMouseLocation)=="function"then
    local pointer=c.Input:GetMouseLocation()
    for _,object in ipairs(c.PlayerGui:GetGuiObjectsAtPosition(pointer.X,pointer.Y))do
@@ -178,6 +199,15 @@ return function(c)
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then return Enum.ContextActionResult.Pass end
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
+  actions:BindActionAtPriority(sprintAction,function(_,state,input)
+   if dead or not v.minecraftEnabled then return Enum.ContextActionResult.Pass end
+   local key=input and input.KeyCode
+   if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
+    if key then sprintKeys[key]=nil else sprintKeys={}end
+   elseif state==Enum.UserInputState.Begin and key and not overInterface()then sprintKeys[key]=true end
+   if c.Input:GetFocusedTextBox()then return Enum.ContextActionResult.Pass end
+   return Enum.ContextActionResult.Sink
+  end,false,10000,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift)
   actions:BindActionAtPriority(grabAction,function(_,state)
    -- Keep the complete native throw gesture intact after the constraint disappears.
    if throwing then
@@ -220,9 +250,28 @@ return function(c)
     end
    end
    handView.Visible=visible==true
-   local pointer=c.MenuOpen()or c.Input.MouseBehavior~=Enum.MouseBehavior.LockCenter
+   local pointer=c.MenuOpen()or nativeMenuOpen()or c.Input:GetFocusedTextBox()~=nil
+    or game:GetService("GuiService").MenuIsOpen==true
    crosshair.Visible=visible==true and not pointer
-   if pointer then c.Unpatch("minecraftCursor",c.Input)else c.Patch("minecraftCursor",c.Input,"MouseIconEnabled",false)end
+   unlocker.Visible=visible==true and pointer
+   if visible and pointer then
+    c.Unpatch("minecraftLook")
+    c.Patch("minecraftPointer",c.Input,"MouseBehavior",Enum.MouseBehavior.Default)
+    c.Patch("minecraftPointer",c.Input,"MouseIconEnabled",true)
+   else
+    c.Unpatch("minecraftPointer")
+    if visible then c.Patch("minecraftLook",c.Input,"MouseBehavior",Enum.MouseBehavior.LockCenter)
+    else c.Unpatch("minecraftLook")end
+   end
+   if visible and not pointer then c.Patch("minecraftCursor",c.Input,"MouseIconEnabled",false)
+   else c.Unpatch("minecraftCursor",c.Input)end
+   local sprinting=visible and not pointer and(sprintKeys[Enum.KeyCode.LeftShift]or sprintKeys[Enum.KeyCode.RightShift])
+   if sprinting then
+    if sprintHumanoid~=humanoid then
+     c.Unpatch("minecraftSprint")sprintHumanoid=humanoid sprintBase=humanoid.WalkSpeed
+    end
+    c.Patch("minecraftSprint",humanoid,"WalkSpeed",sprintBase*1.3)
+   elseif sprintHumanoid then c.Unpatch("minecraftSprint")sprintHumanoid=nil sprintBase=nil end
    local nativeCross=c.PlayerGui:FindFirstChild("Crosshairs")
    if nativeCross and nativeCross:IsA("ScreenGui")then c.Patch("minecraftCursor",nativeCross,"Enabled",false)end
 
@@ -237,13 +286,14 @@ return function(c)
    local speed=velocity and math.sqrt(velocity.X^2+velocity.Z^2)or moving*16
    -- One gentle walking cycle per ~1.33 seconds at standard WalkSpeed16.
    step=step+math.min(speed,24)*delta/10.6666667
-   local amount=(v.minecraftBobbing or .7)*blend*.1
+   local amount=(v.minecraftBobbing or .7)*blend*(sprinting and .12 or .1)
    local walk=-step*math.pi
    local targetPitch=velocity and math.clamp(-velocity.Y*.35,-10,10)or 0
    pitch=pitch+(targetPitch-pitch)*(1-math.exp(-10*delta))
    local bob=CFrame.new(math.sin(walk)*amount*.5,-math.abs(math.cos(walk))*amount,0)
     *CFrame.Angles(0,0,math.rad(math.sin(walk)*amount*3))
     *CFrame.Angles(math.rad(math.abs(math.cos(walk-.2)*amount)*5+pitch),0,0)
+   if sprinting then bob=bob*CFrame.new(0,-.025*blend,0)*CFrame.Angles(-.06*blend,0,0)end
    local attack=math.sin(math.sqrt(swing)*math.pi)
    local attackTwist=math.sin(swing*swing*math.pi)
    local equip=math.max(0,1-age/.25)
@@ -307,6 +357,6 @@ return function(c)
   if not index or dead or not v.minecraftEnabled or processed or c.MenuOpen()or c.Input:GetFocusedTextBox()then return end
   if index and selected~=index then selected=index age=0 swing=1 if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
  end)
- local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false nativeButton(false)end)
+ local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false sprintKeys={}c.Unpatch("minecraftSprint")sprintHumanoid=nil sprintBase=nil nativeButton(false)end)
  return {Destroy=function()if dead then return end dead=true input:Disconnect()focus:Disconnect()clear()end}
 end

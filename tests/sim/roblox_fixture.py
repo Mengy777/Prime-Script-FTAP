@@ -196,3 +196,5 @@ _textures=",".join('["'+f.name+'"]="'+"".join("\\%03d"%b for b in f.read_bytes()
 lua.execute('local textures={'+_textures+'};local previous=game.HttpGet;game.HttpGet=function(self,url)if url:find("/assets/minecraft/",1,true)then local name=url:match("/([^/]+)$");if textures[name]then return textures[name]end end;return previous(self,url)end')
 
 lua.execute("TEST_SERVICES.ContextActionService={bindings={},BindActionAtPriority=function(self,n,f)self.bindings[n]=f end,UnbindAction=function(self,n)self.bindings[n]=nil end}")
+
+lua.execute("TEST_SERVICES.GuiService=TEST_SERVICES.GuiService or {MenuIsOpen=false}")

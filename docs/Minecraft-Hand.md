@@ -26,3 +26,6 @@ RMB ContextActionService action sends a normal virtual LMB press/release only wh
 
 ## 3.2.3ac
 RMB passes native throwing only when a live GrabPart constraint has an owned local beam, reusing main ownGrabBeam resolver. Gesture is latched through release even if the constraint disappears; focus loss clears the latch. No grab input is synthesized for a throw. Empty-sky pickup behavior unchanged.
+
+## 3.2.3bc
+Native FTAP MenuGui/Menu effective visibility (not E press parity or enabled ScreenGui alone) controls pointer release. A zero-size modal TextButton unlocks first-person input while menu is visible; explicit layered MouseBehavior/MouseIconEnabled changes restore on exit. Either Shift is consumed by a mode-only sprint action. Active sprint captures current Humanoid WalkSpeed and patches1.3x; release, menus, focus loss, death, respawn and disable restore baseline. Hand bob/lean increases gently; FOV untouched. Native E action remains untouched.

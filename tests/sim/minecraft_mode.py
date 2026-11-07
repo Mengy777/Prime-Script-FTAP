@@ -30,7 +30,7 @@ TEST_SERVICES.VirtualInputManager={SendMouseButtonEvent=function(self,x,y,button
 end}
 
 local humanoid=player.Character:FindFirstChildOfClass('Humanoid')
-humanoid.MaxHealth=100 humanoid.Health=100 humanoid.MoveDirection=Vector3.new(0,0,-1)
+humanoid.WalkSpeed=16 humanoid.MaxHealth=100 humanoid.Health=100 humanoid.MoveDirection=Vector3.new(0,0,-1)
 assert(TEST_OPTIONS.minecraftEnabled.Value==false)
 TEST_OPTIONS.camThird:SetValue(true)
 TEST_OPTIONS.minecraftEnabled:SetValue(true)
@@ -84,6 +84,26 @@ humanoid.Health=0 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(gui.Enabled and not bar:FindFirstChild('Heart1'):FindFirstChild('Fill').Visible)
 assert(bar:FindFirstChild('Food10'):FindFirstChild('Fill').Visible~=false)
 humanoid.Health=100 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
+-- Native E menu visibility, not an E toggle counter, drives pointer state.
+local shell=Instance.new('ScreenGui')shell.Name='MenuGui' shell.Enabled=true shell.Parent=player:FindFirstChild('PlayerGui')
+local menu=Instance.new('Frame')menu.Name='Menu' menu.Visible=true menu.Parent=shell
+TEST_SERVICES.RunService.RenderStepped:Fire(0)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.Default and TEST_SERVICES.UserInputService.MouseIconEnabled)
+assert(gui:FindFirstChild('MinecraftCursorUnlocker').Visible and not gui:FindFirstChild('MinecraftCrosshair').Visible)
+menu.Visible=false TEST_SERVICES.RunService.RenderStepped:Fire(0)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter and not TEST_SERVICES.UserInputService.MouseIconEnabled)
+assert(not gui:FindFirstChild('MinecraftCursorUnlocker').Visible and gui:FindFirstChild('MinecraftCrosshair').Visible)
+menu.Visible=true shell.Enabled=false TEST_SERVICES.RunService.RenderStepped:Fire(0)
+assert(gui:FindFirstChild('MinecraftCrosshair').Visible,'disabled menu shell released pointer')
+menu.Visible=false shell.Enabled=true
+local sprint=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint
+assert(sprint('PrimeMinecraftSprint',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.LeftShift})==Enum.ContextActionResult.Sink)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+assert(math.abs(humanoid.WalkSpeed-20.8)<1e-9)
+menu.Visible=true TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(humanoid.WalkSpeed==16)
+menu.Visible=false TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(math.abs(humanoid.WalkSpeed-20.8)<1e-9)
+sprint('PrimeMinecraftSprint',Enum.UserInputState.End,{KeyCode=Enum.KeyCode.LeftShift})
+TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(humanoid.WalkSpeed==16)
 local idle=arm.CFrame.Position
 local attack=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack
 assert(attack and attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
@@ -159,7 +179,11 @@ doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
 assert doc['payload']['values']['minecraftEnabled'] is True
 assert len(doc['payload']['values'])==543
 lua.execute("""
+local h=TEST_SERVICES.Players.LocalPlayer.Character:FindFirstChild('Humanoid')
+TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint('PrimeMinecraftSprint',Enum.UserInputState.Begin,{KeyCode=Enum.KeyCode.RightShift})
+TEST_SERVICES.RunService.RenderStepped:Fire(0)assert(math.abs(h.WalkSpeed-20.8)<1e-9)
 TEST_OPTIONS.minecraftEnabled:SetValue(false)
+assert(h.WalkSpeed==16 and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftSprint,'sprint not restored on disable')
 assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftGrab)
 assert(not TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm'))
 assert(not TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft'))

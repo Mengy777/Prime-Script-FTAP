@@ -1,3 +1,11 @@
+## 3.2.3bc — 2026-11-07
+
+- Minecraft E menu cursor follows actual MenuGui/Menu visibility, including ancestor Enabled/Visible guards; no key-toggle desynchronization or enabled-shell false positive.
+- Native pointer shown/unlocked via zero-size modal GUI button and layered input properties while FTAP/Prime/pause UI is open; Minecraft crosshair/locked look restored after close.
+- Minecraft-only Shift sprint replaces native crouch input. Hold either Shift for1.3x captured WalkSpeed plus running hand motion; release, menus, focus loss, death or disabling restores layered baseline. No world/hand FOV changes.
+- Existing E binding untouched; all mode-specific actions/GUI/property layers removed on disable/unload. No new profile keys.
+- Compile and simulation checks cover menu roundtrip, sprint speed/release/menu suspension, existing hand/sword/grab/throw behavior; live native menu/crouch behavior awaits user verification.
+
 ## 3.2.3ac — 2026-11-07
 
 - Minecraft RMB now passes the native throw gesture unchanged when an active local grab is confirmed, including aiming into sky. Does not synthesize another grab click.

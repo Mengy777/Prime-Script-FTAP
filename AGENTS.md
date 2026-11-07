@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.3ac**, tag `v3.2.3ac`. Next normal runtime version: **3.2.3bc**. Consult Git for the release commit.
+- Published runtime target: **3.2.3bc**, tag `v3.2.3bc`. Next normal runtime version: **3.2.3abc**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -367,3 +367,5 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - 3.2.3c replaces rejected sprite/world-space arm with independent ViewportFrame Camera70, six classic Steve UV face PNGs generated losslessly by tools/build_minecraft_hand.py. Java1.8.9 transform order and bob/attack equations source-reviewed; Roblox movement/timing adapted, no promise of universal 1:1 rendering. World FOV does not affect it. No physics changes; user follow-up adds mode-scoped high-priority LMB sink for cosmetic swing only, allowing UI/release events, restoring on exit. Original Minecraft crosshair replaces native/custom crosshair during mode. HUD preserved. XLPQ remains stopped.
 
 - 3.2.3ab: slower capped walking bob; slot9 local extruded original-color diamond sword; RMB normal input remap to native LMB only with real Mouse.Target, no range/ownership bypass or direct remote calls. LMB injection guard, focus/disable release, executor fallback+notice. Live interaction not yet confirmed. Next3.2.3ac.
+
+- 3.2.3bc: native MenuGui/Menu effective visibility owns cursor; zero-size modal button unlocks first-person pointer, independent minecraftPointer/minecraftLook layers restored on exit. Shift CAS action replaces crouch with hold sprint1.3x captured Humanoid WalkSpeed, suspended in menus and restored on release/focus/disable. No new keys. Live E/crouch behavior pending. Next3.2.3abc.
