@@ -51,3 +51,11 @@ Impulse uses horizontal aiming direction (vertical look fallback forward), mass*
 Mock checks cover successful local-constraint handshake, no hit before confirmed drop, exactly one hit, timeout without impulse, cancellation, normal manual grab/throw and2x ratio. Shared physics/ownership persistence is NOT established by mocks; peer-view testing after foreign contact remains required.
 
 Native contact follow-up: hold until local grab is confirmed, wait .12–.35s based on available GetNetworkPing before releasing to allow normal game contact to settle. First try button-up release, then a second native click for toggle-style drop if still held. This is a bounded input state machine, not proof that the server granted lasting ownership.
+
+## 3.2.4 — click routing
+
+Valid clicks are captured into a bounded FIFO (32 entries), not silently discarded when native contact is pending. Each stores target/strength/direction/character. Before starting a queued contact the current native aim must still match its assembly; requests older than1.2s are pruned. UI/focus/disable cancels pending+queue; native timeouts terminate that attempt without clearing later requests. One controller processes the sequence, so inputs are not mixed between objects.
+
+Physical LMB is already down during InputBegan. New native acquisition starts on Heartbeat and sends forced up then down, creating a fresh transition even on deduplicating input engines. Forwarded tokens are matched by state (rather than stalled behind a missing deduped up), expire after60ms and do not serve as a long bypass for later physical clicks. Confirmed settle30–120ms remains ping-based; toggle release fallback15ms, no extra delay after actual release. Early button-up after observed contact proceeds to release instead of canceling the hit.
+
+Hand range20 and exact sword multiplier2 are verified numerically. A mock with actual button-state deduplication produces3hits for3rapid clicks and a subsequent sword40hit. Actual remote acceptance/latency remains live-test dependent.

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.3abcf"
+local VERSION="3.2.4"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -997,6 +997,7 @@ local function buildVisualSystems()
     ru["Pulse speed"]="Скорость пульсации"
     ru["Pulse strength"]="Сила пульсации"
     ru["Minecraft grab input is unavailable in this executor."]="Захват Minecraft недоступен: executor не поддерживает нужный ввод."
+    ru["Hit queue is full. Wait for the current contact."]="Очередь ударов заполнена. Дождись завершения контакта."
     ru["Hit method"]="Способ удара"
     ru["Native contact (test)"]="Игровой контакт (тест)"
     ru["Local impulse"]="Локальный импульс"

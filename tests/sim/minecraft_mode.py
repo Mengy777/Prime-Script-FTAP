@@ -176,7 +176,8 @@ TEST_OPTIONS.minecraftHitStrength:SetValue(1.5)
 TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)TEST_SERVICES.RunService.RenderStepped:Fire(.4)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
 assert(#impulses==1 and math.abs(impulses[1].Magnitude-math.sqrt(54^2+12^2))<1e-9)
-attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==1,'click spam repeated impulse inside one swing')
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)assert(#impulses==2,'separate local clicks were ignored')
+table.remove(impulses,2)
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Nine},false)
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
@@ -207,6 +208,7 @@ TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 local beforeNative=#impulses
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
 assert(#impulses==beforeNative,'native test applied before contact')
+TEST_SERVICES.RunService.Heartbeat:Fire(.01)
 local nativeScope=Instance.new('Folder')nativeScope.Name='GrabParts'nativeScope.Parent=TEST_SERVICES.Workspace
 local nativePart=Instance.new('Part')nativePart.Name='GrabPart'nativePart.Parent=nativeScope
 local nativeWeld=Instance.new('WeldConstraint')nativeWeld.Part0=nativePart nativeWeld.Part1=punchTarget nativeWeld.Enabled=true nativeWeld.Active=true nativeWeld.Parent=nativePart
@@ -226,7 +228,7 @@ nativeScope:Destroy()
 -- No server/local grab confirmation: timeout is inert, never fake an impulse.
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
-for i=1,5 do TEST_SERVICES.RunService.Heartbeat:Fire(.2)end
+for i=1,6 do TEST_SERVICES.RunService.Heartbeat:Fire(.2)end
 assert(#impulses==beforeNative+1,'timeout hit an unconfirmed target')
 -- Focus loss cancels a pending attempt without a later impulse.
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
@@ -234,6 +236,40 @@ attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
 TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
 TEST_SERVICES.RunService.Heartbeat:Fire(.2)
 assert(#impulses==beforeNative+1)
+-- Three physical clicks during a busy handshake all execute, including deduped button edges.
+local originalMouseSend=TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent
+local downState=true local burstScope local burstWeld
+TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent=function(self,x,y,button,down)
+ if downState==down then return end
+ downState=down originalMouseSend(self,x,y,button,down)
+ if down then
+  if burstWeld then burstWeld:Destroy()burstWeld=nil
+  else
+   if burstScope then burstScope:Destroy()end
+   burstScope=Instance.new('Folder')burstScope.Name='GrabParts'burstScope.Parent=TEST_SERVICES.Workspace
+   local part=Instance.new('Part')part.Name='GrabPart'part.Parent=burstScope
+   burstWeld=Instance.new('WeldConstraint')burstWeld.Part0=part burstWeld.Part1=punchTarget burstWeld.Enabled=true burstWeld.Active=true burstWeld.Parent=part
+   local origin=Instance.new('Attachment')origin.Parent=player.Character
+   local beam=Instance.new('Beam')beam.Enabled=true beam.Attachment0=origin beam.Parent=burstScope
+  end
+ end
+end
+TEST_OPTIONS.minecraftHitStrength:SetValue(20)
+local beforeBurst=#impulses
+for i=1,3 do
+ attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+ attack('PrimeMinecraftAttack',Enum.UserInputState.End)
+end
+for i=1,36 do TEST_SERVICES.RunService.Heartbeat:Fire(.016)end
+assert(#impulses==beforeBurst+3,'busy native contact lost burst clicks')
+assert(math.abs(impulses[#impulses].Magnitude-math.sqrt(720^2+160^2))<1e-6,'hand strength20 was clamped')
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Nine},false)
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+for i=1,16 do TEST_SERVICES.RunService.Heartbeat:Fire(.016)end
+assert(#impulses==beforeBurst+4)
+assert(math.abs(impulses[#impulses].Magnitude-2*impulses[#impulses-1].Magnitude)<1e-6,'sword strength40 mismatch')
+if burstScope then burstScope:Destroy()end
+TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent=originalMouseSend
 TEST_SERVICES.Workspace.Raycast=function()return nil end
 TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
 TEST_SERVICES.RunService.RenderStepped:Fire(0)

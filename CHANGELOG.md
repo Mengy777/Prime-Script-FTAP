@@ -1,3 +1,11 @@
+## 3.2.4 — 2026-11-07
+
+- Queue each valid LMB hit instead of discarding it during pending contact or an animation cooldown. FIFO32 limit with explicit full notice; changed aim, stale1.2s requests and lifecycle interruptions cancel safely instead of hitting another target.
+- Start native input on Heartbeat after the physical LMB callback, explicitly prime an up edge and issue a fresh down edge. Forwarded-event acknowledgement no longer stalls behind an up event deduplicated by the input engine; short60ms token lifetime.
+- Reduce confirmed-contact settle to30–120ms (ping-adaptive), toggle-drop delay15ms and remove extra post-release delay. Physical early release after confirmed contact completes the release phase instead of discarding the hit. Failed attempt no longer erases subsequent requests.
+- Hand strength range0–20, sword automatically0–40; setting key/default preserved.
+- Numeric/input simulation with deduplicated engine edges verifies three rapid physical clicks become three hits, then sword power40. Live cadence still depends on normal FTAP grab confirmation.
+
 ## 3.2.3abcf — 2026-11-07
 
 - Experimental Native contact (test) hit method defaults on: a nearby LMB hit sends normal native grab input, waits for an owned local grab constraint on the same assembly, sends native drop input, then applies the hit only after release is confirmed.

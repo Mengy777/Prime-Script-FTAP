@@ -1,3 +1,13 @@
+## 3.2.4 — responsive hits and strength20
+
+1. Native contact (test), nearby cube: single click should start contact without needing a second/third click.
+2. Several quick separate LMB clicks while the same cube remains under aim/in reach: each should produce a hit, without requiring repeated clicks to start the line.
+3. Strength20 hand, then slot9 sword: computed strength40; begin lower if comparing small objects.
+4. After another player touches the cube, a new single click should reacquire contact and hit normally. Check their view for actual movement.
+5. Change aim/open E/disable while queued: no late hit on a different target or stuck synthetic button.
+
+Network-confirmation latency/rejection still applies. Simulated burst success is not proof of identical live FTAP input timing.
+
 ## 3.2.3abcf — automatic native contact experiment
 
 1. Minecraft settings → Hit method = Native contact (test), strength1–1.5 first.

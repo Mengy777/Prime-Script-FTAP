@@ -4,7 +4,7 @@ return function(c)
  local dead=false local screen,arm,sword,handView,handCamera local blend=0 local selected=1
  local age,swing,step,pitch=0,1,0,0
  local swordScale
- local pendingHit local hitCooldown=0 local hitNotice=false
+ local pendingHit local hitQueue={}local hitNotice=false
  local lagPitch,lagYaw,lastCamera
  local crosshair,unlocker
  local actions=game:GetService("ContextActionService")
@@ -14,16 +14,20 @@ return function(c)
  local forwarding=false local injectedDown=false local inputBackend local inputPoint local inputWarned=false
  local forwardedEvents={}
  local function forwardedEvent(state)
-  while forwardedEvents[1]and forwardedEvents[1].expires<os.clock()do table.remove(forwardedEvents,1)end
-  if forwardedEvents[1]and forwardedEvents[1].state==state then table.remove(forwardedEvents,1)return true end
+  for i=#forwardedEvents,1,-1 do if forwardedEvents[i].expires<os.clock()then table.remove(forwardedEvents,i)end end
+  -- Priming up may be deduplicated by the input engine; do not let its missing
+  -- callback block acknowledgement of the following injected down edge.
+  for i,event in ipairs(forwardedEvents)do
+   if event.state==state then table.remove(forwardedEvents,i)return true end
+  end
   return forwarding
  end
- local function nativeButton(down)
-  if down==injectedDown then return true end
+ local function nativeButton(down,force)
+  if down==injectedDown and not force then return true end
   local camera=c.Workspace.CurrentCamera
   if down and not camera then return false end
   if camera then inputPoint=camera.ViewportSize/2 end
-  local token={state=down and Enum.UserInputState.Begin or Enum.UserInputState.End,expires=os.clock()+.25}
+  local token={state=down and Enum.UserInputState.Begin or Enum.UserInputState.End,expires=os.clock()+.06}
   forwardedEvents[#forwardedEvents+1]=token
   forwarding=true
   local ok,err=pcall(function()
@@ -47,7 +51,7 @@ return function(c)
  local function clear()
   c.Job("Minecraft presentation")
   c.Job("Minecraft native hit")
-  pendingHit=nil hitCooldown=0 hitNotice=false
+  pendingHit=nil hitQueue={}hitNotice=false
   nativeButton(false)
   actions:UnbindAction(attackAction)
   actions:UnbindAction(grabAction)
@@ -181,7 +185,7 @@ return function(c)
   return a and b and(a==b or(a.AssemblyRootPart or a)==(b.AssemblyRootPart or b))
  end
  local function cancelHit()
-  pendingHit=nil nativeButton(false)
+  pendingHit=nil hitQueue={}nativeButton(false)
  end
  local function applyHit(hit)
   local root=hit.target.AssemblyRootPart or hit.target
@@ -194,7 +198,7 @@ return function(c)
   root:ApplyImpulse((flat.Unit*18+Vector3.new(0,4,0))*(mass*hit.power))
  end
  local function hitObject()
-  if pendingHit or v.freeCameraEnabled or v.spectateEnabled then return end
+  if v.freeCameraEnabled or v.spectateEnabled then return end
   local character=me.Character local camera=c.Workspace.CurrentCamera
   local humanoid=character and character:FindFirstChildOfClass("Humanoid")
   local head=character and(character:FindFirstChild("Head")or character:FindFirstChild("HumanoidRootPart"))
@@ -207,16 +211,16 @@ return function(c)
    or (result.Position-head.Position).Magnitude>8 or(target.AssemblyRootPart or target).Anchored then return end
   local strength=v.minecraftHitStrength or 1
   if type(strength)~="number"or strength~=strength then return end
-  local power=math.clamp(strength,0,5)*(selected==9 and 2 or 1)
+  local power=math.clamp(strength,0,20)*(selected==9 and 2 or 1)
   if power<=0 then return end
-  local hit={target=target,point=result.Position,startPosition=target.Position,direction=direction,power=power,character=character,elapsed=0,stage="grab"}
+  local hit={target=target,point=result.Position,startPosition=target.Position,direction=direction,power=power,character=character,elapsed=0,age=0,stage="grab"}
   if v.minecraftHitMethod~="Native contact (test)"then applyHit(hit)return end
-  -- Never take over an object the user is already holding or switch to a changed aim.
-  if holdingObject()or me:GetMouse().Target~=target then return end
-  local ok,ping=pcall(function()return me:GetNetworkPing()end)
-  hit.settle=ok and type(ping)=="number"and ping==ping and math.clamp(.06+ping*2,.12,.35)or .12
-  pendingHit=hit
-  if not nativeButton(true)then cancelHit()return end
+  -- Capture every click, but never replay it against a different aim/character.
+  if #hitQueue>=32 then
+   c.Notify(c.Translate("Hit queue is full. Wait for the current contact."))return
+  end
+  hitQueue[#hitQueue+1]=hit
+
  end
  local function update()
   if dead then return end
@@ -235,8 +239,32 @@ return function(c)
   if screen then return end
   local scale=build()
   c.Job("Minecraft native hit",c.Run.Heartbeat,function(dt)
+   local delta=math.min(dt,.2)
+   for _,queued in ipairs(hitQueue)do queued.age=queued.age+delta end
+   if not pendingHit then
+    while hitQueue[1]do
+     local nextHit=hitQueue[1]
+     local sameAim=sameAssembly(me:GetMouse().Target,nextHit.target)
+     if nextHit.age>1.2 or nextHit.character~=me.Character or not sameAim
+      or not nextHit.target:IsDescendantOf(c.Workspace)then table.remove(hitQueue,1)
+     elseif overInterface()or v.freeCameraEnabled or v.spectateEnabled then cancelHit()return
+     elseif holdingObject()then return
+     else
+      local alive=me.Character and me.Character:FindFirstChildOfClass("Humanoid")
+      if not alive or alive.Health<=0 then cancelHit()return end
+      table.remove(hitQueue,1)
+      local ok,ping=pcall(function()return me:GetNetworkPing()end)
+      nextHit.settle=ok and type(ping)=="number"and ping==ping and math.clamp(.02+ping*.5,.03,.12)or .03
+      pendingHit=nextHit
+      -- The physical LMB is already down during its callback. Start next frame,
+      -- prime an up edge, then send a fresh down edge so the game sees a new press.
+      if not nativeButton(false,true)or not nativeButton(true)then cancelHit()end
+      return
+     end
+    end
+   end
    local hit=pendingHit if not hit then return end
-   hit.elapsed=hit.elapsed+math.min(dt,.2)
+   hit.elapsed=hit.elapsed+delta
    local h=me.Character and me.Character:FindFirstChildOfClass("Humanoid")
    if dead or not v.minecraftEnabled or me.Character~=hit.character or not h or h.Health<=0
     or v.freeCameraEnabled or v.spectateEnabled or overInterface()or not hit.target:IsDescendantOf(c.Workspace)then cancelHit()return end
@@ -244,23 +272,23 @@ return function(c)
    if held and not sameAssembly(held,hit.target)then cancelHit()return end
    if hit.stage=="grab"and held then
     hit.stage="settle"hit.elapsed=0
-   elseif hit.stage=="settle"and not held then cancelHit()return
+   elseif hit.stage=="settle"and not held then hit.stage="release"hit.elapsed=0
    elseif hit.stage=="settle"and hit.elapsed>=hit.settle then
     hit.stage="release"hit.elapsed=0
     nativeButton(false)
-   elseif hit.stage=="release"and held and hit.elapsed>=.04 and not hit.dropClicked then
+   elseif hit.stage=="release"and held and hit.elapsed>=.015 and not hit.dropClicked then
     -- Some native handlers release on button-up, others toggle on a second click.
     hit.dropClicked=true
     if not nativeButton(true)then cancelHit()return end
     nativeButton(false)
-   elseif hit.stage=="release"and not held and hit.elapsed>=.03 then
+   elseif hit.stage=="release"and not held and hit.elapsed>=0 then
     pendingHit=nil
     local head=me.Character:FindFirstChild("Head")or me.Character:FindFirstChild("HumanoidRootPart")
     if head and (hit.point+hit.target.Position-hit.startPosition-head.Position).Magnitude<=12 then
      local ok,err=pcall(applyHit,hit)if not ok then c.WarnOnce("Minecraft hit",err)end
     end
    elseif hit.elapsed>(hit.stage=="grab"and .6 or .35)then
-    cancelHit()
+    pendingHit=nil nativeButton(false)
     if not hitNotice then hitNotice=true c.Notify(c.Translate("Native hit could not confirm grab/release. No impulse was applied."))end
    end
   end)
@@ -268,7 +296,7 @@ return function(c)
    if forwardedEvent(state)or dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
    if state==Enum.UserInputState.Begin then
     swing=0
-    if hitCooldown<=0 then hitCooldown=.1 local ok,err=pcall(hitObject)if not ok then cancelHit()c.WarnOnce("Minecraft hit",err)end end
+    local ok,err=pcall(hitObject)if not ok then cancelHit()c.WarnOnce("Minecraft hit",err)end
    end
    if pendingHit and state==Enum.UserInputState.End then return Enum.ContextActionResult.Sink end
    -- End passes through so an object held before enabling can still be released.
@@ -276,7 +304,7 @@ return function(c)
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
   actions:BindActionAtPriority(grabAction,function(_,state)
-   if state==Enum.UserInputState.Begin and pendingHit then cancelHit()end
+   if state==Enum.UserInputState.Begin and(pendingHit or #hitQueue>0)then cancelHit()end
    -- Keep the complete native throw gesture intact after the constraint disappears.
    if throwing then
     if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then throwing=false end
@@ -340,7 +368,6 @@ return function(c)
    local moving=visible and direction and direction.Magnitude>.05 and 1 or 0
    blend=blend+(moving-blend)*(1-math.exp(-12*math.min(dt,.1)))
    local delta=math.min(dt,.1)
-   hitCooldown=math.max(0,hitCooldown-delta)
    age=age+delta swing=math.min(1,swing+delta/.35)
    -- Minecraft's distance-based view bob; standing still freezes walking phase.
    local root=character and character:FindFirstChild("HumanoidRootPart")
@@ -411,7 +438,7 @@ return function(c)
  c.Choice(panel,"minecraftMode","Mode",{"Interactive (test)"},"Interactive (test)",function()end)
  c.Slider(panel,"minecraftHandScale","Hand size",.45,1.1,.7,.05,function()end)
  c.Choice(panel,"minecraftHitMethod","Hit method",{"Native contact (test)","Local impulse"},"Native contact (test)",function()cancelHit()end)
- c.Slider(panel,"minecraftHitStrength","Hand hit strength",0,5,1,.1,function()end)
+ c.Slider(panel,"minecraftHitStrength","Hand hit strength",0,20,1,.1,function()end)
  c.Slider(panel,"minecraftBobbing","Hand bobbing",0,1,.7,.05,function()end)
  c.Slider(panel,"minecraftHotbarScale","Hotbar size",.6,1.6,1,.05,function()if screen then update()end end)
  local numbers={One=1,Two=2,Three=3,Four=4,Five=5,Six=6,Seven=7,Eight=8,Nine=9}

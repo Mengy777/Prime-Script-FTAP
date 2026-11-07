@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.3abcf**, tag `v3.2.3abcf`. Next normal runtime version: **3.2.4**. Consult Git for the release commit.
+- Published runtime target: **3.2.4**, tag `v3.2.4`. Next normal runtime version: **3.2.4a**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -373,3 +373,5 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - 3.2.3abc supersedes3.2.3bc Shift sprint: removed entirely, native FTAP crouch untouched. Hand hit strength0–5(default1), sword2x; one local ApplyImpulse per swing on first <=8stud non-character/unanchored raycast hit. No ownership override/remotes; native authority can ignore client impulse.544keys. Live physical effect pending; do not claim server-authoritative hits. Next3.2.3abcf.
 
 - 3.2.3abcf native-contact hit EXPERIMENT: default minecraftHitMethod Native contact (test), normal native grab/drop input before impulse, matched local live constraint required. No ownership override/remotes. User confirmed manual line contact restores shared hits after foreign grabs; automation not yet live-confirmed. Stronger horizontal18+up4 base, sword2x; short .1s hit gate,545keys. Transient line visible; timeout/cancel means no impulse. Next3.2.4. XLPQ stays stopped.
+
+- 3.2.4 user confirmed3.2.3abcf auto-contact actually throws objects strongly, but needed3–4clicks. New FIFO per-valid-click queue, next-Heartbeat up/down priming (avoids duplicate physical-down suppression), short60ms forwarded tokens, faster30–120ms settle, safe early release and independent attempts. Hand20/sword40,545keys. Deduplicating input mock proves3burstclicks→3hits. Live cadence recheck pending. Next3.2.4a.
