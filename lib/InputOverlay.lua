@@ -14,14 +14,57 @@ return function(c)
   keys[name]={frame=frame,outline=outline,amount=0}
  end
  -- Compact spatial keyboard: E next to W, wide modifiers and space below.
- key("W","W",80,10,38,36)key("E","E",124,10,38,36)
+ key("R","R",36,10,38,36)key("W","W",80,10,38,36)key("E","E",124,10,38,36)
  key("A","A",36,52,38,36)key("S","S",80,52,38,36)key("D","D",124,52,38,36)
  key("Shift","SHIFT",10,100,56,36)key("Ctrl","CTRL",72,100,48,36)key("Space","SPACE",126,100,74,36)
- local mouse=c.Make("Frame",{Name="Mouse",Position=UDim2.fromOffset(212,10),Size=UDim2.fromOffset(70,126),BorderSizePixel=0},root)
- c.Make("UICorner",{CornerRadius=UDim.new(0,22)},mouse)
- local mouseBorder=c.Make("UIStroke",{Thickness=1,Transparency=.45},mouse)
- key("MouseButton1","L",219,19,25,40)key("MouseButton2","R",250,19,25,40)
- key("MouseButton3","•",237,65,20,24)key("WheelUp","↑",220,96,24,25)key("WheelDown","↓",250,96,24,25)
+ local mouse=c.Make("Frame",{Name="Mouse",Position=UDim2.fromOffset(212,10),Size=UDim2.fromOffset(70,126),BackgroundTransparency=1,BorderSizePixel=0},root)
+ local fallback=c.Make("Frame",{Name="MouseFallback",Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(26,26,31),BorderSizePixel=0},mouse)
+ c.Make("UICorner",{CornerRadius=UDim.new(0,24)},fallback)
+ local mouseBorder=c.Make("UIStroke",{Thickness=1,Transparency=.6},fallback)
+ local fallbackWheel=c.Make("Frame",{Name="Wheel",Position=UDim2.fromOffset(31,16),Size=UDim2.fromOffset(8,20),BackgroundColor3=Color3.fromRGB(65,65,70),BorderSizePixel=0},fallback)
+ c.Make("UICorner",{CornerRadius=UDim.new(0,3)},fallbackWheel)
+ local body=c.Make("ImageLabel",{Name="MouseArtwork",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image="",Active=false},mouse)
+ local artReady,artLoading,artAttempted=false,false,false
+ local artwork={["body"]={file="gaming-mouse.png",bytes=2045249},["MouseButton1"]={file="left.png",bytes=15840},["MouseButton2"]={file="right.png",bytes=16137},["MouseButton3"]={file="middle.png",bytes=9827},["WheelUp"]={file="wheel-up.png",bytes=9831},["WheelDown"]={file="wheel-down.png",bytes=9830}}
+ local fallbackRects={MouseButton1={218,20,25,43},MouseButton2={251,20,25,43},MouseButton3={242,26,8,20},WheelUp={242,26,8,10},WheelDown={242,36,8,10}}
+ for _,name in ipairs({"MouseButton1","MouseButton2","MouseButton3","WheelUp","WheelDown"})do
+  local frame=c.Make("ImageLabel",{Name=name,Position=UDim2.fromOffset(212,10),Size=UDim2.fromOffset(70,126),
+   BackgroundTransparency=1,ImageTransparency=1,Image="",Active=false,ZIndex=2},root)
+  local rect=fallbackRects[name]
+  local zone=c.Make("Frame",{Name=name.."Fallback",Position=UDim2.fromOffset(rect[1],rect[2]),Size=UDim2.fromOffset(rect[3],rect[4]),
+   BackgroundTransparency=1,BorderSizePixel=0,Active=false,ZIndex=2},root)
+  c.Make("UICorner",{CornerRadius=UDim.new(0,5)},zone)
+  keys[name]={frame=frame,fallback=zone,mouse=true,amount=0}
+ end
+ local function loadArtwork()
+  if artReady or artLoading or artAttempted then return end
+  artAttempted=true artLoading=true
+  task.spawn(function()
+   local ok,result=pcall(function()
+    local asset=getcustomasset or getsynasset
+    assert(type(asset)=="function"and type(readfile)=="function"and type(writefile)=="function","Local image support unavailable")
+    for _,path in ipairs({"PrimeVisuals","PrimeVisuals/Assets","PrimeVisuals/Assets/InputOverlay"})do if not isfolder(path)then makefolder(path)end end
+    local rootUrl=c.InputOverlayAssetRoot
+    local version=rootUrl:match("tags/v([^/]+)/")or"test"
+    local images={}
+    for name,file in pairs(artwork)do
+     local path="PrimeVisuals/Assets/InputOverlay/"..version.."-"..file.file
+     local function valid(bytes)return type(bytes)=="string"and #bytes==file.bytes and bytes:sub(1,8)==string.char(137,80,78,71,13,10,26,10)end
+     local cached,bytes=pcall(readfile,path)
+     if not cached or not valid(bytes)then bytes=game:HttpGet(rootUrl..file.file)assert(valid(bytes),"Invalid mouse artwork: "..file.file)writefile(path,bytes)end
+     images[name]=asset(path)assert(type(images[name])=="string"and #images[name]>0,"Invalid mouse image URI")
+    end
+    return images
+   end)
+   artLoading=false
+   if dead then return end
+   if ok then
+    body.Image=result.body
+    for name,entry in pairs(keys)do if entry.mouse then entry.frame.Image=result[name]entry.fallback.Visible=false end end
+    artReady=true fallback.Visible=false
+   else if not screen.Enabled then artAttempted=false end c.WarnOnce("Input display artwork",result)end
+  end)
+ end
  local function position(x,y)
   local camera=c.Workspace.CurrentCamera local view=camera and camera.ViewportSize or Vector2.new(1280,720)
   local factor=v.inputOverlayScale or 1
@@ -32,10 +75,11 @@ return function(c)
   scale.Scale=v.inputOverlayScale or 1
   root.BackgroundColor3=v.inputOverlayBackground or Color3.fromRGB(12,12,17)
   root.BackgroundTransparency=v.inputOverlayTransparency or .15
-  mouse.BackgroundColor3=root.BackgroundColor3 mouse.BackgroundTransparency=root.BackgroundTransparency
+  if not screen.Enabled and not artLoading then artAttempted=false end
+  if screen.Enabled then loadArtwork()end
   border.Color=v.inputOverlayAccent or Color3.fromRGB(160,106,255)mouseBorder.Color=border.Color
   if not drag then position(v.inputOverlayX or 24,v.inputOverlayY or 360)end
-  if not screen.Enabled then held={}wheelUp=0 wheelDown=0 drag=nil for _,entry in pairs(keys)do entry.amount=0 end end
+  if not screen.Enabled then held={}wheelUp=0 wheelDown=0 drag=nil for _,entry in pairs(keys)do entry.amount=0 if entry.mouse then entry.frame.ImageTransparency=1 entry.fallback.BackgroundTransparency=1 end end end
  end
  local function finish()
   local previous=drag drag=nil
@@ -88,10 +132,16 @@ return function(c)
    elseif name=="WheelUp"then down=wheelUp>0 elseif name=="WheelDown"then down=wheelDown>0 end
    entry.amount=entry.amount+((down and 1 or 0)-entry.amount)*blend
    local idle=Color3.fromRGB(25,25,32)local accent=v.inputOverlayAccent or Color3.fromRGB(160,106,255)
+   if entry.mouse then
+    entry.frame.ImageColor3=accent entry.frame.ImageTransparency=1-.32*entry.amount
+    entry.fallback.Visible=not artReady
+    entry.fallback.BackgroundColor3=accent entry.fallback.BackgroundTransparency=1-.3*entry.amount
+   else
    entry.frame.BackgroundColor3=idle:Lerp(accent,entry.amount)
    entry.frame.BackgroundTransparency=.12*(1-entry.amount)
    entry.frame.TextColor3=v.inputOverlayText or Color3.new(1,1,1)
    entry.outline.Color=accent entry.outline.Transparency=.8-.65*entry.amount
+   end
   end
  end)
  update()

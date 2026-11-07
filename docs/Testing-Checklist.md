@@ -1,3 +1,13 @@
+## 3.2.4a — input display
+
+1. R appears immediately left of W and lights/fades with physical R presses.
+2. Mouse is a full realistic image without L/R/arrows/dot labels; LMB/RMB light only their matching button.
+3. MMB lights the wheel; wheel-up/down briefly light the appropriate half, then fade.
+4. Check chosen accent/scale and dragging remain correct; saved position persists after reload.
+5. Focus loss/disable clears highlights; no input controls are blocked.
+
+Minecraft3.2.4 fully accepted by user; do not reopen its old checklist absent new bugs. Input artwork/click alignment awaits live visual acceptance.
+
 ## 3.2.4 — responsive hits and strength20
 
 1. Native contact (test), nearby cube: single click should start contact without needing a second/third click.

@@ -1,3 +1,11 @@
+## 3.2.4a — 2026-11-07
+
+- Input display adds R directly left of W; keyboard geometry/panel dimensions and saved position unchanged.
+- Replace labeled mouse rectangles/arrows with a complete realistic grayscale gaming mouse artwork and five independently tinted press/scroll masks. No letters or arrows on the mouse; scrolling lights upper/lower wheel region and MMB lights the full wheel.
+- Preserve accent, scale, background, drag/autosave, focus-loss clearing, processed-input observation and unload cleanup. No game-control binding/sinking.
+- Artwork lazily cached only on enable, version-pinned PNG signature/byte-length validation; unobtrusive no-text native fallback if image support/download unavailable. Re-enable can retry a failed load.
+- Compilation and input/cache/PNG tests passed; live appearance awaits user confirmation. Minecraft3.2.4 accepted in full by user before this update, runtime unchanged here.
+
 ## 3.2.4 — 2026-11-07
 
 - Queue each valid LMB hit instead of discarding it during pending contact or an animation cooldown. FIFO32 limit with explicit full notice; changed aim, stale1.2s requests and lifecycle interruptions cancel safely instead of hitting another target.
