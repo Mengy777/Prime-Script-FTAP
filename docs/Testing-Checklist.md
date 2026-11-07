@@ -1,3 +1,13 @@
+## 3.2.3ab — Minecraft interaction prototype
+
+1. Walk normally: slower hand bob, no frantic shake at high velocity.
+2. Press9: diamond sword appears, LMB animates sword;1–8 restores bare arm.
+3. Aim at nearby grabbable object + RMB: ordinary FTAP line/grab should work. Check normal drop/release behavior.
+4. Aim into sky + RMB: no line/grab. LMB remains only a swing.
+5. E menu/Prime UI remains clickable; disable/unload restores standard controls. No stuck mouse after changing focus.
+
+Live checks3–5 depend on FTAP input handlers and executor support; simulation success is not live proof.
+
 ## 3.2.3c — textured Minecraft hand
 
 - Compare default idle model silhouette and sharp pixel texture to Minecraft; report screenshot if orientation differs.

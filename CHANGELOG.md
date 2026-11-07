@@ -1,3 +1,11 @@
+## 3.2.3ab — 2026-11-07
+
+- Minecraft walking bob slowed by ~2.67x at standard speed, with a speed cap to avoid frantic motion when flung/accelerated.
+- Slot9 equips a local extruded diamond sword from exact original sprite color runs; source-based handheld pose, equip rise and swing. Empty slots restore the bare arm.
+- Minecraft-only RMB forwards ordinary native LMB press/release if Mouse.Target is a real world BasePart, excluding own character; no input for empty sky. Native game still decides grab eligibility/range. UI clicks pass, LMB remains cosmetic, release on focus loss/disable/unload.
+- Native virtual input with executor mouse API fallback; unsupported input produces one notice. No direct grab remotes or distance/ownership bypass.
+- Compile, numeric hand/sword animation and input routing simulations recorded; actual FTAP grab/beam and executor event delivery require live testing.
+
 ## 3.2.3c — 2026-11-07
 
 - Replace magnified hand screenshot with a native 4x12x4 model rendered in an independent ViewportFrame Camera at fixed 70-degree FOV.

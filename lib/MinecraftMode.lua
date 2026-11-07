@@ -1,20 +1,58 @@
 -- Local Minecraft presentation. No remotes/damage; mode-scoped LMB sink blocks native grabbing.
 return function(c)
  local v=c.Controls local me=c.Players.LocalPlayer
- local dead=false local screen,arm,handView,handCamera local blend=0 local selected=1
+ local dead=false local screen,arm,sword,handView,handCamera local blend=0 local selected=1
  local age,swing,step,pitch=0,1,0,0
+ local swordScale
  local lagPitch,lagYaw,lastCamera
  local crosshair
  local actions=game:GetService("ContextActionService")
  local attackAction="PrimeMinecraftAttack"
+ local grabAction="PrimeMinecraftGrab"
+ local forwarding=false local injectedDown=false local inputBackend local inputPoint local inputWarned=false
+ local forwardedEvents={}
+ local function forwardedEvent(state)
+  while forwardedEvents[1]and forwardedEvents[1].expires<os.clock()do table.remove(forwardedEvents,1)end
+  if forwardedEvents[1]and forwardedEvents[1].state==state then table.remove(forwardedEvents,1)return true end
+  return forwarding
+ end
+ local function nativeButton(down)
+  if down==injectedDown then return true end
+  local camera=c.Workspace.CurrentCamera
+  if down and not camera then return false end
+  if camera then inputPoint=camera.ViewportSize/2 end
+  local token={state=down and Enum.UserInputState.Begin or Enum.UserInputState.End,expires=os.clock()+.25}
+  forwardedEvents[#forwardedEvents+1]=token
+  forwarding=true
+  local ok,err=pcall(function()
+   if inputBackend=="executor"then
+    local fn=down and mouse1press or mouse1release assert(type(fn)=="function","Mouse input unavailable")fn()
+   else
+    local point=inputPoint or Vector2.new(0,0)
+    game:GetService("VirtualInputManager"):SendMouseButtonEvent(point.X,point.Y,0,down,game,0)
+   end
+  end)
+  if not ok and not inputBackend and type(mouse1press)=="function"and type(mouse1release)=="function"then
+   inputBackend="executor"ok,err=pcall(down and mouse1press or mouse1release)
+  end
+  forwarding=false
+  if ok then injectedDown=down inputBackend=inputBackend or "native" return true end
+  for i,event in ipairs(forwardedEvents)do if event==token then table.remove(forwardedEvents,i)break end end
+  c.WarnOnce("Minecraft input",err)
+  if not inputWarned then inputWarned=true c.Notify(c.Translate("Minecraft grab input is unavailable in this executor."))end return false
+ end
  local selection local data local images local hearts={} local previousHealth
  local function clear()
   c.Job("Minecraft presentation")
+  nativeButton(false)
   actions:UnbindAction(attackAction)
+  actions:UnbindAction(grabAction)
+  inputWarned=false forwardedEvents={}
   c.Unpatch("minecraftCursor")
   if screen then screen:Destroy()screen=nil end
   if arm then arm:Destroy()arm=nil end
-  selection=nil crosshair=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
+  if sword then sword:Destroy()sword=nil end
+  swordScale=nil selection=nil crosshair=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
   c.Unpatch("minecraftCamera")
  end
  local function loadImages()
@@ -79,6 +117,13 @@ return function(c)
    local target=face=="Top"and"Bottom"or face=="Bottom"and"Top"or face=="Right"and"Left"or face=="Left"and"Right"or face
    c.Make("Decal",{Name="Steve"..face,Face=Enum.NormalId[target],Texture=images["Arm"..face]},arm)
   end
+  sword=c.Make("Model",{Name="PrimeDiamondSword"})
+  for _,run in ipairs(data.SwordRuns)do
+   c.Make("Part",{Name="TexelStrip",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,CastShadow=false,
+    Size=Vector3.new(run[3]/16,1/16,1/16),CFrame=CFrame.new((run[1]+run[3]/2)/16-.5,.5-(run[2]+.5)/16,0),
+    Color=Color3.fromRGB(run[4],run[5],run[6]),Material=Enum.Material.SmoothPlastic},sword)
+  end
+  sword.WorldPivot=CFrame.new()
   return scale
  end
  local function overInterface()
@@ -108,12 +153,26 @@ return function(c)
   if screen then return end
   local scale=build()
   actions:BindActionAtPriority(attackAction,function(_,state)
-   if dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
+   if forwardedEvent(state)or dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
    if state==Enum.UserInputState.Begin then if swing>=1 then swing=0 end end
    -- End passes through so an object held before enabling can still be released.
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then return Enum.ContextActionResult.Pass end
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
+  actions:BindActionAtPriority(grabAction,function(_,state)
+   if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
+    if injectedDown then nativeButton(false)return Enum.ContextActionResult.Sink end
+    return Enum.ContextActionResult.Pass
+   end
+   if dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
+   if state==Enum.UserInputState.Begin and not v.freeCameraEnabled and not v.spectateEnabled then
+    local mouse=me:GetMouse()local target=mouse.Target
+    if target and target:IsA("BasePart")and target:IsDescendantOf(c.Workspace)
+     and not(me.Character and target:IsDescendantOf(me.Character))then nativeButton(true)end
+   end
+   return Enum.ContextActionResult.Sink
+  end,false,10000,Enum.UserInputType.MouseButton2)
+
 
   c.Notify(c.Translate(wasThird and "Third-person disabled. Minecraft mode enabled."or"Minecraft mode enabled."))
   c.Job("Minecraft presentation",c.Run.RenderStepped,function(dt)
@@ -122,6 +181,7 @@ return function(c)
    local character=me.Character local humanoid=character and character:FindFirstChildOfClass("Humanoid")
    local living=humanoid and humanoid.Health>0
    local visible=living and not v.freeCameraEnabled and not v.spectateEnabled
+   if not visible and injectedDown then nativeButton(false)end
    screen.Enabled=humanoid~=nil
    local health=humanoid and math.clamp(humanoid.Health/math.max(humanoid.MaxHealth or 100,1),0,1)or 0
    local units=health>0 and math.ceil(health*20-1e-6)or 0
@@ -149,7 +209,8 @@ return function(c)
    local root=character and character:FindFirstChild("HumanoidRootPart")
    local velocity=root and root.AssemblyLinearVelocity
    local speed=velocity and math.sqrt(velocity.X^2+velocity.Z^2)or moving*16
-   step=step+speed*delta/4
+   -- One gentle walking cycle per ~1.33 seconds at standard WalkSpeed16.
+   step=step+math.min(speed,24)*delta/10.6666667
    local amount=(v.minecraftBobbing or .7)*blend*.1
    local walk=-step*math.pi
    local targetPitch=velocity and math.clamp(-velocity.Y*.35,-10,10)or 0
@@ -187,7 +248,23 @@ return function(c)
    local handScale=(v.minecraftHandScale or .7)/.7
    arm.Size=Vector3.new(.25,.75,.25)*handScale
    -- Offset zoom only for explicit hand-size setting, never the world camera FOV.
+   local equipped=selected==9
+   arm.Parent=not equipped and handView or nil
+   sword.Parent=equipped and handView or nil
    arm.CFrame=bob*lookLag*pose
+   if equipped then
+    local desiredScale=.68*handScale
+    if desiredScale~=swordScale then sword:ScaleTo(desiredScale)swordScale=desiredScale end
+    -- Java handheld item transform + original handheld.json right-hand display pose.
+    local item=CFrame.new(-.4*attack,.2*math.sin(math.sqrt(swing)*math.pi*2),-.2*math.sin(swing*math.pi))
+     *CFrame.new(.56,-.52-equip*.6,-.71999997)
+     *CFrame.Angles(0,math.rad(45-attackTwist*20),0)
+     *CFrame.Angles(0,0,math.rad(attack*-20))
+     *CFrame.Angles(math.rad(attack*-80),0,0)
+     *CFrame.new(1.13/16,3.2/16,1.13/16)
+     *CFrame.Angles(0,math.rad(-90),math.rad(25))
+    sword:PivotTo(bob*lookLag*item)
+   end
    scale.Scale=v.minecraftHotbarScale or 1
   end)
  end
@@ -202,7 +279,8 @@ return function(c)
  local input=c.Input.InputBegan:Connect(function(event,processed)
   local index=event.KeyCode and numbers[event.KeyCode.Name]
   if not index or dead or not v.minecraftEnabled or processed or c.MenuOpen()or c.Input:GetFocusedTextBox()then return end
-  if index then selected=index if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
+  if index and selected~=index then selected=index age=0 swing=1 if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
  end)
- return {Destroy=function()if dead then return end dead=true input:Disconnect()clear()end}
+ local focus=c.Input.WindowFocusReleased:Connect(function()nativeButton(false)end)
+ return {Destroy=function()if dead then return end dead=true input:Disconnect()focus:Disconnect()clear()end}
 end

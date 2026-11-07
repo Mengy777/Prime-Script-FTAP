@@ -21,6 +21,14 @@ CFrame.Angles=function(x,y,z)
 end
 TEST_SERVICES.Workspace.CurrentCamera.CFrame=CFrame.new()
 local player=TEST_SERVICES.Players.LocalPlayer
+local mouse={Target=nil}player.GetMouse=function()return mouse end
+local synthetic={}
+TEST_SERVICES.VirtualInputManager={SendMouseButtonEvent=function(self,x,y,button,down)
+ local callback=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack
+ assert(callback('PrimeMinecraftAttack',down and Enum.UserInputState.Begin or Enum.UserInputState.End)==Enum.ContextActionResult.Pass,'forwarded click sunk')
+ synthetic[#synthetic+1]=down
+end}
+
 local humanoid=player.Character:FindFirstChildOfClass('Humanoid')
 humanoid.MaxHealth=100 humanoid.Health=100 humanoid.MoveDirection=Vector3.new(0,0,-1)
 assert(TEST_OPTIONS.minecraftEnabled.Value==false)
@@ -38,6 +46,12 @@ local gui=player:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft')
 local view=gui:FindFirstChild('HandView');assert(view and view:IsA('ViewportFrame'))
 local arm=view:FindFirstChild('PrimeSteveArm');assert(arm and arm:IsA('Part'))
 assert(#arm:GetChildren()==6 and view.CurrentCamera.FieldOfView==70)
+local sword
+for _,object in ipairs(ALL_INSTANCES)do if object.Name=='PrimeDiamondSword'then sword=object end end
+assert(sword and #sword:GetChildren()>0)
+sword.PivotTo=function(self,pose)self.lastPose=pose end
+sword.ScaleTo=function(self,scale)self.testScale=scale end
+
 local bar=gui and gui:FindFirstChild("Hotbar");assert(bar and bar:FindFirstChild("Slot9"):FindFirstChild("DiamondSword"))
 for i=1,8 do assert(not bar:FindFirstChild('Slot'..i):FindFirstChild('DiamondSword'))end
 TEST_SERVICES.RunService.RenderStepped:Fire(0)
@@ -79,6 +93,41 @@ assert(attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextAct
 TEST_LIBRARY:Toggle(false)
 TEST_SERVICES.RunService.RenderStepped:Fire(.1)
 assert((arm.CFrame.Position-idle).Magnitude>.01,'click did not animate hand')
+local grab=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftGrab
+assert(grab and grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+assert(#synthetic==0,'sky click generated grab')
+local target=Instance.new('Part')target.Parent=TEST_SERVICES.Workspace mouse.Target=target
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+assert(synthetic[1]==true)
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.End)==Enum.ContextActionResult.Sink and synthetic[2]==false)
+TEST_LIBRARY:Toggle(true)
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass and #synthetic==2,'UI click forwarded into world')
+TEST_LIBRARY:Toggle(false)
+grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)
+local activeCamera=TEST_SERVICES.Workspace.CurrentCamera
+TEST_SERVICES.Workspace.CurrentCamera=nil
+TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
+assert(synthetic[#synthetic]==false,'focus/camera loss left mouse held')
+TEST_SERVICES.Workspace.CurrentCamera=activeCamera
+-- Some runtimes dispatch synthetic events after SendMouseButtonEvent returns.
+local synchronous=TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent
+TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent=function()end
+grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)
+assert(attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'deferred press sunk')
+grab('PrimeMinecraftGrab',Enum.UserInputState.End)
+assert(attack('PrimeMinecraftAttack',Enum.UserInputState.End)==Enum.ContextActionResult.Pass,'deferred release sunk')
+assert(attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink,'physical LMB bypassed swing gate')
+TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent=synchronous
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.Nine},false)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+assert(sword.Parent==view and arm.Parent==nil and sword.lastPose and sword.testScale,'sword not equipped')
+local swordPose=sword.lastPose.Position
+attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+assert((sword.lastPose.Position-swordPose).Magnitude>.01,'sword did not swing')
+TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.One},false)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+assert(arm.Parent==view and sword.Parent==nil,'empty hand not restored')
 local old=TEST_SERVICES.Workspace.CurrentCamera
 local replacement=Instance.new('Camera') replacement.Parent=TEST_SERVICES.Workspace
 replacement.CFrame=old.CFrame replacement.FieldOfView=old.FieldOfView replacement.ViewportSize=old.ViewportSize
@@ -92,7 +141,7 @@ assert doc['payload']['values']['minecraftEnabled'] is True
 assert len(doc['payload']['values'])==543
 lua.execute("""
 TEST_OPTIONS.minecraftEnabled:SetValue(false)
-assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack)
+assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack and not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftGrab)
 assert(not TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm'))
 assert(not TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft'))
 TEST_OPTIONS.camThird:SetValue(true) assert(TEST_OPTIONS.camThird.Value)

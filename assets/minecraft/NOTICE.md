@@ -15,3 +15,5 @@ arm_*.png files are lossless UV extractions from classic steve.png with nearest-
 Hand transform/bob/attack formula reference: Minecraft Java 1.8.9, ItemRenderer.renderPlayerArm, EntityRenderer.setupViewBobbing, ModelBiped/ModelBox, via https://github.com/Marcelektro/MavenMCP-1.8.9/tree/master/src/main/java/net/minecraft/client . Minecraft/Mojang/Microsoft notices remain applicable; no ownership claimed over original algorithms/artwork.
 
 Crosshair: original 1.21.5/assets/minecraft/textures/gui/sprites/hud/crosshair.png from the same Minecraft asset mirror.
+
+3.2.3ab SwordRuns metadata preserves original diamond_sword.png RGBA colors as horizontal runs for local extruded item geometry. Handheld display reference: 1.21.5/assets/minecraft/models/item/handheld.json from the same mirror.

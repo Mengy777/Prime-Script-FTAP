@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.3c"
+local VERSION="3.2.3ab"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -996,6 +996,7 @@ local function buildVisualSystems()
     ru["Pulse transparency"]="Пульсация прозрачности"
     ru["Pulse speed"]="Скорость пульсации"
     ru["Pulse strength"]="Сила пульсации"
+    ru["Minecraft grab input is unavailable in this executor."]="Захват Minecraft недоступен: executor не поддерживает нужный ввод."
     ru["Crosshair preset"]="Пресет прицела"
     ru["Custom image"]="Своя картинка"
     ru["Precision dot"]="Точная точка"
