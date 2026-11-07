@@ -2,12 +2,14 @@
 return function(c)
     local lib,make,listen=c.Library,c.Make,c.Listen
     local pages={
+        Favorites={"Favorites"},
         View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
         FTAP={"Grab line","Crosshair","Blackholes"},Personalization={"Interface","Audio"},Settings={"General","Profiles"},
     }
     -- Input group -> short subpage, shared card, column. Adjacent single-toggle cards merge.
     local routes={
+        Favorites={},
         Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},Freecam={"Camera","Camera tools",2},["Cinematic camera"]={"Camera","Camera tools",2}},
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
         Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
@@ -29,7 +31,7 @@ return function(c)
         Audio={["Sound replacements"]={"Audio","Sound replacements",1},["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
         Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
     }
-    local categoryFor={Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="Personalization",Personalization="Personalization",Settings="Settings"}
+    local categoryFor={Favorites="Favorites",Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="Personalization",Personalization="Personalization",Settings="Settings"}
     local states,cache={},{} local destroyed=false
     for category in pairs(pages)do
         local tab=c.Tabs[category]

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2bc"
+local VERSION="3.2.2abc"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -399,6 +399,7 @@ local ru={
     ["Autosave: unavailable"]="Автосохранение: недоступно",
 
     ["Home"]="Главная",
+    ["Favorites"]="Избранное",
     ["Quick access"]="Быстрый доступ",
     ["Camera & sky"]="Камера и небо",
     ["Lighting & effects"]="Освещение и эффекты",
@@ -1163,6 +1164,7 @@ local function buildVisualSystems()
     local categoryTabs={}
     local categories={
         {"Home","house",{"Home"}},
+        {"Favorites","star",{"Favorites"}},
         {"View","camera",{"Camera","Sky"}},
         {"Graphics","sparkles",{"Lighting","Particles","World"}},
         {"Character","user-round",{"Character"}},
@@ -1265,7 +1267,7 @@ local function buildVisualSystems()
             profileChanged(key)
         end
     end
-    local groupIcons={Home="house",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Personalization="palette",Settings="settings"}
+    local groupIcons={Home="house",Favorites="star",Camera="camera",Sky="cloud-moon",Lighting="sun",Particles="sparkles",World="globe",Character="user-round",ESP="scan-eye",Tweaks="orbit",Audio="volume-2",Personalization="palette",Settings="settings"}
     navigation=loadUIModule("Navigation")({Library=Library,Make=make,Listen=listen,Tabs=categoryTabs,Translate=function(text) return ru[text] or text end})
     local function group(tab,title,side)
         return navigation:Group(tab,title,side,groupIcons[tab])

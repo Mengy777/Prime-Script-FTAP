@@ -1,3 +1,9 @@
+# 3.2.2abc — Избранное
+
+- После главной страницы есть вкладка со звездой; на русском — «Избранное».
+- Она открывается и пока пустая. Остальные разделы доступны, при запуске первой открывается главная.
+- Compilation and navigation/Home/localization simulations passed; live UI confirmation pending.
+
 # 3.2.2ac input display — pending user test
 
 - Personalization: enable Keyboard and mouse (default off); check WASD/E/Space, both Shift/Ctrl sides.

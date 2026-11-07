@@ -1,3 +1,8 @@
+# 3.2.2abc — 2026-11-07
+
+- Added a dedicated Favorites sidebar section with a star icon immediately after Home, localized as «Избранное» in Russian. Prepared the normal two-column navigation route for future selected features.
+- Section starts empty; existing functions, settings and profiles are unchanged. XLPQ research remains stopped at the user's request.
+
 # 3.2.2bc — 2026-11-06
 
 - Removed empty Prime Vortex sidebar category and unused navigation route. Freecam stays in View; standalone Vortex launcher unchanged.

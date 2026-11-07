@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.2bc**, tag `v3.2.2bc`. Next normal runtime version: **3.2.2abc**. Consult Git for the release commit.
+- Published runtime target: **3.2.2abc**, tag `v3.2.2abc`. Next normal runtime version: **3.2.2abcf**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -357,3 +357,6 @@ InputOverlay.lua: Personalization/Input display toggle defaultoff; spatial WASD/
 
 ## 3.2.2bc navigation override
 User removed empty Prime Vortex category from Visuals. Freecam stays View. Standalone Vortex and Settings launcher unchanged. Proposed future mixed-function category name: Hybrids; do not add empty placeholder until actual feature request.
+
+## 3.2.2abc Favorites
+User explicitly requested a new Favorites section and confirmed it should start empty for future special features. Star sidebar tab immediately after Home; Russian name «Избранное». Native two-column Navigation route is prepared, with no filler cards, duplicate controls, new settings or background jobs. Existing features remain in their approved locations. All Lua compilation, UI navigation/Home/localization simulations and an ad-hoc tab-switch check passed; live appearance awaits user confirmation. XLPQ research remains stopped by user request; do not resume it while working on Visuals.
