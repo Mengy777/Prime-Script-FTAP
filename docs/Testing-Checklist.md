@@ -1,3 +1,11 @@
+## 3.2.3c — textured Minecraft hand
+
+- Compare default idle model silhouette and sharp pixel texture to Minecraft; report screenshot if orientation differs.
+- Walk/stop, jump/land, turn and click LMB: smooth motion and visual swing, no FTAP grab/line while mode enabled.
+- Original Minecraft crosshair centered; E menu and its buttons still clickable. Disable mode: native grab/crosshair restored.
+- Change world FOV 30/70/120: independent hand camera remains 70, hand shape/size unchanged.
+- Check hand size, disable/unload, death/respawn. Approved HUD remains unchanged.
+
 ## 3.2.3b — reference hand
 
 - Compare the hand to the supplied PNG: same silhouette and texture.

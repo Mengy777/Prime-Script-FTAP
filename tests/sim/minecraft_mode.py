@@ -5,10 +5,21 @@ lua.execute("""
 local cache={} local read,write=readfile,writefile
 readfile=function(p)if cache[p]then return cache[p]end return read(p)end
 writefile=function(p,b)if p:find("/Assets/Minecraft/",1,true)then cache[p]=b else write(p,b)end end
--- This fixture checks lifecycle/HUD, not 3D transform correctness.
-local cf={}local mt={__mul=function()return cf end}setmetatable(cf,mt)
-CFrame.new=function()return cf end CFrame.Angles=function()return cf end
-TEST_SERVICES.Workspace.CurrentCamera.CFrame=cf
+-- Real rigid-transform math for the hand's source-derived pose/FOV checks.
+local mt={}
+local function cf(r,x,y,z)return setmetatable({r=r,p=Vector3.new(x or 0,y or 0,z or 0)},mt)end
+mt.__index=function(a,k)if k=='Position'then return a.p elseif k=='LookVector'then return Vector3.new(-a.r[3],-a.r[6],-a.r[9])end end
+mt.__mul=function(a,b)
+ local r={}for i=0,2 do for j=0,2 do local n=0 for k=0,2 do n=n+a.r[i*3+k+1]*b.r[k*3+j+1]end r[i*3+j+1]=n end end
+ local v=b.p local u=a.r
+ return cf(r,a.p.X+u[1]*v.X+u[2]*v.Y+u[3]*v.Z,a.p.Y+u[4]*v.X+u[5]*v.Y+u[6]*v.Z,a.p.Z+u[7]*v.X+u[8]*v.Y+u[9]*v.Z)
+end
+CFrame.new=function(x,y,z)return cf({1,0,0,0,1,0,0,0,1},x,y,z)end
+CFrame.Angles=function(x,y,z)
+ local sx,cx,sy,cy,sz,cz=math.sin(x),math.cos(x),math.sin(y),math.cos(y),math.sin(z),math.cos(z)
+ return cf({cy*cz,-cy*sz,sy,cx*sz+sx*sy*cz,cx*cz-sx*sy*sz,-sx*cy,sx*sz-cx*sy*cz,sx*cz+cx*sy*sz,cx*cy})
+end
+TEST_SERVICES.Workspace.CurrentCamera.CFrame=CFrame.new()
 local player=TEST_SERVICES.Players.LocalPlayer
 local humanoid=player.Character:FindFirstChildOfClass('Humanoid')
 humanoid.MaxHealth=100 humanoid.Health=100 humanoid.MoveDirection=Vector3.new(0,0,-1)
@@ -24,22 +35,31 @@ TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType
 assert(not TEST_OPTIONS.camThird.Value,'Minecraft bind gate failed');assert(#TEST_NOTICES==notices,'blocked bind dispatched')
 
 local gui=player:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft')
-local arm=gui:FindFirstChild('PrimeSteveArm');assert(arm and arm:IsA('ImageLabel'))
+local view=gui:FindFirstChild('HandView');assert(view and view:IsA('ViewportFrame'))
+local arm=view:FindFirstChild('PrimeSteveArm');assert(arm and arm:IsA('Part'))
+assert(#arm:GetChildren()==6 and view.CurrentCamera.FieldOfView==70)
 local bar=gui and gui:FindFirstChild("Hotbar");assert(bar and bar:FindFirstChild("Slot9"):FindFirstChild("DiamondSword"))
 for i=1,8 do assert(not bar:FindFirstChild('Slot'..i):FindFirstChild('DiamondSword'))end
+TEST_SERVICES.RunService.RenderStepped:Fire(0)
+-- Independent matrix calculation of Java1.8.9 arm center at equip-start.
+local start=arm.CFrame.Position
+assert(math.abs(start.X-.61692154)<1e-6 and math.abs(start.Y+1.24071865)<1e-6 and math.abs(start.Z+.81166968)<1e-6,'source transform order drifted')
 for i=1,10 do TEST_SERVICES.RunService.RenderStepped:Fire(1/60)end
 assert(bar.Image:find('hotbar.png',1,true))
 local initialFov=TEST_SERVICES.Workspace.CurrentCamera.FieldOfView
 TEST_OPTIONS.minecraftBobbing:SetValue(0)
 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
-local width,height=arm.Size.X.Offset,arm.Size.Y.Offset
-local x,y=arm.Position.X.Offset,arm.Position.Y.Offset
+local width,height,depth=arm.Size.X,arm.Size.Y,arm.Size.Z
+local pose=arm.CFrame
 for _,fov in ipairs({30,70,120})do
  TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=fov
- TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
- assert(arm.Size.X.Offset==width and arm.Size.Y.Offset==height,'FOV changed sprite size')
- assert(arm.Position.X.Offset==x and arm.Position.Y.Offset==y,'FOV moved sprite')
+ TEST_SERVICES.RunService.RenderStepped:Fire(0)
+ for i=1,9 do assert(math.abs(arm.CFrame.r[i]-pose.r[i])<1e-9)end
+ assert((arm.CFrame.Position-pose.Position).Magnitude<1e-9,"FOV changed hand position")
+ assert(arm.Size.X==width and arm.Size.Y==height and arm.Size.Z==depth,'FOV changed model size')
+ assert(view.CurrentCamera.FieldOfView==70,'world FOV leaked into hand camera')
 end
+assert(math.abs(height/width-3)<1e-9 and width==depth)
 TEST_SERVICES.Workspace.CurrentCamera.FieldOfView=initialFov
 humanoid.Health=50 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(bar:FindFirstChild('Heart5'):FindFirstChild('Fill').Visible)
@@ -50,12 +70,21 @@ humanoid.Health=0 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
 assert(gui.Enabled and not bar:FindFirstChild('Heart1'):FindFirstChild('Fill').Visible)
 assert(bar:FindFirstChild('Food10'):FindFirstChild('Fill').Visible~=false)
 humanoid.Health=100 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
+local idle=arm.CFrame.Position
+local attack=TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack
+assert(attack and attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+assert(attack('PrimeMinecraftAttack',Enum.UserInputState.End)==Enum.ContextActionResult.Pass)
+TEST_LIBRARY:Toggle(true)
+assert(attack('PrimeMinecraftAttack',Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass)
+TEST_LIBRARY:Toggle(false)
+TEST_SERVICES.RunService.RenderStepped:Fire(.1)
+assert((arm.CFrame.Position-idle).Magnitude>.01,'click did not animate hand')
 local old=TEST_SERVICES.Workspace.CurrentCamera
 local replacement=Instance.new('Camera') replacement.Parent=TEST_SERVICES.Workspace
 replacement.CFrame=old.CFrame replacement.FieldOfView=old.FieldOfView replacement.ViewportSize=old.ViewportSize
 TEST_SERVICES.Workspace.CurrentCamera=replacement old:Destroy()
 TEST_SERVICES.RunService.RenderStepped:Fire(1/60)
-assert(gui:FindFirstChild('PrimeSteveArm')==arm,'camera replacement destroyed sprite')
+assert(view:FindFirstChild('PrimeSteveArm')==arm,'world camera replacement destroyed hand')
 TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
@@ -63,6 +92,7 @@ assert doc['payload']['values']['minecraftEnabled'] is True
 assert len(doc['payload']['values'])==543
 lua.execute("""
 TEST_OPTIONS.minecraftEnabled:SetValue(false)
+assert(not TEST_SERVICES.ContextActionService.bindings.PrimeMinecraftAttack)
 assert(not TEST_SERVICES.Workspace:FindFirstChild('PrimeSteveArm'))
 assert(not TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeMinecraft'))
 TEST_OPTIONS.camThird:SetValue(true) assert(TEST_OPTIONS.camThird.Value)

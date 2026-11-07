@@ -1,3 +1,12 @@
+## 3.2.3c — 2026-11-07
+
+- Replace magnified hand screenshot with a native 4x12x4 model rendered in an independent ViewportFrame Camera at fixed 70-degree FOV.
+- Six crisp face textures extracted losslessly from the original classic Steve skin, nearest-neighbor expanded without generated detail.
+- Source-reviewed Java1.8.9 first-person transform order, idle arm motion, distance-driven walking bob, equip rise and left-click swing; vertical movement tilt adapted to Roblox velocity.
+- User follow-up: Minecraft-only high-priority LMB action plays cosmetic swing and sinks native world-grab input; UI clicks and release events pass through. Original Minecraft crosshair replaces native/custom crosshair during this mode; restore on exit.
+- World FOV, walls and world lighting cannot distort the isolated hand. Existing size/bob controls and approved HUD retained. No world-grab action is sent by this module.
+- Numeric transform/FOV invariance, click animation, HUD and lifecycle tests; live visual comparison remains pending. This is an adaptation, not a claim that every Minecraft item animation is implemented.
+
 ## 3.2.3b — 2026-11-07
 
 - Replace the 3D Steve arm with the exact transparent PNG supplied by the user, without redrawing or image generation.

@@ -1,13 +1,20 @@
--- Local Minecraft presentation only. No remotes, grabbing, damage or input sinking.
+-- Local Minecraft presentation. No remotes/damage; mode-scoped LMB sink blocks native grabbing.
 return function(c)
  local v=c.Controls local me=c.Players.LocalPlayer
- local dead=false local screen,arm local phase,blend=0,0 local selected=1
+ local dead=false local screen,arm,handView,handCamera local blend=0 local selected=1
+ local age,swing,step,pitch=0,1,0,0
+ local lagPitch,lagYaw,lastCamera
+ local crosshair
+ local actions=game:GetService("ContextActionService")
+ local attackAction="PrimeMinecraftAttack"
  local selection local data local images local hearts={} local previousHealth
  local function clear()
   c.Job("Minecraft presentation")
+  actions:UnbindAction(attackAction)
+  c.Unpatch("minecraftCursor")
   if screen then screen:Destroy()screen=nil end
   if arm then arm:Destroy()arm=nil end
-  selection=nil hearts={}previousHealth=nil phase=0 blend=0
+  selection=nil crosshair=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
   c.Unpatch("minecraftCamera")
  end
  local function loadImages()
@@ -35,6 +42,9 @@ return function(c)
  end
  local function build()
   screen=c.Make("ScreenGui",{Name="PrimeMinecraft",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=20},c.PlayerGui)
+  crosshair=c.Make("ImageLabel",{Name="MinecraftCrosshair",BackgroundTransparency=1,AnchorPoint=Vector2.new(.5,.5),
+   Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(30,30),Image=images.Crosshair,
+   ResampleMode=Enum.ResamplerMode.Pixelated,ZIndex=5},screen)
   local bar=c.Make("ImageLabel",{Name="Hotbar",AnchorPoint=Vector2.new(.5,1),Position=UDim2.new(.5,0,1,0),
    Size=UDim2.fromOffset(364,44),BackgroundTransparency=1,Image=images.Hotbar,ResampleMode=Enum.ResamplerMode.Pixelated},screen)
   local scale=c.Make("UIScale",{Scale=v.minecraftHotbarScale or 1},bar)
@@ -57,10 +67,29 @@ return function(c)
   end
   selection=c.Make("ImageLabel",{Name="Selection",BackgroundTransparency=1,Position=UDim2.fromOffset((selected-1)*40-2,-2),
    Size=UDim2.fromOffset(48,46),Image=images.Selection,ResampleMode=Enum.ResamplerMode.Pixelated,ZIndex=3},bar)
-  arm=c.Make("ImageLabel",{Name="PrimeSteveArm",BackgroundTransparency=1,AnchorPoint=Vector2.new(1,1),
-   Position=UDim2.new(1,0,1,0),Size=UDim2.fromOffset(320,320),Image=images.Hand,
-   ResampleMode=Enum.ResamplerMode.Pixelated,ScaleType=Enum.ScaleType.Fit,ZIndex=0},screen)
+  -- Independent camera prevents world FOV, world lighting and walls from distorting the hand.
+  handView=c.Make("ViewportFrame",{Name="HandView",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
+   Ambient=Color3.fromRGB(185,185,185),LightColor=Color3.fromRGB(85,85,85),LightDirection=Vector3.new(-.4,-1,-.6),
+   Active=false,ZIndex=0},screen)
+  handCamera=c.Make("Camera",{Name="HandCamera",CFrame=CFrame.new(),FieldOfView=70},handView)
+  handView.CurrentCamera=handCamera
+  arm=c.Make("Part",{Name="PrimeSteveArm",Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,
+   CastShadow=false,Size=Vector3.new(.25,.75,.25),Color=Color3.new(1,1,1),Material=Enum.Material.SmoothPlastic},handView)
+  for _,face in ipairs({"Front","Back","Right","Left","Top","Bottom"})do
+   local target=face=="Top"and"Bottom"or face=="Bottom"and"Top"or face=="Right"and"Left"or face=="Left"and"Right"or face
+   c.Make("Decal",{Name="Steve"..face,Face=Enum.NormalId[target],Texture=images["Arm"..face]},arm)
+  end
   return scale
+ end
+ local function overInterface()
+  if c.MenuOpen()or c.Input:GetFocusedTextBox()then return true end
+  if type(c.PlayerGui.GetGuiObjectsAtPosition)=="function"and type(c.Input.GetMouseLocation)=="function"then
+   local pointer=c.Input:GetMouseLocation()
+   for _,object in ipairs(c.PlayerGui:GetGuiObjectsAtPosition(pointer.X,pointer.Y))do
+    if object:IsA("GuiButton")or object:IsA("TextBox")then return true end
+   end
+  end
+  return false
  end
  local function update()
   if dead then return end
@@ -78,6 +107,14 @@ return function(c)
   c.Patch("minecraftCamera",me,"CameraMaxZoomDistance",.5)
   if screen then return end
   local scale=build()
+  actions:BindActionAtPriority(attackAction,function(_,state)
+   if dead or not v.minecraftEnabled or overInterface()then return Enum.ContextActionResult.Pass end
+   if state==Enum.UserInputState.Begin then if swing>=1 then swing=0 end end
+   -- End passes through so an object held before enabling can still be released.
+   if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then return Enum.ContextActionResult.Pass end
+   return Enum.ContextActionResult.Sink
+  end,false,10000,Enum.UserInputType.MouseButton1)
+
   c.Notify(c.Translate(wasThird and "Third-person disabled. Minecraft mode enabled."or"Minecraft mode enabled."))
   c.Job("Minecraft presentation",c.Run.RenderStepped,function(dt)
    if dead or not v.minecraftEnabled or not arm then return end
@@ -96,18 +133,61 @@ return function(c)
      fill.Image=value>=2 and images.HeartFull or images.HeartHalf
     end
    end
-   arm.Visible=visible==true
+   handView.Visible=visible==true
+   local pointer=c.MenuOpen()or c.Input.MouseBehavior~=Enum.MouseBehavior.LockCenter
+   crosshair.Visible=visible==true and not pointer
+   if pointer then c.Unpatch("minecraftCursor",c.Input)else c.Patch("minecraftCursor",c.Input,"MouseIconEnabled",false)end
+   local nativeCross=c.PlayerGui:FindFirstChild("Crosshairs")
+   if nativeCross and nativeCross:IsA("ScreenGui")then c.Patch("minecraftCursor",nativeCross,"Enabled",false)end
+
    local direction=humanoid and humanoid.MoveDirection
    local moving=visible and direction and direction.Magnitude>.05 and 1 or 0
    blend=blend+(moving-blend)*(1-math.exp(-12*math.min(dt,.1)))
-   phase=phase+math.min(dt,.1)*8
-   local amount=(v.minecraftBobbing or .7)*blend
-   -- Screen-space reference sprite: camera FOV never changes pose or proportions.
-   local viewport=camera.ViewportSize
-   local height=math.max(1,viewport.Y)
-   local pixels=height*.31*((v.minecraftHandScale or .7)/.7)
-   arm.Size=UDim2.fromOffset(pixels,pixels)
-   arm.Position=UDim2.new(1,math.sin(phase)*height*.003*amount,1,math.cos(phase*2)*height*.003*amount)
+   local delta=math.min(dt,.1)
+   age=age+delta swing=math.min(1,swing+delta/.35)
+   -- Minecraft's distance-based view bob; standing still freezes walking phase.
+   local root=character and character:FindFirstChild("HumanoidRootPart")
+   local velocity=root and root.AssemblyLinearVelocity
+   local speed=velocity and math.sqrt(velocity.X^2+velocity.Z^2)or moving*16
+   step=step+speed*delta/4
+   local amount=(v.minecraftBobbing or .7)*blend*.1
+   local walk=-step*math.pi
+   local targetPitch=velocity and math.clamp(-velocity.Y*.35,-10,10)or 0
+   pitch=pitch+(targetPitch-pitch)*(1-math.exp(-10*delta))
+   local bob=CFrame.new(math.sin(walk)*amount*.5,-math.abs(math.cos(walk))*amount,0)
+    *CFrame.Angles(0,0,math.rad(math.sin(walk)*amount*3))
+    *CFrame.Angles(math.rad(math.abs(math.cos(walk-.2)*amount)*5+pitch),0,0)
+   local attack=math.sin(math.sqrt(swing)*math.pi)
+   local attackTwist=math.sin(swing*swing*math.pi)
+   local equip=math.max(0,1-age/.25)
+   -- Minecraft Java ItemRenderer.renderPlayerArm, transform order preserved.
+   local pose=CFrame.new(-.3*attack,.4*math.sin(math.sqrt(swing)*math.pi*2),-.4*math.sin(swing*math.pi))
+    *CFrame.new(.64000005,-.6-equip*.6,-.71999997)
+    *CFrame.Angles(0,math.rad(45),0)
+    *CFrame.Angles(0,math.rad(attack*70),0)
+    *CFrame.Angles(0,0,math.rad(attackTwist*-20))
+    *CFrame.new(-1,3.6,3.5)
+    *CFrame.Angles(0,0,math.rad(120))
+    *CFrame.Angles(math.rad(200),0,0)
+    *CFrame.Angles(0,math.rad(-135),0)
+    *CFrame.new(5.6,0,0)
+    *CFrame.new(-5/16,2/16,0)
+    *CFrame.Angles(math.sin(age*.067)*.05,0,math.cos(age*.09)*.05+.05)
+    *CFrame.new(-1/16,4/16,0)
+   -- Minecraft rotateWithPlayerRotations: small lag behind camera pitch/yaw.
+   local look=camera.CFrame.LookVector
+   local lookPitch=math.asin(math.clamp(look.Y,-1,1))
+   local lookYaw=math.atan2(-look.X,-look.Z)
+   if lastCamera~=camera then lagPitch=lookPitch lagYaw=lookYaw lastCamera=camera end
+   local yawGap=math.atan2(math.sin(lookYaw-lagYaw),math.cos(lookYaw-lagYaw))
+   local catchup=1-math.exp(-14*delta)
+   lagPitch=lagPitch+(lookPitch-lagPitch)*catchup lagYaw=lagYaw+yawGap*catchup
+   local lookLag=CFrame.Angles((lookPitch-lagPitch)*.1,0,0)
+    *CFrame.Angles(0,math.atan2(math.sin(lookYaw-lagYaw),math.cos(lookYaw-lagYaw))*.1,0)
+   local handScale=(v.minecraftHandScale or .7)/.7
+   arm.Size=Vector3.new(.25,.75,.25)*handScale
+   -- Offset zoom only for explicit hand-size setting, never the world camera FOV.
+   arm.CFrame=bob*lookLag*pose
    scale.Scale=v.minecraftHotbarScale or 1
   end)
  end

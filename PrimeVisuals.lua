@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.3b"
+local VERSION="3.2.3c"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -3586,7 +3586,7 @@ local function buildVisualSystems()
     -- Lightweight lifecycle handling. No scans run every frame.
     job("Crosshair visibility",Run.RenderStepped,function()
         menuOpen=Library.Toggled
-        if controls.crossEnabled then crossGui.Enabled=not menuOpen end
+        if controls.crossEnabled then crossGui.Enabled=not menuOpen and not controls.minecraftEnabled end
         grabbedInfo.Enabled=controls.grabInfo and not menuOpen
     end)
     listen(player.CharacterAdded,function()
