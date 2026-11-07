@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4a"
+local VERSION="3.2.4b"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -329,6 +329,7 @@ local ru={
     ["Item names"]="Названия предметов",
     ["Icon size"]="Размер иконки",
     ["Reveal invisible characters"]="Показывать невидимых персонажей",
+    ["Lighting presets"]="Пресеты освещения",
     ["Scene presets"]="Готовые сцены",
     ["Atmosphere preset"]="Готовая атмосфера",
     ["Preset"]="Вариант",
@@ -483,7 +484,7 @@ local ru={
     ["Disable ragdoll blur"]="Убрать размытие при падении",
     ["Show body in first person"]="Тело от первого лица",
     ["Limb transparency"]="Прозрачность конечностей",
-    ["Shaders"]="Фильтры изображения",
+    ["Shaders"]="Шейдеры",
     ["Brightness"]="Яркость",
     ["Exposure"]="Экспозиция",
     ["Saturation"]="Насыщенность",
@@ -1184,7 +1185,8 @@ local function buildVisualSystems()
         {"Home","house",{"Home"}},
         {"Favorites","star",{"Favorites"}},
         {"View","camera",{"Camera","Sky"}},
-        {"Graphics","sparkles",{"Lighting","Particles","World"}},
+        {"Graphics","sparkles",{"Particles","World"}},
+        {"Shaders","sun",{"Lighting"}},
         {"Character","user-round",{"Character"}},
         {"ESP","scan-eye",{"ESP"}},
         {"FTAP","orbit",{"Tweaks"}},

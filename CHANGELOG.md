@@ -1,3 +1,10 @@
+## 3.2.4b — 2026-11-07
+
+- Add dedicated Shaders sidebar category (RU Шейдеры) after Graphics, with sun icon.
+- Route existing Lighting group there: manual lighting/filter editor left, source scene presets and Fullbright right. Existing preset selection, Edit selected preset, Basic/Light/Air/Effects/Focus controls and Reset filters move with their parent feature panels.
+- Graphics retains particles/weather, water/performance and existing world surfaces. No effect algorithms, preset definitions, setting IDs/defaults or config schema changed;545 persisted values.
+- Navigation, RU/EN labels, preset editing/reset, floating-inspector persistence and cold config restore tests pass; all Lua compiles. New layout awaits user visual confirmation.
+
 ## 3.2.4a — 2026-11-07
 
 - Input display adds R directly left of W; keyboard geometry/panel dimensions and saved position unchanged.

@@ -1,3 +1,12 @@
+## 3.2.4b — Shaders category
+
+1. New sun icon after Graphics: tooltip Шейдеры/Shaders follows language.
+2. Manual lighting left; presets (Pale Frost/Dreamy Night/Tokyowami) and Fullbright right.
+3. Existing feature settings open normally: color, environment/fog, atmosphere, Bloom/rays/blur/DOF, edit preset and reset filters.
+4. Saved settings/config restore remain the same; weather/water/FPS stay in Graphics.
+
+Input display3.2.4a accepted by user; no new input-overlay changes here. Existing shaders moved only; new shader development is a later task.
+
 ## 3.2.4a — input display
 
 1. R appears immediately left of W and lights/fades with physical R presses.

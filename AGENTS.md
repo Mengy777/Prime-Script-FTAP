@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4a**, tag `v3.2.4a`. Next normal runtime version: **3.2.4b**. Consult Git for the release commit.
+- Published runtime target: **3.2.4b**, tag `v3.2.4b`. Next normal runtime version: **3.2.4c**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -378,3 +378,6 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 
 - Acceptance: user fully confirmed Minecraft mode3.2.4 before InputOverlay update. Treat as complete unless new requested changes/bugs. No new MC gameplay edits in3.2.4a.
 - 3.2.4a InputOverlay: R atx36 left ofWx80; generated full mouse PNG and5code-native masks, no mouse text/arrow widgets. Lazy enable-only asset cache with PNG length/signature checks, unbranded no-text fallback, retry after toggle if failure. Old keys545/settings/drag geometry preserved; observational input only. Native art rendering pending user acceptance. Next3.2.4b.
+
+- Acceptance: user confirmed InputOverlay3.2.4a R key/new mouse fully.
+- 3.2.4b: dedicated Shaders/sun sidebar after Graphics, owns logical Lighting tab; Navigation routes Lighting card left and Lighting presets right. All existing manual editor5pages,3presets/edit/reset/Fullbright transferred. Graphics retains weather/water/FPS/surfaces. No runtime algorithms/settings/schema changed,545keys. Focused nav/localization/lighting/cold-restore tests plus all-Lua compile passed. New layout pending acceptance; next3.2.4c.

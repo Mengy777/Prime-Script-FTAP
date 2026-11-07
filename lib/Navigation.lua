@@ -3,7 +3,7 @@ return function(c)
     local lib,make,listen=c.Library,c.Make,c.Listen
     local pages={
         Favorites={"Favorites"},
-        View={"Camera","Sky"},Graphics={"Lighting","Weather","Water & FPS"},
+        View={"Camera","Sky"},Graphics={"Weather","Water & FPS"},Shaders={"Lighting","Presets"},
         Character={"Appearance","Movement","Mannequins"},ESP={"Players","Tools"},
         FTAP={"Grab line","Crosshair","Blackholes"},Personalization={"Interface","Audio"},Settings={"General","Profiles"},
     }
@@ -12,7 +12,7 @@ return function(c)
         Favorites={},
         Camera={Camera={"Camera","Camera",1},View={"Camera","Camera",1},Freecam={"Camera","Camera tools",2},["Cinematic camera"]={"Camera","Camera tools",2}},
         Sky={Skybox={"Sky","Custom skybox",1},Sun={"Sky","Sun and clouds",2},Clouds={"Sky","Sun and clouds",2},["Skybox collection"]={"Sky","Sky collection",1}},
-        Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Lighting","Lighting",1}},
+        Lighting={["Color and light"]={"Lighting","Lighting",1},["Scene presets"]={"Presets","Lighting presets",2}},
         Particles={Particles={"Weather","Particles",1},Snowfall={"Weather","Snowfall",2}},
         World={["Map surfaces"]={"Surfaces","Map surfaces",1},Water={"Water & FPS","Water",1},["Ocean appearance"]={"Water & FPS","Water",1},Performance={"Water & FPS","Performance",2}},
         Character={
@@ -31,7 +31,7 @@ return function(c)
         Audio={["Sound replacements"]={"Audio","Sound replacements",1},["Mute categories"]={"Audio","Mute sounds",1},["Blackhole sound"]={"Audio","Blackhole audio",2}},
         Settings={Protection={"General","Protection",2},Interface={"General","Interface",1},Configurations={"Profiles","Saved profiles",1},["Import / export"]={"Profiles","Share profiles",2}},
     }
-    local categoryFor={Favorites="Favorites",Camera="View",Sky="View",Lighting="Graphics",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="Personalization",Personalization="Personalization",Settings="Settings"}
+    local categoryFor={Favorites="Favorites",Camera="View",Sky="View",Lighting="Shaders",Particles="Graphics",World="Graphics",Character="Character",ESP="ESP",Tweaks="FTAP",Audio="Personalization",Personalization="Personalization",Settings="Settings"}
     local states,cache={},{} local destroyed=false
     for category in pairs(pages)do
         local tab=c.Tabs[category]

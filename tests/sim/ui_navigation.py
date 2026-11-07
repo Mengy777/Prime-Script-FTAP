@@ -5,6 +5,11 @@ lua.execute(r"""
 assert(TEST_LIBRARY.TestWindowInfo.Font==Enum.Font.BuilderSans)
 assert(TEST_GROUPS.Camera.BoxHolder.Visible and TEST_GROUPS['Custom skybox'].BoxHolder.Visible)
 assert(TEST_GROUPS.Particles.BoxHolder.Visible and TEST_GROUPS.Snowfall.BoxHolder.Visible)
+assert(TEST_TAB_OBJECTS.Shaders and TEST_GROUPS.Lighting.NavigationCategory=='Shaders')
+assert(TEST_GROUPS['Lighting presets'].NavigationCategory=='Shaders')
+assert(TEST_GROUPS.Particles.NavigationCategory=='Graphics' and TEST_GROUPS.Snowfall.NavigationCategory=='Graphics')
+assert(TEST_GROUPS.Lighting.BoxHolder.Parent~=TEST_GROUPS['Lighting presets'].BoxHolder.Parent or TEST_GROUPS.Lighting~=TEST_GROUPS['Lighting presets'])
+
 for _,tab in pairs(TEST_TAB_OBJECTS)do assert(not tab.Container:FindFirstChild('PV_SectionBar'))end
 assert(TEST_OPTIONS.camThird.Info.Text=='Third-person camera')
 assert(TEST_GROUPS['Camera tools'].NavigationCategory=='View')
@@ -16,7 +21,7 @@ print('PASS merged sections display all cards without section bars; Freecam move
 lua.execute('TEST_DRAIN()')
 before=D.writes
 lua.execute(r"""
-for i=1,40 do TEST_TAB_OBJECTS.View:Show();TEST_TAB_OBJECTS.Graphics:Show()end
+for i=1,40 do TEST_TAB_OBJECTS.View:Show();TEST_TAB_OBJECTS.Graphics:Show();TEST_TAB_OBJECTS.Shaders:Show()end
 TEST_DRAIN()
 """)
 assert D.writes==before,'presentation-only navigation saved/changed profile'

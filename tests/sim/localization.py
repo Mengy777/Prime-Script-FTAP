@@ -9,9 +9,10 @@ local function section(name)
  error('missing section '..name)
 end
 local tools=TEST_LOCALIZED_MAKE('TextLabel',{Text='Tools'},TEST_LIBRARY.ScreenGui)
+local shaders=TEST_LOCALIZED_MAKE('TextLabel',{Text='Shaders'},TEST_LIBRARY.ScreenGui)
 assert(tools.Text=='Tools')
 TEST_OPTIONS.uiLanguage:SetValue('Русский')
-assert(tools.Text=='Инструменты')
+assert(tools.Text=='Инструменты' and shaders.Text=='Шейдеры')
 local status=TEST_LOCALIZED_MAKE('TextLabel',{Text='Anti-Kick: Attached'},TEST_LIBRARY.ScreenGui)
 assert(status.Text=='Защита от кика: Закреплено','late-created label not translated')
 status.Text='Anti-Kick: Waiting for character'
