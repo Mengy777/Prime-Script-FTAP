@@ -1,3 +1,10 @@
+## 3.2.3 — Minecraft checks
+
+- Smaller arm, adjustable Hand size, original Steve texture.
+- Original hotbar at bottom center; health hearts track damage/healing, hunger stays full.
+- Third-person bind ignored while Minecraft enabled, restored on disable; E menu works.
+- Check proportions and PNG loading live; simulations do not verify rendered 3D appearance.
+
 # 3.2.2abcf — Minecraft: первая тестовая версия
 
 1. Избранное → Minecraft: включить. Проверить руку Стива, покачивание при ходьбе, остановку покачивания стоя.

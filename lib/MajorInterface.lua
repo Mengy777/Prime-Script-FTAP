@@ -2,7 +2,8 @@
 return function(c)
  local v,lib=c.Controls,c.Library
  local wordmark=c.Wordmark({Make=c.Make,Library=lib})
- local input=c.Keybinds({Input=c.Input,MenuOpen=function()return lib.Toggled end,Safe=c.Safe})
+ local input=c.Keybinds({Input=c.Input,MenuOpen=function()return lib.Toggled end,Safe=c.Safe,
+  Blocked=function(key)return key=="camThird" and v.minecraftEnabled==true end})
  local roots,connections={},{} local dead=false
  local api={}
  function api:Destroy()if dead then return end dead=true input:Destroy()for _,link in ipairs(connections)do if link then link:Disconnect()end end for _,root in ipairs(roots)do root:Destroy()end end

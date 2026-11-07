@@ -1,3 +1,11 @@
+## 3.2.3 — 2026-11-07
+
+- Minecraft: smaller lower-right Steve arm, adjustable size, original classic skin UV textures.
+- Original pixelated hotbar, selection, sword, hearts, hunger and empty XP bar; health follows current Humanoid, hunger stays full.
+- Third-person binding is ignored entirely while Minecraft mode is enabled; saved binding remains intact.
+- Versioned local PNG cache; textures load only when the mode is enabled. 543 persisted settings.
+- Compilation and mocked simulations recorded in docs/Validation-3.2.3.md; live asset rendering and proportions require user verification.
+
 # 3.2.2abcf — 2026-11-07
 
 - Favorites > Minecraft: opt-in first-mode presentation prototype. Steve right arm with original pixel UV faces, movement bobbing and a nine-slot hotbar; slots1–8 empty, diamond sword icon in slot9. Number keys select a slot without consuming native input. No sword damage, spawning or new player interaction.

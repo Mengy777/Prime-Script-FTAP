@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2abcf"
+local VERSION="3.2.3"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -405,6 +405,7 @@ local ru={
     ["Mode"]="Подрежим",
     ["Interactive (test)"]="С взаимодействием (тест)",
     ["Hand bobbing"]="Покачивание руки",
+    ["Hand size"]="Размер руки",
     ["Hotbar size"]="Размер хотбара",
     ["Minecraft mode enabled."]="Режим Minecraft включён.",
     ["Minecraft mode disabled."]="Режим Minecraft выключен.",
@@ -2904,6 +2905,7 @@ local function buildVisualSystems()
     do
         local lastWarning={}
         visualExpansion=loadUIModule("VisualExpansion")({
+            MinecraftAssetRoot="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/minecraft/",
             Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
             LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,

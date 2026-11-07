@@ -36,7 +36,7 @@ return function(c)
    request.done(value) return
   end
   if processed or c.Input:GetFocusedTextBox() or not value then return end
-  for key,binding in pairs(bindings)do if binding==value and routes[key] and (key=="menu" or not c.MenuOpen())then c.Safe(routes[key])break end end
+  for key,binding in pairs(bindings)do if binding==value and routes[key] and not(c.Blocked and c.Blocked(key)) and (key=="menu" or not c.MenuOpen())then c.Safe(routes[key])break end end
  end)
  if c.Input.WindowFocusReleased then links[#links+1]=c.Input.WindowFocusReleased:Connect(function()capture=nil end)end
  function api:Destroy()if dead then return end dead=true capture=nil for _,link in ipairs(links)do link:Disconnect()end routes={}bindings={}end
