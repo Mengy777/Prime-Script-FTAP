@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.2abc"
+local VERSION="3.2.2abcf"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -400,6 +400,16 @@ local ru={
 
     ["Home"]="Главная",
     ["Favorites"]="Избранное",
+    ["Minecraft"]="Minecraft",
+    ["Minecraft mode"]="Режим Minecraft",
+    ["Mode"]="Подрежим",
+    ["Interactive (test)"]="С взаимодействием (тест)",
+    ["Hand bobbing"]="Покачивание руки",
+    ["Hotbar size"]="Размер хотбара",
+    ["Minecraft mode enabled."]="Режим Minecraft включён.",
+    ["Minecraft mode disabled."]="Режим Minecraft выключен.",
+    ["Disable Minecraft mode to use third person."]="Выключите Minecraft, чтобы включить вид от третьего лица.",
+    ["Third-person disabled. Minecraft mode enabled."]="Вид от третьего лица выключен. Режим Minecraft включён.",
     ["Quick access"]="Быстрый доступ",
     ["Camera & sky"]="Камера и небо",
     ["Lighting & effects"]="Освещение и эффекты",
@@ -1568,6 +1578,11 @@ local function buildVisualSystems()
         else job("Third-person visibility",Run.RenderStepped,thirdVisibility) end
     end
     local function updateThirdPerson(on,snapDistance)
+        if on and controls.minecraftEnabled then
+            if setters.camThird then setters.camThird(false,false) end
+            on=false
+            if not building and not restoringProfile then notify(uiLanguage=="ru" and ru["Disable Minecraft mode to use third person."] or "Disable Minecraft mode to use third person.")end
+        end
         if on then
             local distance=controls.camDistance or 12
             patch("third",player,"CameraMode",Enum.CameraMode.Classic)

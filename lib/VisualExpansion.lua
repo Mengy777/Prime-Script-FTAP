@@ -14,17 +14,20 @@ return function(c)
         Make=make,Slider=slider,Field=field,ImageId=c.ImageId,Notify=c.Notify,Translate=c.Translate,Warn=c.WarnOnce,LoadModule=c.LoadModule,Workspace=W,Run=R,Patch=patch,Unpatch=unpatch,Group=group,Toggle=toggle,Choice=choice,Color=color,
         ColorOwners=c.ColorOwners,Panel=panel,Action=c.Action,TrackCleanup=c.TrackCleanup})
     local inputOverlay=c.LoadModule("InputOverlay")(c)
+    local minecraft={Destroy=function()end}
     local dead=false
     local objects,links={},{}
     local teardown=function()
         dead=true
         mapAppearance:Destroy()
         inputOverlay:Destroy()
+        minecraft:Destroy()
         for con in pairs(links) do pcall(function() con:Disconnect() end) end
         for o in pairs(objects) do pcall(function() o:Destroy() end) end
         pcall(function() R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end)
     end
     c.TrackCleanup(function() teardown() end)
+    minecraft=c.LoadModule("MinecraftMode")(c)
     local function create(class,props,parent)
         local o=make(class,props,parent) objects[o]=true return o
     end
@@ -942,6 +945,7 @@ return function(c)
         if dead then return end dead=true
         mapAppearance:Destroy()
         inputOverlay:Destroy()
+        minecraft:Destroy()
         endFree() stopSpectate()
         if bound then R:UnbindFromRenderStep("PrimeVisualsCinematicCamera") end
         for con in pairs(links) do con:Disconnect() end links={}

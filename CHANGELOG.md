@@ -1,3 +1,10 @@
+# 3.2.2abcf — 2026-11-07
+
+- Favorites > Minecraft: opt-in first-mode presentation prototype. Steve right arm with original pixel UV faces, movement bobbing and a nine-slot hotbar; slots1–8 empty, diamond sword icon in slot9. Number keys select a slot without consuming native input. No sword damage, spawning or new player interaction.
+- Minecraft temporarily enforces first person; third-person attempts from UI/binds are normalized back off. Disabling Minecraft releases the camera constraints and restores normal third-person controls. Notifications indicate activation/deactivation. Native E menu input remains untouched.
+- Mode selector exposes only the current interactive-mode prototype; full visual/block mode is not implemented. Bobbing and hotbar scale persist, with the standard feature bind.542 settings total. Pixel data is bundled as Lua geometry; texture provenance retained in assets/minecraft/NOTICE.md. No runtime image downloads.
+- All Lua compiled;43 simulation scenarios /122 groups passed. Final viewmodel ownership fix also passed a targeted camera-replacement/lifecycle regression. These are simulations, not live FTAP rendering confirmation.
+
 # 3.2.2abc — 2026-11-07
 
 - Added a dedicated Favorites sidebar section with a star icon immediately after Home, localized as «Избранное» in Russian. Prepared the normal two-column navigation route for future selected features.

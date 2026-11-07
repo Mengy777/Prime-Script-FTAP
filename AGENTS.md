@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.2abc**, tag `v3.2.2abc`. Next normal runtime version: **3.2.2abcf**. Consult Git for the release commit.
+- Published runtime target: **3.2.2abcf**, tag `v3.2.2abcf`. Next normal runtime version: **3.2.3**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -360,3 +360,6 @@ User removed empty Prime Vortex category from Visuals. Freecam stays View. Stand
 
 ## 3.2.2abc Favorites
 User explicitly requested a new Favorites section and confirmed it should start empty for future special features. Star sidebar tab immediately after Home; Russian name «Избранное». Native two-column Navigation route is prepared, with no filler cards, duplicate controls, new settings or background jobs. Existing features remain in their approved locations. All Lua compilation, UI navigation/Home/localization simulations and an ad-hoc tab-switch check passed; live appearance awaits user confirmation. XLPQ research remains stopped by user request; do not resume it while working on Visuals.
+
+## 3.2.2abcf Minecraft prototype
+Favorites now contains Minecraft (explicit user request). Only first-mode presentation implemented: Steve textured arm, movement bob, nine slots/diamond sword at9. No added grabbing/damage/spawning; full visual/block mode explicitly deferred until user provides it. Renderer only active when enabled, assets are bundled pixel runs from referenced Minecraft textures; no network/image-asset dependency. Camera-facing local noncolliding/nonqueryable Part lives directly under Workspace so replacing/destroying CurrentCamera cannot destroy it. Death hides presentation; fresh humanoid/camera is resolved on each active frame. No avatar transparency/skin edits or physics changes. Native E remains untouched;1–9 merely observe unprocessed keyboard input. Four settings plus standard bind =>542. camThird guard is in updateThirdPerson so UI, bindings and config callbacks cannot turn third person on while Minecraft is active; checkbox normalizes false. No automatic re-enable on exit; manual/binds work normally again. Minecraft cleanup included in early/final VisualExpansion teardown. All Lua compile;43sim/122groups pass, plus targeted camera replacement after final renderer ownership change. Live appearance pending. XLPQ remains stopped.

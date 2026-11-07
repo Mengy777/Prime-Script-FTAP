@@ -21,7 +21,7 @@ TEST_DRAIN()
 """)
 assert D.writes==before,'presentation-only navigation saved/changed profile'
 auto=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(auto['payload']['values'])==537
+assert len(auto['payload']['values'])==542
 lua.execute(r"""
 local label
 for _,item in ipairs(TEST_LABELS)do if item.Text=='Tint'then label=item break end end assert(label)
@@ -45,7 +45,7 @@ lua2,*_=session(D)
 lua2.execute("local found=false for _,p in ipairs(TEST_SETTINGS)do if p.Owner==TEST_OPTIONS.lightEnabled then assert(p.LastPosition.X.Offset==730 and p.LastPosition.Y.Offset==220); found=true end end assert(found)")
 print('PASS floating inspector coordinates autosave and restore on cold start')
 lua.execute("TEST_ACTIONS['Unload script']()")
-print('PASS navigation creates no profile writes; 537 current settings retained (advanced lighting editor included)')
+print('PASS navigation creates no profile writes; 542 current settings retained (advanced lighting editor included)')
 # Exercise the actual native feature-panel implementation rather than the main UI stub.
 native=(ROOT/'lib/Obsidian.lua').read_text(encoding='utf-8-sig')
 block=native[native.index('local ActiveFeatureSettings'):native.index('function Library:SetFont')]
