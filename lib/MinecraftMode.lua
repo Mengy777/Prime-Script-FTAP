@@ -9,6 +9,7 @@ return function(c)
  local actions=game:GetService("ContextActionService")
  local attackAction="PrimeMinecraftAttack"
  local grabAction="PrimeMinecraftGrab"
+ local throwing=false
  local forwarding=false local injectedDown=false local inputBackend local inputPoint local inputWarned=false
  local forwardedEvents={}
  local function forwardedEvent(state)
@@ -47,7 +48,7 @@ return function(c)
   nativeButton(false)
   actions:UnbindAction(attackAction)
   actions:UnbindAction(grabAction)
-  inputWarned=false forwardedEvents={}
+  inputWarned=false forwardedEvents={}throwing=false
   c.Unpatch("minecraftCursor")
   if screen then screen:Destroy()screen=nil end
   if arm then arm:Destroy()arm=nil end
@@ -136,6 +137,24 @@ return function(c)
   end
   return false
  end
+ local function holdingObject()
+  for _,scope in ipairs(c.Workspace:GetChildren())do
+   if scope.Name=="GrabParts"then
+    local part=scope:FindFirstChild("GrabPart")
+    local weld=part and part:FindFirstChild("WeldConstraint")
+    if part and part:IsA("BasePart")and weld and weld:IsA("WeldConstraint")
+     and weld.Enabled~=false and weld.Active~=false then
+     local a,b=weld.Part0,weld.Part1 local target=a==part and b or b==part and a or nil
+     if target and target~=part and target:IsA("BasePart")and target:IsDescendantOf(c.Workspace)then
+      for _,beam in ipairs(scope:GetDescendants())do
+       if beam:IsA("Beam")and beam.Enabled~=false and c.IsLocalGrabBeam(beam)then return true end
+      end
+     end
+    end
+   end
+  end
+  return false
+ end
  local function update()
   if dead then return end
   if not v.minecraftEnabled then
@@ -160,6 +179,13 @@ return function(c)
    return Enum.ContextActionResult.Sink
   end,false,10000,Enum.UserInputType.MouseButton1)
   actions:BindActionAtPriority(grabAction,function(_,state)
+   -- Keep the complete native throw gesture intact after the constraint disappears.
+   if throwing then
+    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then throwing=false end
+    return Enum.ContextActionResult.Pass
+   end
+   if state==Enum.UserInputState.Begin and not dead and v.minecraftEnabled and not overInterface()
+    and holdingObject()then throwing=true return Enum.ContextActionResult.Pass end
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
     if injectedDown then nativeButton(false)return Enum.ContextActionResult.Sink end
     return Enum.ContextActionResult.Pass
@@ -281,6 +307,6 @@ return function(c)
   if not index or dead or not v.minecraftEnabled or processed or c.MenuOpen()or c.Input:GetFocusedTextBox()then return end
   if index and selected~=index then selected=index age=0 swing=1 if selection then selection.Position=UDim2.fromOffset((selected-1)*40-2,-2)end end
  end)
- local focus=c.Input.WindowFocusReleased:Connect(function()nativeButton(false)end)
+ local focus=c.Input.WindowFocusReleased:Connect(function()throwing=false nativeButton(false)end)
  return {Destroy=function()if dead then return end dead=true input:Disconnect()focus:Disconnect()clear()end}
 end

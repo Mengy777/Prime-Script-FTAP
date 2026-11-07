@@ -109,6 +109,25 @@ TEST_SERVICES.Workspace.CurrentCamera=nil
 TEST_SERVICES.UserInputService.WindowFocusReleased:Fire()
 assert(synthetic[#synthetic]==false,'focus/camera loss left mouse held')
 TEST_SERVICES.Workspace.CurrentCamera=activeCamera
+-- Only an active local grab may pass RMB to the native throw, including sky aim.
+local scope=Instance.new('Folder')scope.Name='GrabParts' scope.Parent=TEST_SERVICES.Workspace
+local held=Instance.new('Part')held.Name='GrabPart'held.Parent=scope
+local weld=Instance.new('WeldConstraint')weld.Part0=held weld.Part1=target weld.Enabled=true weld.Active=true weld.Parent=held
+local origin=Instance.new('Attachment')origin.Parent=player.Character
+local beam=Instance.new('Beam')beam.Attachment0=origin beam.Enabled=true beam.Parent=scope
+mouse.Target=nil
+local beforeThrow=#synthetic
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'held object did not allow native sky throw')
+weld:Destroy()
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.End)==Enum.ContextActionResult.Pass,'throw release interrupted')
+assert(#synthetic==beforeThrow,'throw generated a grab click')
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink,'empty sky passed native throw')
+assert(#synthetic==beforeThrow)
+-- A stale/foreign grab must not enable native sky throw.
+local foreignWeld=Instance.new('WeldConstraint')foreignWeld.Part0=held foreignWeld.Part1=target foreignWeld.Enabled=true foreignWeld.Active=true foreignWeld.Parent=held
+origin.Parent=target
+assert(grab('PrimeMinecraftGrab',Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+scope:Destroy()mouse.Target=target
 -- Some runtimes dispatch synthetic events after SendMouseButtonEvent returns.
 local synchronous=TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent
 TEST_SERVICES.VirtualInputManager.SendMouseButtonEvent=function()end

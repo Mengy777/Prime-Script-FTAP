@@ -1,3 +1,10 @@
+## 3.2.3ac — RMB throw
+
+- Grab an object, lift it, aim into sky, RMB: ordinary FTAP throw.
+- Empty hands + sky + RMB: no action/line.
+- Empty hands + object + RMB: approved pickup still works, with hand and sword.
+- After dropping/throwing, sky RMB remains inert. Other players holding objects must not change your input.
+
 ## 3.2.3ab — Minecraft interaction prototype
 
 1. Walk normally: slower hand bob, no frantic shake at high velocity.

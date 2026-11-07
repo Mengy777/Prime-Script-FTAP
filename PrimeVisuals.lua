@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.3ab"
+local VERSION="3.2.3ac"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2912,7 +2912,7 @@ local function buildVisualSystems()
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             RefreshAvatarVisibility=function()avatarVisibility:Refresh()end,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
-            PlayerPicker=addPlayerPicker,
+            PlayerPicker=addPlayerPicker,IsLocalGrabBeam=ownGrabBeam,
             Notify=notify,
             IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,
             Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,

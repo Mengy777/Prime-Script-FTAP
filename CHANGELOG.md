@@ -1,3 +1,10 @@
+## 3.2.3ac — 2026-11-07
+
+- Minecraft RMB now passes the native throw gesture unchanged when an active local grab is confirmed, including aiming into sky. Does not synthesize another grab click.
+- Holding detection requires a live enabled GrabPart constraint and a beam owned by the local character/camera (shared existing ownership resolver); stale/foreign grabs do not enable throwing.
+- Gesture remains passed through until release even if the grab constraint disappears mid-throw. Empty-handed sky clicks remain inert; initial object pickup remains the approved RMB remap.
+- User confirmed3.2.3ab native grab line works. New native throwing requires live confirmation; targeted simulated local/stale/foreign cases and compile checks passed.
+
 ## 3.2.3ab — 2026-11-07
 
 - Minecraft walking bob slowed by ~2.67x at standard speed, with a speed cap to avoid frantic motion when flung/accelerated.
