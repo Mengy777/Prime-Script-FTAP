@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4c**, tag `v3.2.4c`. Next normal runtime version: **3.2.4d**. Consult Git for the release commit.
+- Published runtime target: **3.2.4d**, tag `v3.2.4d`. Next normal runtime version: **3.2.4e**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -389,3 +389,9 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - Imported presets disable manual lighting to avoid stacking; temporary property layers restore foreign effects/clouds. Foreign atmospheres are detached and restored, not destroyed. PresetHasSky covers all catalog skies and Silent Target's no-sky Arctic; main sky maintenance must respect it. Adaptive uses Prime UI accent and checks changes on existing half-second maintenance.
 - All files compile; tests/sim/shader_catalog.py exercises every imported definition, source anchors, foreign restoration, sky values/exclusivity, cloud restoration, accent changes, stricter dropdown filtering, restart/unload. Full simulation report: docs/Simulation-3.2.4c.md. Live visual/asset access/FPS validation is pending; do not assert pixel identity across game state or claim imported parameters escape Roblox clamps.
 - Current real repo: D:/Projects/Prime-Script-FTAP/Repository; development outputs: ../Codex workspace/outputs. Simulation deps: ../Codex workspace/work/python-tools via PYTHONPATH.
+
+## 2026-11-08 — shader card panel 3.2.4d
+
+- lib/ShaderBrowser.lua builds the embedded 384px native UIPassthrough panel inside Scene presets: seven horizontally scrollable collection buttons, search, two-column card grid with internal vertical scrolling, count/empty state, selected footer. 45 cards reuse source names/palette values; no fake rendered thumbnails. Click calls existing setters and enables the preset.
+- Keep visualPreset and shaderCollection registered but hidden (SetVisible(false)); all profile/setter behavior and 546 setting values unchanged. ShaderBrowser is preloaded/tag-pinned; owned instances and connections use VisualExpansion create/connect, including startup-failure/unload cleanup. Cached Refresh runs on UI interaction and existing half-second maintenance only while the menu is open; no new per-frame job/save/world scan.
+- Theme via GetScheme, EN/RU localization, UTF-8-safe ASCII/Cyrillic search (avoid locale-dependent string.lower over UTF-8). tests/sim/shader_browser.py checks interaction, persistence and dead handlers after unload. Regression report: docs/Simulation-3.2.4d.md. Live Roblox visual layout acceptance pending.

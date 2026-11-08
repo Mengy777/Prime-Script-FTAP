@@ -1,3 +1,10 @@
+## 3.2.4d — 2026-11-08
+
+- Replace the visible shader dropdowns with a native embedded catalog panel: 45 clickable two-column cards, horizontally scrollable collection buttons, a search box, result count and selected-preset footer. Cards show source, palette accent and selection mark; clicking selects and enables the scene immediately.
+- Preserve all source preset values, editor action, Fullbright and 546 persisted settings. Existing visualPreset/shaderCollection widgets remain hidden for profile validation and stable setters; no duplicate settings or new config format.
+- Literal EN/RU search handles Cyrillic case independently of host locale. Selection, collection, language and UI palette changes update existing cards; no per-frame rebuilds or config writes. UI instances/connections share VisualExpansion cleanup, including failed startup.
+- Add actual-module catalog interaction simulations for click/apply, categories, search/empty state, themes, restart and unload. Extend the GUI fixture with passthrough/visibility and Color3 methods on its HSV result. Compilation and regression suite pass; visual layout remains to be checked in live Roblox.
+
 ## 3.2.4c — 2026-11-08
 
 - Expand Shaders scene catalog from 3 to 45 entries: Mercury (20), SAVITAR (7), Fosfor (5), Eris (5), Silent Target (5), plus the original three. Keep source-specific names and duplicate-looking scenes; preserve original numeric/color parameters and asset IDs.

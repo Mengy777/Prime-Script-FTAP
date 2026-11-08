@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4c"
+local VERSION="3.2.4d"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","ShaderBrowser","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -332,6 +332,7 @@ local ru={
     ["Lighting presets"]="Пресеты освещения",
     ["Scene presets"]="Каталог шейдеров",
     ["Collection"]="Коллекция",["All collections"]="Все коллекции",
+    ["Search shaders..."]="Поиск шейдеров...",["No shaders found"]="Шейдеры не найдены",
     ["Atmosphere preset"]="Готовая атмосфера",
     ["Preset"]="Вариант",
     ["Fullbright"]="Полное освещение",
@@ -2938,6 +2939,7 @@ local function buildVisualSystems()
             GetSky=ensureSky,
             ApplySky=applySkyData,
             GetAccent=function() return Library.Scheme.AccentColor end,
+            GetScheme=function() return Library.Scheme end,
             EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })
     end

@@ -1,0 +1,50 @@
+from support import Disk,session
+disk=Disk()
+lua,_,_,_=session(disk)
+lua.execute('''
+local root
+for _,o in ipairs(ALL_INSTANCES) do if o.Name=='PV_ShaderBrowser' then root=o end end
+assert(root and root.Parent and root.Size.Y.Offset==384)
+assert(TEST_OPTIONS.visualPreset.Visible==false and TEST_OPTIONS.shaderCollection.Visible==false,'list controls still visible')
+local cards=root:FindFirstChild('ShaderCards'):FindFirstChild('Cards')
+local categories=root:FindFirstChild('Collections')
+local search=root:FindFirstChild('ShaderSearch')
+local function visibleCards()
+ local n=0 for _,o in ipairs(cards:GetChildren()) do if o:IsA('TextButton') and o.Visible then n=n+1 end end return n
+end
+local function card(title,source)
+ for _,o in ipairs(cards:GetChildren()) do
+  if o:IsA('TextButton') and o:FindFirstChild('Title').Text==title and o:FindFirstChild('Source').Text==source then return o end
+ end
+ error('Missing card '..title..' / '..source)
+end
+assert(visibleCards()==45)
+local rain=card('Rain','Mercury')
+rain.Activated:Fire()
+assert(TEST_OPTIONS.visualPreset.Value=='Mercury / Rain' and TEST_OPTIONS.visualPresetEnabled.Value)
+assert(rain:FindFirstChild('Selected').Visible)
+categories:FindFirstChild('Collection_4').Activated:Fire()
+assert(TEST_OPTIONS.shaderCollection.Value=='SAVITAR' and visibleCards()==7)
+search.Text='night' assert(visibleCards()==2)
+search.Text='[]' assert(visibleCards()==0 and root:FindFirstChild('EmptyResults').Visible,'search treated as pattern')
+categories:FindFirstChild('Collection_1').Activated:Fire()
+search.Text='НОЧЬ' assert(visibleCards()==1,'Cyrillic search: '..tostring(visibleCards())..' text='..search.Text)
+card('Ночь','Eris').Activated:Fire()
+assert(TEST_OPTIONS.visualPreset.Value=='Eris / Ночь')
+search.Text='' assert(visibleCards()==45 and not root:FindFirstChild('EmptyResults').Visible)
+local night=card('Ночь','Eris')
+TEST_LIBRARY:Toggle(true)
+local accent=Color3.fromRGB(20,180,220) TEST_LIBRARY.Scheme.AccentColor=accent
+TEST_SERVICES.RunService.Heartbeat:Fire(.6)
+assert(night:FindFirstChild('Selected').TextColor3==accent,'theme change not reflected')
+TEST_OPTIONS.visualPresetEnabled:SetValue(false)
+assert(root:FindFirstChild('ShaderSelection').Text:sub(1,3)=='○')
+TEST_DRAIN()
+TEST_ACTIONS['Unload script']()
+assert(not root.Parent)
+rain.Activated:Fire()
+assert(TEST_OPTIONS.visualPreset.Value=='Eris / Ночь','unloaded card still receives clicks')
+''')
+lua,_,_,_=session(disk)
+lua.execute("assert(TEST_OPTIONS.visualPreset.Value=='Eris / Ночь' and not TEST_OPTIONS.visualPresetEnabled.Value); TEST_ACTIONS['Unload script']()")
+print('PASS 45 clickable shader cards, auto-apply, collection chips, EN/RU literal search, empty results, selection/theme sync, persistence and disconnected unload')

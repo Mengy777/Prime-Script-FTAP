@@ -16,6 +16,7 @@ return function(c)
     local inputOverlay=c.LoadModule("InputOverlay")(c)
     local minecraft={Destroy=function()end}
     local dead=false
+    local shaderBrowser
     local objects,links={},{}
     local teardown=function()
         dead=true
@@ -627,6 +628,7 @@ return function(c)
         for _,o in ipairs(presetObjects) do if o:IsA("ColorCorrectionEffect") then o.TintColor=rgb(255,255,255):Lerp(accent,.45) end end
     end
     local function updatePreset()
+        if shaderBrowser then shaderBrowser:Refresh() end
         for _,o in ipairs(presetObjects) do destroy(o) end presetObjects={} appliedPreset=nil appliedAccent=nil unpatch("visualPreset")
         if not v.visualPresetEnabled then return end
         local data=presets[v.visualPreset] if not data then return end
@@ -678,10 +680,14 @@ return function(c)
                 if name~=names[1] and (v.shaderCollection=="All collections" or v.shaderCollection==source) then names[#names+1]=name end
             end
             widget:SetValues(names)
+            if shaderBrowser then shaderBrowser:Refresh() end
         end
         choice(g,"shaderCollection","Collection",{"All collections","Prime Visuals","Mercury","SAVITAR","Fosfor","Eris","Silent Target"},"All collections",filterPresets)
         choice(g,"visualPreset","Preset",presetNames,"Pale Frost",function() filterPresets() updatePreset() end)
         filterPresets()
+        for _,key in ipairs({"shaderCollection","visualPreset"}) do c.Widgets[key]:SetVisible(false) end
+        shaderBrowser=c.LoadModule("ShaderBrowser")({Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
+            Names=presetNames,Presets=presets,Translate=c.Translate,GetScheme=c.GetScheme})
         c.Action(g,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)
@@ -971,6 +977,7 @@ return function(c)
                 updateAccent()
                 for _,o in ipairs(presetObjects) do if not o.Parent then updatePreset() break end end
             end
+            if shaderBrowser and c.MenuOpen() then shaderBrowser:Refresh() end
         end
     end)
     -- Camera-only transform runs after the native controller; no second mouse-rotation path.
