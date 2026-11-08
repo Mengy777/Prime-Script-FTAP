@@ -283,7 +283,7 @@ TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
 assert doc['payload']['values']['minecraftEnabled'] is True
-assert len(doc['payload']['values'])==545
+assert len(doc['payload']['values'])==546
 lua.execute("""
 local h=TEST_SERVICES.Players.LocalPlayer.Character:FindFirstChild('Humanoid')
 TEST_OPTIONS.minecraftEnabled:SetValue(false)

@@ -611,16 +611,42 @@ return function(c)
             sky={SkyboxUp="rbxassetid://323493360",SkyboxLf="rbxassetid://323494252",SkyboxBk="rbxassetid://323494035",SkyboxFt="rbxassetid://323494130",
                 SkyboxDn="rbxassetid://323494368",SkyboxRt="rbxassetid://323494067",SunAngularSize=14}},
     }
-    local presetObjects={} local appliedPreset
+    local catalog=c.LoadModule("ShaderCatalog")
+    for name,data in pairs(catalog) do presets[name]=data end
+    local presetNames={"Pale Frost","Dreamy Night","Tokyowami"}
+    local importedNames={} for name in pairs(catalog) do importedNames[#importedNames+1]=name end table.sort(importedNames)
+    for _,name in ipairs(importedNames) do presetNames[#presetNames+1]=name end
+    local presetObjects={} local appliedPreset local appliedAccent
+    local function updateAccent()
+        if appliedPreset~="Fosfor / Adaptive Map" then return end
+        local accent=c.GetAccent and c.GetAccent() or rgb(168,85,247)
+        if accent==appliedAccent then return end appliedAccent=accent
+        patch("visualPreset",L,"FogColor",accent)
+        patch("visualPreset",L,"Ambient",rgb(255,255,255):Lerp(accent,.5))
+        patch("visualPreset",L,"OutdoorAmbient",rgb(0,0,0):Lerp(accent,.45))
+        for _,o in ipairs(presetObjects) do if o:IsA("ColorCorrectionEffect") then o.TintColor=rgb(255,255,255):Lerp(accent,.45) end end
+    end
     local function updatePreset()
-        for _,o in ipairs(presetObjects) do destroy(o) end presetObjects={} appliedPreset=nil unpatch("visualPreset")
+        for _,o in ipairs(presetObjects) do destroy(o) end presetObjects={} appliedPreset=nil appliedAccent=nil unpatch("visualPreset")
         if not v.visualPresetEnabled then return end
         local data=presets[v.visualPreset] if not data then return end
+        if data.source and v.lightEnabled then c.Setters.lightEnabled(false,true) end
         for property,value in pairs(data.light) do patch("visualPreset",L,property,value) end
-        if v.visualPreset=="Pale Frost" then
+        if v.visualPreset=="Pale Frost" or data.source then
             for _,o in ipairs(L:GetChildren()) do
                 if o:IsA("PostEffect") then patch("visualPreset",o,"Enabled",false)
-                elseif o:IsA("Atmosphere") then patch("visualPreset",o,"Density",0) patch("visualPreset",o,"Haze",0) patch("visualPreset",o,"Glare",0) end
+                elseif o:IsA("Atmosphere") then
+                    if data.source then patch("visualPreset",o,"Parent",nil)
+                    else patch("visualPreset",o,"Density",0) patch("visualPreset",o,"Haze",0) patch("visualPreset",o,"Glare",0) end
+                elseif data.source=="Silent Target" and not data.sky and o:IsA("Sky") then patch("visualPreset",o,"Parent",nil) end
+            end
+        end
+        if data.clouds then
+            local terrain=W:FindFirstChildOfClass("Terrain")
+            if terrain then
+                local clouds=terrain:FindFirstChildOfClass("Clouds")
+                if not clouds then clouds=create("Clouds",{Name="PV_PresetClouds"},terrain) presetObjects[#presetObjects+1]=clouds end
+                for property,value in pairs(data.clouds) do patch("visualPreset",clouds,property,value) end
             end
         end
         for i,e in ipairs(data.effects) do
@@ -633,6 +659,7 @@ return function(c)
             for _,o in ipairs(L:GetChildren()) do if o:IsA("Sky") and o~=s then patch("visualPreset",o,"Parent",nil) end end
         end
         appliedPreset=v.visualPreset
+        updateAccent()
     end
     local function fullbright(on)
         unpatch("fullbright") if not on then return end
@@ -640,9 +667,22 @@ return function(c)
     end
     do
         local g=group("Lighting","Scene presets",2)
-        toggle(g,"visualPresetEnabled","Atmosphere preset",false,updatePreset) local h=panel("visualPresetEnabled")
-        choice(h,"visualPreset","Preset",{"Pale Frost","Dreamy Night","Tokyowami"},"Pale Frost",updatePreset)
-        c.Action(h,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
+        toggle(g,"visualPresetEnabled","Atmosphere preset",false,updatePreset)
+        local function filterPresets()
+            local widget=c.Widgets.visualPreset if not widget or not widget.SetValues then return end
+            -- Keep the active selection available while browsing another collection.
+            -- The persisted registry retains the complete allowed-value list.
+            local names={v.visualPreset or "Pale Frost"}
+            for _,name in ipairs(presetNames) do
+                local source=presets[name].source or "Prime Visuals"
+                if name~=names[1] and (v.shaderCollection=="All collections" or v.shaderCollection==source) then names[#names+1]=name end
+            end
+            widget:SetValues(names)
+        end
+        choice(g,"shaderCollection","Collection",{"All collections","Prime Visuals","Mercury","SAVITAR","Fosfor","Eris","Silent Target"},"All collections",filterPresets)
+        choice(g,"visualPreset","Preset",presetNames,"Pale Frost",function() filterPresets() updatePreset() end)
+        filterPresets()
+        c.Action(g,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)
         local names={} for name in pairs(c.Data.Skies) do names[#names+1]=name end table.sort(names)
@@ -928,6 +968,7 @@ return function(c)
                 for _,o in ipairs(parts) do unpatch("deathDust",o) end dusted[char]=nil
             end end
             if appliedPreset then
+                updateAccent()
                 for _,o in ipairs(presetObjects) do if not o.Parent then updatePreset() break end end
             end
         end
@@ -952,5 +993,8 @@ return function(c)
         for o in pairs(objects) do pcall(function() o:Destroy() end) end objects={}
         for _,name in ipairs({"visualPreset","fullbright","revealInvisible","deathDust","freeCamera","freeBody","freeToyMenu","oceanAppearance","oceanColor","bodyAppearance","bodyAccessories","bodyFace","blackholeSprite"}) do unpatch(name) end
     end
-    return {Destroy=function() teardown() end}
+    return {Destroy=function() teardown() end,PresetHasSky=function()
+        local data=presets[v.visualPreset]
+        return v.visualPresetEnabled and data and (data.sky~=nil or data.source=="Silent Target")
+    end}
 end

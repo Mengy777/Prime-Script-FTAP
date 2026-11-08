@@ -178,7 +178,7 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("MinecraftMode","MinecraftAssets","InputOverlay","CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
+for module in ("MinecraftMode","MinecraftAssets","InputOverlay","CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","ShaderCatalog","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
  source=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  if module=="MinecraftMode": source="local cache={} local originalRead,originalWrite=readfile,writefile;local readfile=function(p)if cache[p]then return cache[p]end return originalRead(p)end;local writefile=function(p,b)cache[p]=b end;local getcustomasset=function(path)return 'rbxasset://test/'..path end\n"+source
  lua.globals().TEST_VISUAL_SOURCE=source

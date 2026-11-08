@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-08",
+  "entries": 42,
+  "sources": [
+    {
+      "file": "Mercury_fix.txt",
+      "sha256": "51d34c2a740af3e29f3213d3c8e664b3717eb6a5ccdef14fbe92956d27991b6c",
+      "lines": [
+        4028,
+        4391
+      ],
+      "presets": [
+        "Morning",
+        "Midday",
+        "Afternoon",
+        "Evening",
+        "Night",
+        "Midnight",
+        "Rain",
+        "Snow",
+        "Fog",
+        "Sunny",
+        "Cloudy",
+        "Storm",
+        "Autumn",
+        "Spring",
+        "Summer",
+        "Winter",
+        "Red Theme",
+        "Green Theme",
+        "Blue Theme",
+        "Black & White"
+      ]
+    },
+    {
+      "file": "SAVITAR.txt",
+      "sha256": "f913358abcc0475dc576c5f6dd15781e518b7547ad3429056322158f3a2c1e51",
+      "lines": [
+        32602,
+        33300
+      ],
+      "presets": [
+        "Scarlet Atmosphere",
+        "Golden Hour",
+        "Night",
+        "Neon Night",
+        "Lost Ocean",
+        "Dreamy",
+        "Colorful"
+      ]
+    },
+    {
+      "file": "Fosfor Visuals.txt",
+      "sha256": "7df616fc68c619d54eeb2e0ab932109297b247b902704209f404a635299dfe1b",
+      "lines": [
+        6463,
+        6788
+      ],
+      "presets": [
+        "Rainy Shader",
+        "Sunset Shader",
+        "Dreamy Shader",
+        "Purple Map",
+        "Adaptive Map"
+      ]
+    },
+    {
+      "file": "Eris.txt",
+      "sha256": "81308b7c58b0dd4d5ccf6c52c4590ba944364b58dc002c3e08a93b703b0a8ea3",
+      "lines": [
+        354,
+        435
+      ],
+      "presets": [
+        "Ночь",
+        "Вечер",
+        "Неон",
+        "Холодный",
+        "Тёплый"
+      ]
+    },
+    {
+      "file": "Project Silent Target.txt",
+      "sha256": "0af3639486c00feb418ea5167f3a600f827c614656a03ea1f16ef93c98d65c7c",
+      "lines": [
+        27269,
+        27426
+      ],
+      "presets": [
+        "Classic",
+        "Twilight",
+        "Luminous",
+        "Sandstorm",
+        "Arctic"
+      ]
+    }
+  ],
+  "additional_source_ranges": {
+    "SAVITAR.txt": [
+      33058,
+      33120
+    ],
+    "Eris.txt": [
+      2588,
+      2648
+    ]
+  },
+  "repairs": [
+    "Fosfor: restore missing asset URI quotes/punctuation without changing asset IDs.",
+    "Fosfor Adaptive: undefined accentLerp replaced with explicit base:Lerp(accent, factor); follows Prime UI accent."
+  ],
+  "limits": [
+    "Only configuration data copied; foreign loaders and destructive lifecycle code excluded.",
+    "Roblox property clamping and unavailable assets can affect rendering.",
+    "Unspecified properties inherit game state; identical output across different games is not guaranteed."
+  ]
+}

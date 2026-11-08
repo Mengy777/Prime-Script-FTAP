@@ -22,7 +22,7 @@ assert(not workspace:FindFirstChild('PV_ExperimentalGraphics'))
 TEST_OPTIONS.lightContrast:SetValue(.39)TEST_DRAIN()
 """)
 doc=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(doc['payload']['values'])==545
+assert len(doc['payload']['values'])==546
 assert all(key not in doc['payload']['values'] for key in removed)
 assert not (ROOT/'lib/ExperimentalGraphics.lua').exists()
 assert 'ExperimentalGraphics' not in source

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4b"
+local VERSION="3.2.4c"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -237,7 +237,7 @@ local ru={
     ["Show your own body while playing in first person."]="Показывает своё тело при игре от первого лица.",
     ["Apply a ForceField material to your character and selected objects."]="Меняет материал тела и выбранных объектов на ForceField.",
     ["Draw an outline around your own character."]="Подсвечивает контур собственного персонажа.",
-    ["Choose Pale Frost, Dreamy Night or Tokyowami in settings."]="Выбери Pale Frost, Dreamy Night или Tokyowami в настройках.",
+    ["Choose a shader from the catalog or edit its settings."]="Выбери шейдер в каталоге или отредактируй его настройки.",
     ["Adjust brightness, colors, bloom and blur yourself."]="Настрой яркость, цвет, свечение и размытие вручную.",
     ["Move only the camera: WASD, Space up, Q down. Mouse looks around; wheel changes speed."]="Летает только камера: WASD, Пробел — вверх, Q — вниз. Обзор мышью, колёсико — скорость.",
     ["Choose a player from the server list and follow their camera subject."]="Выбери игрока из списка сервера и наблюдай за ним.",
@@ -330,7 +330,8 @@ local ru={
     ["Icon size"]="Размер иконки",
     ["Reveal invisible characters"]="Показывать невидимых персонажей",
     ["Lighting presets"]="Пресеты освещения",
-    ["Scene presets"]="Готовые сцены",
+    ["Scene presets"]="Каталог шейдеров",
+    ["Collection"]="Коллекция",["All collections"]="Все коллекции",
     ["Atmosphere preset"]="Готовая атмосфера",
     ["Preset"]="Вариант",
     ["Fullbright"]="Полное освещение",
@@ -1227,6 +1228,7 @@ local function buildVisualSystems()
             local wasSuppressed=suppressed
             suppressed=true
             local updated,message=pcall(function()
+                if key=="visualPreset" and widget.SetValues then widget:SetValues(settingSpecs[key].Values) end
                 if isColor then widget:SetValueRGB(value) else widget:SetValue(value) end
             end)
             suppressed=wasSuppressed
@@ -1303,7 +1305,7 @@ local function buildVisualSystems()
         camThird="Rotate with the mouse; use the wheel to zoom into first person or back out.",
         camNoclip="Let the camera pass through walls.",camBlur="Remove the game's ragdoll blur.",camBody="Show your own body while playing in first person.",
         characterEnabled="Apply a ForceField material to your character and selected objects.",selfESP="Draw an outline around your own character.",
-        visualPresetEnabled="Choose Pale Frost, Dreamy Night or Tokyowami in settings.",lightEnabled="Adjust brightness, colors, bloom and blur yourself.",
+        visualPresetEnabled="Choose a shader from the catalog or edit its settings.",lightEnabled="Adjust brightness, colors, bloom and blur yourself.",
         freeCameraEnabled="Move only the camera: WASD, Space up, Q down. Mouse looks around; wheel changes speed.",
         spectateEnabled="Choose a player from the server list and follow their camera subject.",
         serverGhostEnabled="An estimated delayed position from your own movement history and ping; not server telemetry.",
@@ -1337,7 +1339,7 @@ local function buildVisualSystems()
         return register(key,widget,tostring(initial or ""),callback,false,{Kind="Input"})
     end
     local function choice(g,key,text,values,initial,callback,aliases)
-        local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Callback=changed(key,callback)})
+        local widget=g:AddDropdown(key,{Text=text,Values=values,Default=table.find(values,initial) or 1,Searchable=key=="visualPreset",Callback=changed(key,callback)})
         return register(key,widget,initial,callback,false,{Kind="Dropdown",Values=values,Aliases=aliases})
     end
     -- Existing rainbow implementations keep their own controls and efficient render paths.
@@ -1687,7 +1689,7 @@ local function buildVisualSystems()
         ApplySky=applySkyData,
     })
     maintenance.Sky=function()
-        if activeSky and skyRecoveryData and not (controls.visualPresetEnabled and controls.visualPreset=="Tokyowami") then
+        if activeSky and skyRecoveryData and not (visualExpansion and visualExpansion.PresetHasSky and visualExpansion.PresetHasSky()) then
             local sky=ensureSky()
             for key,value in pairs(skyRecoveryData) do if sky[key]~=value then sky[key]=value end end
         end
@@ -1757,7 +1759,7 @@ local function buildVisualSystems()
         end)
         maintenance.Clouds=function() if controls.skyClouds then updateClouds(true) end end
         beforeSkyChange=function()
-            if controls.visualPresetEnabled and controls.visualPreset=="Tokyowami" then setters.visualPresetEnabled(false,true) end
+            if visualExpansion and visualExpansion.PresetHasSky and visualExpansion.PresetHasSky() then setters.visualPresetEnabled(false,true) end
         end
         onCustomSkyApplied=function(data)
             setters.skySun(math.clamp(tonumber(data.SunAngularSize) or 21,0,60),false)
@@ -2935,6 +2937,7 @@ local function buildVisualSystems()
             end,
             GetSky=ensureSky,
             ApplySky=applySkyData,
+            GetAccent=function() return Library.Scheme.AccentColor end,
             EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })
     end

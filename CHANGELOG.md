@@ -1,3 +1,11 @@
+## 3.2.4c — 2026-11-08
+
+- Expand Shaders scene catalog from 3 to 45 entries: Mercury (20), SAVITAR (7), Fosfor (5), Eris (5), Silent Target (5), plus the original three. Keep source-specific names and duplicate-looking scenes; preserve original numeric/color parameters and asset IDs.
+- Add a compact collection filter and searchable preset selector directly on the Shaders card. Keep visualPreset and visualPresetEnabled config IDs; add shaderCollection (546 persisted values). Active selection survives browsing another collection and profile restart.
+- Import data only, with original source hashes/ranges in docs/Shader-Catalog-Sources.json. Restore Fosfor's damaged asset strings; Adaptive follows Prime's accent with explicit blending because the saved source lacks accentLerp. No external loaders executed or imported.
+- Create/clean owned effects, restore foreign filters/atmospheres/skies and cloud properties on switch/off/unload. Generalize sky ownership so native sky recovery does not compete with catalog skies. Imported presets disable the manual lighting editor to avoid stacked filters; Edit selected preset remains available.
+- Compilation and simulated catalog/lifecycle/profile regressions pass. Source values can be clamped by Roblox; source assets and the actual appearance/performance still require live FTAP checks. This is a source-parameter import, not proof of pixel-identical rendering in every scene.
+
 ## 3.2.4b — 2026-11-07
 
 - Add dedicated Shaders sidebar category (RU Шейдеры) after Graphics, with sun icon.

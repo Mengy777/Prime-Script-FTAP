@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4b**, tag `v3.2.4b`. Next normal runtime version: **3.2.4c**. Consult Git for the release commit.
+- Published runtime target: **3.2.4c**, tag `v3.2.4c`. Next normal runtime version: **3.2.4d**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -381,3 +381,11 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 
 - Acceptance: user confirmed InputOverlay3.2.4a R key/new mouse fully.
 - 3.2.4b: dedicated Shaders/sun sidebar after Graphics, owns logical Lighting tab; Navigation routes Lighting card left and Lighting presets right. All existing manual editor5pages,3presets/edit/reset/Fullbright transferred. Graphics retains weather/water/FPS/surfaces. No runtime algorithms/settings/schema changed,545keys. Focused nav/localization/lighting/cold-restore tests plus all-Lua compile passed. New layout pending acceptance; next3.2.4c.
+
+## 2026-11-08 — shader catalog 3.2.4c
+
+- 45 source scenes total (3 legacy + 42 imported). lib/ShaderCatalog.lua is data-only and pinned/preloaded with the runtime. Source hashes/ranges and the two Fosfor compatibility repairs: docs/Shader-Catalog-Sources.json. Rebuild via tools/import_shader_catalog.py <catalog-findings.json> using the original local research manifest; never execute source collection loaders.
+- Scene presets card has collection filter + searchable dropdown + edit action. visualPreset/visualPresetEnabled retained; shaderCollection adds one persisted value (546 total). Filtering retains active selection; registry always validates against the full catalog, including profile restore while browsing another collection.
+- Imported presets disable manual lighting to avoid stacking; temporary property layers restore foreign effects/clouds. Foreign atmospheres are detached and restored, not destroyed. PresetHasSky covers all catalog skies and Silent Target's no-sky Arctic; main sky maintenance must respect it. Adaptive uses Prime UI accent and checks changes on existing half-second maintenance.
+- All files compile; tests/sim/shader_catalog.py exercises every imported definition, source anchors, foreign restoration, sky values/exclusivity, cloud restoration, accent changes, stricter dropdown filtering, restart/unload. Full simulation report: docs/Simulation-3.2.4c.md. Live visual/asset access/FPS validation is pending; do not assert pixel identity across game state or claim imported parameters escape Roblox clamps.
+- Current real repo: D:/Projects/Prime-Script-FTAP/Repository; development outputs: ../Codex workspace/outputs. Simulation deps: ../Codex workspace/work/python-tools via PYTHONPATH.

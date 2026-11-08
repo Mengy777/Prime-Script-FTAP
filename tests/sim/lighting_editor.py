@@ -102,7 +102,7 @@ assert(GETE('PV_ManualAtmosphere').Density==.6 and GETE('PV_Depth').FocusDistanc
 assert d.writes==writes,'effect recovery wrote configs'
 path='PrimeVisuals/Configs/1234/autosave.json'
 expected=copy.deepcopy(json.loads(d.files[path])['payload']['values'])
-assert len(expected)==545
+assert len(expected)==546
 lua.execute("TEST_ACTIONS['Unload script']();assert(TEST_NATIVE_AIR.Density==.25 and TEST_NATIVE_BLOOM.Enabled)")
 # Cold startup restores extra values, active flags and edited sky, no action replay required.
 lua2,*_=session(d)
