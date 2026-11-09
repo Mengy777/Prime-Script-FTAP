@@ -16,11 +16,12 @@ return function(c)
     local inputOverlay=c.LoadModule("InputOverlay")(c)
     local minecraft={Destroy=function()end}
     local dead=false
-    local shaderBrowser
+    local shaderBrowser,shaderWindow
     local objects,links={},{}
     local teardown=function()
         dead=true
         if shaderBrowser then shaderBrowser:Destroy() end
+        if shaderWindow then shaderWindow:Destroy() end
         mapAppearance:Destroy()
         inputOverlay:Destroy()
         minecraft:Destroy()
@@ -687,8 +688,15 @@ return function(c)
         choice(g,"visualPreset","Preset",presetNames,"Pale Frost",function() filterPresets() updatePreset() end)
         filterPresets()
         for _,key in ipairs({"shaderCollection","visualPreset"}) do c.Widgets[key]:SetVisible(false) end
+        shaderWindow=c.LoadModule("WraithCatalogUI")({Make=create,Connect=connect,PlayerGui=c.PlayerGui,MenuGui=c.MenuGui,
+            Workspace=W,MenuOpen=c.MenuOpen,TweenService=c.TweenService,Translate=c.Translate,Cursor=c.CatalogCursor,
+            Edit=function()c.EditLighting(presets[v.visualPreset],v.visualPreset)end})
         shaderBrowser=c.LoadModule("ShaderBrowser")({Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
-            Names=presetNames,Presets=presets,Translate=c.Translate,GetScheme=c.GetScheme,TweenService=c.TweenService})
+            Host=shaderWindow.Host,Sidebar=shaderWindow.Sidebar,Thematic=true,Names=presetNames,Presets=presets,Translate=c.Translate,
+            GetScheme=function()return {MainColor=rgb(14,18,28),OutlineColor=rgb(36,43,58),FontColor=rgb(230,235,245),AccentColor=c.GetAccent()}end,
+            TweenService=c.TweenService})
+        shaderWindow.OnOpen=function()shaderBrowser:Refresh(true)end
+        c.Action(g,"Open shader catalog",function()shaderWindow:Open()end)
         c.Action(g,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)
@@ -978,7 +986,8 @@ return function(c)
                 updateAccent()
                 for _,o in ipairs(presetObjects) do if not o.Parent then updatePreset() break end end
             end
-            if shaderBrowser and c.MenuOpen() then shaderBrowser:Refresh() end
+            if shaderWindow then shaderWindow:Refresh() end
+            if shaderBrowser and shaderWindow:IsOpen() then shaderBrowser:Refresh() end
         end
     end)
     -- Camera-only transform runs after the native controller; no second mouse-rotation path.
@@ -993,6 +1002,7 @@ return function(c)
     teardown=function()
         if dead then return end dead=true
         if shaderBrowser then shaderBrowser:Destroy() end
+        if shaderWindow then shaderWindow:Destroy() end
         mapAppearance:Destroy()
         inputOverlay:Destroy()
         minecraft:Destroy()

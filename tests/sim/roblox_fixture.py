@@ -78,6 +78,8 @@ function methods:FindFirstChild(name,recursive) for _,o in ipairs(recursive and 
 function methods:WaitForChild(name) local c=self:FindFirstChild(name) if c then return c end c=Instance.new('Folder') c.Name=name c.Parent=self return c end
 function methods:FindFirstChildOfClass(class) for _,o in ipairs(self._children) do if o:IsA(class) then return o end end end
 function methods:FindFirstChildWhichIsA(class,recursive) for _,o in ipairs(recursive and self:GetDescendants() or self._children) do if o:IsA(class) then return o end end end
+function methods:SetAttribute(key,value) self._attrs=self._attrs or {} self._attrs[key]=value end
+function methods:GetAttribute(key) return self._attrs and self._attrs[key] end
 function methods:IsA(class)
  if class==self._class or class=='Instance' then return true end
  if class=='GuiObject' then return ({Frame=true,CanvasGroup=true,ScrollingFrame=true,TextButton=true,TextBox=true,TextLabel=true,ImageLabel=true,ImageButton=true,ViewportFrame=true})[self._class] or false end
@@ -89,8 +91,7 @@ end
 function methods:FindFirstAncestorOfClass(class) local p=self.Parent while p do if p:IsA(class)then return p end p=p.Parent end end
 function methods:IsDescendantOf(root) local p=self.Parent while p do if p==root then return true end p=p.Parent end return false end
 function methods:GetPropertyChangedSignal(name) self._signals=self._signals or {} self._signals[name]=self._signals[name] or signal() return self._signals[name] end
-function methods:GetAttribute(name) return nil end
-function methods:GetAttributes() return {} end
+function methods:GetAttributes() return self._attrs or {} end
 function methods:Destroy() if self._props.Destroying then self._props.Destroying:Fire() end for _,c in ipairs(self:GetChildren()) do c:Destroy() end self.Parent=nil end
 function methods:IsFocused() return false end
 function methods:ReleaseFocus() end
@@ -178,7 +179,7 @@ lua.globals().TEST_EMBLEM_SOURCE=Path(REPO / "lib/AnimatedEmblem.lua").read_text
 lua.execute("local previous=game.HttpGet; game.HttpGet=function(self,url) if url:find('AnimatedEmblem.lua',1,true) then return TEST_EMBLEM_SOURCE end return previous(self,url) end")
 
 # Execute the actual source-reviewed pack and preset data, not a replacement stub.
-for module in ("MinecraftMode","MinecraftAssets","InputOverlay","CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","ShaderCatalog","ShaderBrowser","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
+for module in ("MinecraftMode","MinecraftAssets","InputOverlay","CrosshairStyles","MapPresets","MapAppearance","SoundPresets","SoundOverrides","CoinIcon","ToyMenuDiagnostics","ToyCollection","AvatarVisibility","Wordmark","MajorInterface","Keybinds","VisualExpansion","VisualPresets","ShaderCatalog","ShaderBrowser","WraithCatalogUI","Navigation","AntiKick","LightingEditor","Mannequins","MannequinRagdoll"):
  source=Path(REPO / ("lib/"+module+".lua")).read_text(encoding="utf-8-sig")
  if module=="MinecraftMode": source="local cache={} local originalRead,originalWrite=readfile,writefile;local readfile=function(p)if cache[p]then return cache[p]end return originalRead(p)end;local writefile=function(p,b)cache[p]=b end;local getcustomasset=function(path)return 'rbxasset://test/'..path end\n"+source
  lua.globals().TEST_VISUAL_SOURCE=source

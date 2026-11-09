@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4e**, tag `v3.2.4e`. Next normal runtime version: **3.2.4f**. Consult Git for the release commit.
+- Published runtime target: **3.2.4f**, tag `v3.2.4f`. Next normal runtime version: **3.2.4g**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -400,3 +400,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 
 - User asks for faster, scoped work/checks and concise reports. ShaderBrowser now 442px, all seven categories in 4-column/two-row grid, responsive one-column readable rows below 360px and two columns above. Clear search, previous/next within filtered results, auto-scroll selected row and enable/disable footer. Same 45 presets/546 settings.
 - Short cancelable TweenService color/stroke/press-scale/filter-entry animations. Browser Destroy cancels active tweens in both VisualExpansion cleanup paths; native user scroll unchanged. Targeted shader_browser.py/shader_catalog.py plus compile pass; live UI acceptance pending. No full unrelated suite rerun for this layout change.
+
+## 2026-11-09 — separate Wraith-style shader catalog 3.2.4f
+
+- Main UI remains Obsidian. Shaders has Open shader catalog; lib/WraithCatalogUI.lua owns a separate 880x590 modal shell adapted to Wraith.dev's NeverLose-style palette/sidebar. Explicitly NOT the complete third-party UI engine. Source reference: Wraith.dev.txt CreateWindow 10081+, equivalent Wraith.txt 3981+. No source loaders/gameplay/config engine imported.
+- ShaderBrowser hosts full-size in this shell, sidebar uses parameter themes (not source names), 1/2/3-column responsive grid. Sort Name/Time/Brightness/Saturation with direction; missing fields last. Theme derived from raw lighting/CC/Atmosphere parameters. Source identities retained internally via ShaderId attribute and original registry keys. 45 presets/546 persisted settings unchanged; filter/sort session-local.
+- Shell uses same GUI parent as Obsidian and higher DisplayOrder; modal backdrop blocks underlying clicks. Opens only while main menu is open; closes on main-menu hide. CatalogCursor temporarily disables Obsidian's custom cursor so native cursor is visible on top; restores original flag on close/destroy. No second keybind/config engine.
+- Short tweens, viewport fit and generation-guarded delayed close; cleanup in both VisualExpansion teardown paths. Edit closes catalog and opens existing native lighting editor. Tests: shader_browser.py (thematic filters, ascending/descending parameter order), shader_window.py (open/reopen/hide/editor/cursor/viewport/unload), shader_catalog.py, ui_navigation.py, startup_resilience.py, controls_matrix.py; compilation passed. Live appearance/input acceptance pending.

@@ -1,3 +1,11 @@
+## 3.2.4f — 2026-11-09
+
+- Keep the main Obsidian interface and move the shader catalog into a separate large Wraith.dev-inspired window, opened from Shaders. Dedicated sidebar, wide responsive 1/2/3-column grid, full search area, shared selected scene, editor handoff and close/backdrop controls. This is an adapted lightweight shell, not the full third-party Wraith/NeverLose engine.
+- Replace visible script-source grouping with parameter-based Daylight/Night/Warm/Cool/Foggy/Monochrome/Vivid filters. Classify from preset clock, tint, saturation, fog/atmosphere values; display scene time/brightness instead of source names.
+- Sort by name, time, brightness or saturation in either direction; unknown time/brightness stay last. Preserve all 45 source definitions and 546 persisted settings. Catalog filter/sort state stays local to the current session; existing selected preset/config IDs unchanged.
+- Fit the window to the viewport; short open/close transitions and generation-guarded delayed close. Shared main-menu ownership avoids a second input router; temporarily use the native cursor above the modal catalog and restore the Obsidian cursor. Clean instances, callbacks and tweens on unload/failed startup.
+- Lua compilation and targeted browser/catalog/window/navigation/startup/control-matrix simulations pass. Layout, cursor and animations still need a live FTAP check.
+
 ## 3.2.4e — 2026-11-09
 
 - Rework shader browsing: show all seven collection tabs in a two-row grid; responsive full-width rows on narrow cards and two columns on wide panels. Taller panel, clearer titles, fixed search and selection/actions areas.
