@@ -72,7 +72,18 @@ assert(categories:FindFirstChildOfClass('UIGridLayout'),'categories require hori
 TEST_LIBRARY:Toggle(true)
 local accent=Color3.fromRGB(20,180,220) TEST_LIBRARY.Scheme.AccentColor=accent
 TEST_SERVICES.RunService.Heartbeat:Fire(.6)
-assert(night:FindFirstChild('Selected').TextColor3==accent,'theme change not reflected')
+local grid=cards:FindFirstChildOfClass('UIGridLayout')
+assert(grid.FillDirectionMaxCells==5 and math.abs(grid.CellSize.X.Scale-.2)<.0001,'not five shaders per row')
+assert(not night:FindFirstChild('Source') and not night:FindFirstChild('Palette'),'extra card details remain')
+local page=root.Parent.Parent
+for _,o in ipairs(page:GetDescendants()) do
+ for _,property in ipairs({'BackgroundColor3','TextColor3','ScrollBarImageColor3','Color','PlaceholderColor3'}) do
+  local value=o[property]
+  if type(value)=='table' and value.R~=nil then assert(value.R==value.G and value.G==value.B,'colored catalog '..property) end
+ end
+ if o:IsA('UIStroke') then assert(o.ApplyStrokeMode==Enum.ApplyStrokeMode.Border,'text outline creates bold letters') end
+ if o:IsA('TextLabel') or o:IsA('TextButton') or o:IsA('TextBox') then assert(o.Font~=Enum.Font.GothamBold and o.Font~=Enum.Font.GothamMedium,'bold font remains') end
+end
 TEST_OPTIONS.visualPresetEnabled:SetValue(false)
 assert(root:FindFirstChild('ShaderSelection').Text:sub(1,3)=='○')
 TEST_DRAIN()

@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4g**, tag `v3.2.4g`. Next normal runtime version: **3.2.4h**. Consult Git for the release commit.
+- Published runtime target: **3.2.4h**, tag `v3.2.4h`. Next normal runtime version: **3.2.4i**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -413,3 +413,9 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - User explicitly rejected the separate window and visible Lighting/Lighting presets cards. WraithCatalogUI.lua now builds PV_ShaderPage directly under categoryTabs.Shaders.Container, filling its area. Both legacy tab.Sides are hidden; registry/config callbacks retained internally (546 keys). No modal ScreenGui/open action/cursor override. Other tabs remain unchanged.
 - Catalog uses Gotham/GothamMedium (not main Builder Sans), neutral dark palette, sidebar with scrollable parameter themes and larger full-width sort choices. Same 45 definitions and direction/search/next/previous. Existing lib filename retained for dependency compatibility; this is now page presentation, not a foreign runtime.
 - shader_window.py now verifies full-page parent/size, hidden native columns, absence of popup/open action, font replacement, navigation and unload. Targeted shader_browser/catalog/ui_navigation and compilation pass. Live layout acceptance pending.
+
+## 2026-11-09 — monochrome five-column shader catalog 3.2.4h
+
+- User explicitly wants black/white ONLY inside Shaders, five presets per row, no brightness/time/palette clutter, no bold selection. ShaderBrowser ignores global Scheme for UI colors; shader data/Adaptive world colors remain unchanged. Regular Gotham; UIStroke.ApplyStrokeMode=Border is essential (default Contextual on TextButton was thickening glyphs).
+- Fixed five-column layout (CellSize .2 with 6px gaps, 52px height), name-only cards, narrower 112px sidebar. Source/palette UI removed; redundant count/selection captions hidden. Search/filter/sort/navigation remain.
+- shader_browser.py verifies monochrome colors despite accent changes, five columns, absence of extra card objects, regular font and border-only strokes; shader_window/catalog and compilation pass. Live confirmation pending.

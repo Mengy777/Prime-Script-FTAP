@@ -12,7 +12,7 @@ return function(c)
             animations[object]=tween tween:Play()
         else for key,value in pairs(properties) do object[key]=value end end
     end
-    local white=Color3.fromRGB(235,235,240)
+    local white=Color3.new(1,1,1)
     local function tr(text) return c.Translate and c.Translate(text) or text end
     local upper,lower="АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ","абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
     local letters={} for i=1,#upper,2 do letters[upper:sub(i,i+1)]=lower:sub(i,i+1) end
@@ -25,7 +25,7 @@ return function(c)
         local holder=c.Group:AddUIPassthrough("shaderBrowserPanel",{Instance=root,Height=442})
         holder.SearchAliases="Shaders shader catalog presets Шейдеры каталог пресеты "..table.concat(c.Names," ")
     end
-    local listTop=c.Host and 64 or 140
+    local listTop=c.Host and 44 or 140
     local categories=make("Frame",{Name="Collections",BackgroundTransparency=1,Size=c.Sidebar and UDim2.new(1,0,0,310) or UDim2.new(1,0,0,67)},c.Sidebar or root)
     make("UIGridLayout",{CellSize=c.Sidebar and UDim2.new(1,0,0,c.Thematic and 32 or 38) or UDim2.new(.25,-4.5,0,30),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},categories)
     local search=make("TextBox",{Name="ShaderSearch",Position=UDim2.fromOffset(0,c.Host and 0 or 76),Size=UDim2.new(1,0,0,32),
@@ -34,16 +34,16 @@ return function(c)
     make("UICorner",{CornerRadius=UDim.new(0,5)},search)
     make("UIPadding",{PaddingLeft=UDim.new(0,10),PaddingRight=UDim.new(0,30)},search)
     local clear=make("TextButton",{Name="ClearSearch",Text="×",BackgroundTransparency=1,Position=UDim2.new(1,-29,0,c.Host and 1 or 77),Size=UDim2.fromOffset(28,30),Font=Enum.Font.Gotham,TextSize=20,Visible=false},root)
-    local searchStroke=make("UIStroke",{Thickness=1},search)
+    local searchStroke=make("UIStroke",{Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},search)
     local status=make("TextLabel",{Name="ShaderCount",BackgroundTransparency=1,Position=UDim2.fromOffset(0,listTop-25),
         Size=UDim2.new(1,0,0,18),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left},root)
     local scroll=make("ScrollingFrame",{Name="ShaderCards",BackgroundTransparency=1,BorderSizePixel=0,
-        Position=UDim2.fromOffset(0,listTop),Size=UDim2.new(1,0,1,-listTop-66),CanvasSize=UDim2.new(),
+        Position=UDim2.fromOffset(0,listTop),Size=UDim2.new(1,0,1,-listTop-40),CanvasSize=UDim2.new(),
         AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=4,Active=true},root)
     local content=make("Frame",{Name="Cards",BackgroundTransparency=1,Size=UDim2.new(1,-7,0,0),AutomaticSize=Enum.AutomaticSize.Y},scroll)
-    local grid=make("UIGridLayout",{CellSize=UDim2.new(1,0,0,60),CellPadding=UDim2.fromOffset(8,8),SortOrder=Enum.SortOrder.LayoutOrder},content)
-    local function columns() return root.AbsoluteSize.X>=640 and 3 or root.AbsoluteSize.X>=360 and 2 or 1 end
-    local function resize() local n=columns() grid.CellSize=UDim2.new(1/n,-8*(n-1)/n,0,n>1 and 68 or 60) end
+    local grid=make("UIGridLayout",{CellSize=UDim2.new(1,0,0,60),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},content)
+    local function columns() return 5 end
+    local function resize() local n=columns() grid.CellSize=UDim2.new(1/n,-6*(n-1)/n,0,52) grid.FillDirectionMaxCells=5 end
     connect(root:GetPropertyChangedSignal("AbsoluteSize"),resize) resize()
     local empty=make("TextLabel",{Name="EmptyResults",BackgroundTransparency=1,Position=UDim2.fromOffset(0,listTop+24),
         Size=UDim2.new(1,0,0,55),Font=Enum.Font.Gotham,TextSize=13,TextWrapped=true,Text=tr("No shaders found"),Visible=false},root)
@@ -58,12 +58,12 @@ return function(c)
         c.Setters.visualPreset(name,true)
         if not c.Controls.visualPresetEnabled then c.Setters.visualPresetEnabled(true,true) end
         local countColumns=columns()
-        local height=countColumns>1 and 68 or 60
+        local height=52
         local index=0
         for _,card in ipairs(cards) do if card.button.Visible then
             index=index+1
             if card.name==name then
-                local y=math.floor((index-1)/countColumns)*(height+8)
+                local y=math.floor((index-1)/countColumns)*(height+6)
                 local top=scroll.CanvasPosition.Y
                 if y<top then top=y elseif y+height>top+scroll.AbsoluteSize.Y then top=y+height-scroll.AbsoluteSize.Y end
                 scroll.CanvasPosition=Vector2.new(0,math.max(0,top)) break
@@ -84,7 +84,7 @@ return function(c)
         local b=make("TextButton",{Name="Collection_"..i,Size=UDim2.fromOffset(name=="All collections" and 106 or name=="Prime Visuals" and 102 or name=="Silent Target" and 102 or 85,28),
             LayoutOrder=i,BorderSizePixel=0,AutoButtonColor=false,Text=tr(name),TextSize=12,TextWrapped=true,Font=Enum.Font.Gotham},categories)
         make("UICorner",{CornerRadius=UDim.new(0,5)},b)
-        local stroke=make("UIStroke",{Thickness=1},b)
+        local stroke=make("UIStroke",{Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
         chips[#chips+1]={name=name,button=b,stroke=stroke}
         connect(b.Activated,function()
             if c.Thematic then api.Category=name api:Refresh(true) else c.Setters.shaderCollection(name,true) end
@@ -102,7 +102,7 @@ return function(c)
             connect(button.Activated,function()api.Sort=name api:Refresh(true)end)
         end
         local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,166),Size=UDim2.new(1,0,0,28),
-            Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.fromRGB(25,30,44),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham},sortRoot)
+            Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham},sortRoot)
         make("UICorner",{CornerRadius=UDim.new(0,4)},direction)
         connect(direction.Activated,function() api.Descending=not api.Descending direction.Text=tr(api.Descending and "Descending" or "Ascending") api:Refresh(true) end)
     end
@@ -113,23 +113,19 @@ return function(c)
         local b=make("TextButton",{Name="Shader_"..i,Size=UDim2.new(.5,-4,0,64),LayoutOrder=i,Text="",BorderSizePixel=0,AutoButtonColor=false},content)
         b:SetAttribute("ShaderId",name)
         make("UICorner",{CornerRadius=UDim.new(0,6)},b)
-        local stroke=make("UIStroke",{Thickness=1},b)
+        local stroke=make("UIStroke",{Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
         local tint=data.light.OutdoorAmbient or data.light.Ambient or white
         local saturation,density=0,0
         for _,effect in ipairs(data.effects or {}) do
             if effect[1]=="ColorCorrectionEffect" then tint=effect[2].TintColor or tint saturation=effect[2].Saturation or 0 end
             if effect[1]=="Atmosphere" then density=effect[2].Density or 0 end
         end
-        make("Frame",{Name="Palette",BackgroundColor3=tint,BorderSizePixel=0,Position=UDim2.fromOffset(10,10),Size=UDim2.fromOffset(3,44)},b)
-        local label=make("TextLabel",{Name="Title",BackgroundTransparency=1,Position=UDim2.fromOffset(18,9),Size=UDim2.new(1,-40,0,30),
-            Text=title,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.GothamMedium,TextSize=14},b)
-        local origin=make("TextLabel",{Name="Source",BackgroundTransparency=1,Position=UDim2.fromOffset(18,42),Size=UDim2.new(1,-24,0,14),
-            Text=c.Thematic and ((data.light.ClockTime and string.format("%02d:%02d",math.floor(data.light.ClockTime)%24,math.floor(data.light.ClockTime%1*60))) or "—").."  ·  "..tr("Brightness").." "..tostring(data.light.Brightness or "—") or source,
-            TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.Gotham,TextSize=10},b)
+        local label=make("TextLabel",{Name="Title",BackgroundTransparency=1,Position=UDim2.fromOffset(5,4),Size=UDim2.new(1,-10,1,-8),
+            Text=title,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=11},b)
         local check=make("TextLabel",{Name="Selected",BackgroundTransparency=1,Position=UDim2.new(1,-22,0,8),Size=UDim2.fromOffset(16,20),
-            Text="●",Font=Enum.Font.GothamBold,TextSize=14,Visible=false},b)
+            Text="",Font=Enum.Font.Gotham,TextSize=14,Visible=false},b)
         local scale=make("UIScale",{Scale=1},b)
-        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,origin=origin,check=check,scale=scale,
+        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,check=check,scale=scale,
             time=data.light.ClockTime,brightness=data.light.Brightness,saturation=saturation,
             tags={Daylight=data.light.ClockTime and data.light.ClockTime>=6 and data.light.ClockTime<18,
                 Night=data.light.ClockTime and (data.light.ClockTime<6 or data.light.ClockTime>=18),
@@ -142,18 +138,17 @@ return function(c)
         connect(b.MouseLeave,function() if hovered==b then hovered=nil api:Refresh(true) end end)
     end
     function api:Refresh(force)
-        local scheme=c.GetScheme and c.GetScheme() or {}
-        local accent=scheme.AccentColor or Color3.fromRGB(160,106,255)
-        local bg=scheme.MainColor or Color3.fromRGB(20,20,24)
-        local outline=scheme.OutlineColor or Color3.fromRGB(48,48,54)
-        local font=scheme.FontColor or white
+        local accent=white
+        local bg=Color3.new(0,0,0)
+        local outline=white
+        local font=white
         local collection=c.Thematic and api.Category or c.Controls.shaderCollection or "All collections"
         local query=fold(search.Text):match("^%s*(.-)%s*$")
         local key=table.concat({collection,query,tostring(c.Controls.visualPreset),tostring(c.Controls.visualPresetEnabled),tostring(accent),tostring(bg),tostring(font),tostring(outline),tr("Search shaders..."),api.Sort,tostring(api.Descending)},"|")
         if not force and key==lastKey then return end
         local filterChanged=api.Collection~=collection or api.Query~=query or api.LastSort~=api.Sort or api.LastDescending~=api.Descending
         lastKey=key api.Collection=collection api.Query=query api.LastSort=api.Sort api.LastDescending=api.Descending
-        search.BackgroundColor3=bg search.TextColor3=font search.PlaceholderColor3=font:Lerp(bg,.45) searchStroke.Color=outline
+        search.BackgroundColor3=bg search.TextColor3=font search.PlaceholderColor3=font searchStroke.Color=outline
         search.PlaceholderText=tr("Search shaders...")
         local count=0
         if c.Thematic then
@@ -174,17 +169,17 @@ return function(c)
             card.button.Visible=visible if visible then count=count+1 end
             local active=card.name==c.Controls.visualPreset
             if active and c.Thematic then activeTitle=card.title end
-            animate(card.button,{BackgroundColor3=active and bg:Lerp(accent,.2) or hovered==card.button and bg:Lerp(accent,.09) or bg})
-            animate(card.stroke,{Color=active and accent or outline,Thickness=active and 1.5 or 1})
-            card.label.TextColor3=font card.origin.TextColor3=font:Lerp(bg,.4)
-            card.check.Visible=active card.check.TextColor3=accent
+            animate(card.button,{BackgroundColor3=active and white or bg})
+            animate(card.stroke,{Color=white,Thickness=1,Transparency=active and 0 or hovered==card.button and .25 or .8})
+            card.label.TextColor3=active and bg or white
+            card.check.Visible=active card.check.TextColor3=bg
         end
-        for _,entry in ipairs(sortButtons) do animate(entry.button,{BackgroundColor3=entry.name==api.Sort and bg:Lerp(accent,.25) or bg,TextColor3=font}) end
+        for _,entry in ipairs(sortButtons) do animate(entry.button,{BackgroundColor3=entry.name==api.Sort and white or bg,TextColor3=entry.name==api.Sort and bg or white}) end
         for _,chip in ipairs(chips) do
             local active=chip.name==collection
             chip.button.Text=tr(chip.name)
-            animate(chip.button,{BackgroundColor3=active and bg:Lerp(accent,.22) or bg,TextColor3=active and accent or font})
-            animate(chip.stroke,{Color=active and accent or outline})
+            animate(chip.button,{BackgroundColor3=active and white or bg,TextColor3=active and bg or white})
+            animate(chip.stroke,{Color=white,Transparency=active and 0 or .85})
         end
         if filterChanged then
             scroll.CanvasPosition=Vector2.new(0,0)
@@ -193,9 +188,9 @@ return function(c)
         clear.Visible=query~="" clear.TextColor3=font
         for _,button in ipairs({previous,power,nextButton}) do animate(button,{BackgroundColor3=bg,TextColor3=font}) end
         power.Text=tr(c.Controls.visualPresetEnabled and "Disable" or "Enable")
-        status.Text=tostring(count).." / "..tostring(#cards).."  ·  "..tr(collection) status.TextColor3=font:Lerp(bg,.35)
+        status.Text=tostring(count).." / "..tostring(#cards).."  ·  "..tr(collection) status.TextColor3=font status.Visible=false
         empty.Text=tr("No shaders found") empty.Visible=count==0 empty.TextColor3=font
-        selected.Text=(c.Controls.visualPresetEnabled and "●  " or "○  ")..tostring(activeTitle or "") selected.TextColor3=c.Controls.visualPresetEnabled and accent or font
+        selected.Text=(c.Controls.visualPresetEnabled and "●  " or "○  ")..tostring(activeTitle or "") selected.TextColor3=font selected.Visible=false
         scroll.ScrollBarImageColor3=accent
     end
     connect(search:GetPropertyChangedSignal("Text"),function() api:Refresh() end)

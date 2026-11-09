@@ -1,3 +1,10 @@
+## 3.2.4h — 2026-11-09
+
+- Make only the full-page shader catalog monochrome, independent of the global accent/theme. Black/white selection, regular Gotham throughout; all strokes use ApplyStrokeMode.Border so selection does not outline/thicken button text.
+- Exactly five compact 52px shader cards per row. Remove palette bars and time/brightness/source subtitles; hide redundant result/selected-name captions. Narrower sidebar, smaller header and tighter spacing allocate more room to shader names.
+- Keep parameter filters/sort, search, preset selection/persistence and short animations. Shader/world color values remain untouched.
+- Full compilation and targeted browser/page/catalog simulations pass, including five-column geometry, monochrome colors after accent changes, border-only strokes and no bold/card metadata. Live appearance still requires confirmation.
+
 ## 3.2.4g — 2026-11-09
 
 - Replace the entire Shaders tab body with the catalog itself. Hide the legacy lighting/preset group columns; remove the popup, opening button, modal backdrop and catalog-specific cursor switching. Other Obsidian tabs remain unchanged.
