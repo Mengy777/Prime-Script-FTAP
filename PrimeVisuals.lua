@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4j"
+local VERSION="3.2.4k"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -3125,7 +3125,7 @@ local function buildVisualSystems()
         Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Workspace=Workspace,
         Actions=game:GetService("ContextActionService"),PhysicalMenu=loadUIModule("PhysicalMenu"),Patch=patch,Unpatch=unpatch,
         Translate=function(text)return uiLanguage=="ru"and(ru[text]or text)or text end,
-        BeamTemplate=function()for beam in pairs(lineBeams)do if beam.Parent then return beam end end end,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,HeaderTitle=nativeWindow.TitleLabel,Wordmark=loadUIModule("Wordmark"),
+        Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,HeaderTitle=nativeWindow.TitleLabel,Wordmark=loadUIModule("Wordmark"),
         TrackCleanup=function(fn)majorInterface={Destroy=fn}end,
         Keybinds=loadUIModule("Keybinds"),Icon=loadUIModule("PrimeIcon"),Make=make,Safe=safe,Notify=notify,
         Group=group,Panel=featureSettings,Field=field,Action=action,Toggle=toggle,Slider=sliderControl,Color=color,Choice=choice})

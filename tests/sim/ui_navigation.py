@@ -91,6 +91,10 @@ drag=drag[:drag.index('\nend')+4]
 drag='function Library:MakeDraggable(UI,DragFrame,IgnoreToggled,IsMainWindow,SnapConfig)\n'+drag[drag.index('    local StartPos'):]
 drag=drag.replace('Input: InputObject','Input')
 lua.execute("function IsClickInput(i)return i.UserInputType==Enum.UserInputType.MouseButton1 end; function IsHoverInput(i)return i.UserInputType==Enum.UserInputType.MouseMovement end")
+pointers=native[native.index('function Library:GetPointerLocation('):native.index('function Library:MouseIsOverFrame(')]
+pointers=re.sub(r':\s*Vector2\b','',pointers)
+lua.execute("Mouse=CURRENT_POINT")
+lua.execute(pointers)
 lua.execute(drag)
 lua.execute(block)
 lua.execute(r"""

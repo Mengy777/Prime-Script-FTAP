@@ -9,11 +9,11 @@ return function(c)
  local api={}
  function api:Destroy()if dead then return end dead=true if physical then physical:Destroy()end lib.Toggle=nativeToggle input:Destroy()for _,link in ipairs(connections)do if link then link:Disconnect()end end for _,root in ipairs(roots)do root:Destroy()end end
  if c.TrackCleanup then c.TrackCleanup(function()api:Destroy()end)end
+ c.NativeToggle=nativeToggle
  physical=c.PhysicalMenu(c)
  local function menuVisible()return v.worldMenuEnabled and physical:IsVisible() or lib.Toggled end
  function lib:Toggle(value)
   if v.worldMenuEnabled then
-   nativeToggle(self,false)
    physical:SetVisible(value==nil and not physical:IsVisible() or value==true)
   else
    if physical:IsVisible()then physical:SetVisible(false)end
@@ -22,10 +22,11 @@ return function(c)
  end
  local physicalSettings=c.Group("Favorites","Physical menu",1)
  c.Toggle(physicalSettings,"worldMenuEnabled","Physical menu",false,function(on)
-  if on then if lib.Toggled then nativeToggle(lib,false)physical:SetVisible(true)end
+  if on then if lib.Toggled then physical:SetVisible(true)end
   else local was=physical:IsVisible()physical:SetVisible(false)if was then nativeToggle(lib,true)end end
  end)
- c.Slider(physicalSettings,"worldMenuTransparency","Panel transparency",0,.95,.75,.05,function()physical:Configure()end)
+ c.Slider(physicalSettings,"worldMenuTransparency","Panel transparency",0,.95,0,.05,function()physical:Configure()end)
+ c.Widgets.worldMenuTransparency:SetVisible(false)
  c.Slider(physicalSettings,"worldMenuScale","Panel size",.5,2,1,.1,function()physical:Configure()end)
  c.Slider(physicalSettings,"worldMenuDistance","Panel distance",5,20,9,1,function()end)
  local function own(o)roots[#roots+1]=o return o end
@@ -49,7 +50,12 @@ return function(c)
   binding(key,function()c.Setters[key](not v[key],true)end,panel)
  end
  local general=c.Group("Settings","Keybinds",1)
- binding("menu",function()lib:Toggle(not menuVisible())end,general)
+ binding("menu",function()
+  if v.worldMenuEnabled and c.Input.IsKeyDown and (c.Input:IsKeyDown(Enum.KeyCode.LeftShift)or c.Input:IsKeyDown(Enum.KeyCode.RightShift))then
+   c.Setters.worldMenuEnabled(false,true)nativeToggle(lib,true)return
+  end
+  lib:Toggle(not menuVisible())
+ end,general)
  c.Action(general,"Clear all keybinds",function()for key in pairs(c.Specs)do if key:sub(1,5)=="bind_"then c.Setters[key]("",true)end end end)
  local settings=c.Group("Settings","Menu appearance",1)
  local alphaOriginal=setmetatable({}, {__mode="k"})
@@ -71,6 +77,7 @@ return function(c)
    end end
   end
  end
+ c.RestoreMenuStyle=function()themePending=true end
  c.Choice(settings,"menuTheme","Theme",{"Obsidian","Midnight","Crimson","Emerald"},"Obsidian",theme)
  c.Toggle(settings,"menuCustomAccent","Custom accent",false,theme)
  c.Toggle(settings,"menuCustomBackground","Custom background",false,theme)

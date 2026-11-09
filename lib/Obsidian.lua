@@ -663,6 +663,7 @@ local function IsMouseInput(Input: InputObject, IncludeM2: boolean?)
         or Input.UserInputType == Enum.UserInputType.Touch
 end
 local function IsClickInput(Input: InputObject, IncludeM2: boolean?)
+    if Library.PhysicalDragging then return false end
     return IsMouseInput(Input, IncludeM2)
         and Input.UserInputState == Enum.UserInputState.Begin
         and Library.IsRobloxFocused
@@ -672,6 +673,7 @@ local function IsHoverInput(Input: InputObject)
         and Input.UserInputState == Enum.UserInputState.Change
 end
 local function IsDragInput(Input: InputObject, IncludeM2: boolean?)
+    if Library.PhysicalDragging then return false end
     return IsMouseInput(Input, IncludeM2)
         and (Input.UserInputState == Enum.UserInputState.Begin or Input.UserInputState == Enum.UserInputState.Change)
         and Library.IsRobloxFocused
@@ -1643,7 +1645,7 @@ if type(registerStartup)=="function" then registerStartup(Library) end
 
 ScreenGui.DescendantRemoving:Connect(function(Instance)
     task.defer(function()
-        if Instance.Parent and Instance:IsDescendantOf(ScreenGui) then
+        if Instance.Parent and (Instance:IsDescendantOf(ScreenGui) or (Library.PhysicalGui and Instance:IsDescendantOf(Library.PhysicalGui))) then
             return
         end
 
@@ -1933,9 +1935,19 @@ function Library:GetTextBounds(Text: string, Font: Font, Size: number, Width: nu
     return math.ceil(Bounds.X / Scale), math.ceil(Bounds.Y / Scale)
 end
 
+-- Optional world-space UI adapter; ordinary screen behavior is unchanged.
+function Library:GetPointerLocation(): Vector2
+    if self.PointerProvider then return self.PointerProvider() end
+    return Vector2.new(Mouse.X, Mouse.Y)
+end
+function Library:GetScreenPointerLocation(): Vector2
+    if self.PointerProvider then return self.PointerProvider() end
+    return UserInputService:GetMouseLocation()
+end
+
 function Library:MouseIsOverFrame(Frame: GuiObject, Point: Vector2?): boolean
     if not Frame then return false end
-    Point = Point or Vector2.new(Mouse.X, Mouse.Y)
+    Point = Point or Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
     return Point.X >= AbsPos.X
         and Point.X <= AbsPos.X + AbsSize.X
@@ -2171,7 +2183,7 @@ function Library:MakeDraggable(
             return
         end
 
-        StartPos = Input.Position
+        StartPos = Library.PhysicalGui and Library:GetPointerLocation() or Input.Position
         FramePos = UI.Position
         Dragging = true
 
@@ -2208,7 +2220,7 @@ function Library:MakeDraggable(
         end
 
         if Dragging and IsHoverInput(Input) then
-            local Delta = Input.Position - StartPos
+            local Delta = (Library.PhysicalGui and Library:GetPointerLocation() or Input.Position) - StartPos
             local NewX = FramePos.X.Offset + Delta.X
             local NewY = FramePos.Y.Offset + Delta.Y
 
@@ -2292,7 +2304,7 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
     local InputChanged
 
     InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
-        if not IsClickInput(Input) then
+        if Library.PhysicalGui or not IsClickInput(Input) then
             return
         end
 
@@ -3936,13 +3948,13 @@ function Library:AddTooltip(InfoStr: string, DisabledInfoStr: string, HoverInsta
         if HolderGui and HolderGui ~= ScreenGui and Library.ActiveLoading and HolderGui == Library.ActiveLoading.ScreenGui then
             TooltipLabel.Parent = HolderGui
         else
-            TooltipLabel.Parent = ScreenGui
+            TooltipLabel.Parent = Library.PhysicalGui or ScreenGui
         end
 
         TooltipLabel.Text = TooltipTable.Disabled and DisabledInfoStr or InfoStr
         TooltipLabel.Position = UDim2.fromOffset(
-            Mouse.X + (Library.ShowCustomCursor and 8 or 14),
-            Mouse.Y + (Library.ShowCustomCursor and 8 or 12)
+            Library:GetPointerLocation().X + (Library.ShowCustomCursor and 8 or 14),
+            Library:GetPointerLocation().Y + (Library.ShowCustomCursor and 8 or 12)
         )
         TooltipLabel.Visible = true
         UpdateTooltipSize(true)
@@ -3954,8 +3966,8 @@ function Library:AddTooltip(InfoStr: string, DisabledInfoStr: string, HoverInsta
             and not (CurrentMenu and Library:MouseIsOverFrame(CurrentMenu.Menu, Mouse))
         do
             TooltipLabel.Position = UDim2.fromOffset(
-                Mouse.X + (Library.ShowCustomCursor and 8 or 14),
-                Mouse.Y + (Library.ShowCustomCursor and 8 or 12)
+                Library:GetPointerLocation().X + (Library.ShowCustomCursor and 8 or 14),
+                Library:GetPointerLocation().Y + (Library.ShowCustomCursor and 8 or 12)
             )
 
             RunService.RenderStepped:Wait()
@@ -5584,12 +5596,12 @@ do
 
             table.insert(ColorPicker.Connections, ResizeGrabber.InputBegan:Connect(function(Input: InputObject)
                 Library.CantDragForced = true
-                local StartMouse = Vector2.new(Mouse.X, Mouse.Y)
+                local StartMouse = Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)
                 local StartWidth = ColorPicker.MapWidth
                 local StartHeight = ColorPicker.MapHeight
 
                 while IsDragInput(Input) and not ColorPicker.Destroyed do
-                    local Delta = Vector2.new(Mouse.X, Mouse.Y) - StartMouse
+                    local Delta = Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y) - StartMouse
                     UpdateColorMenuSize(StartWidth + Delta.X, StartHeight + Delta.Y)
 
                     RunService.RenderStepped:Wait()
@@ -5966,11 +5978,11 @@ do
             while IsDragInput(Input) and not ColorPicker.Destroyed do
                 local MinX = SatVipMap.AbsolutePosition.X
                 local MaxX = MinX + SatVipMap.AbsoluteSize.X
-                local LocationX = math.clamp(Mouse.X, MinX, MaxX)
+                local LocationX = math.clamp(Library:GetPointerLocation().X, MinX, MaxX)
 
                 local MinY = SatVipMap.AbsolutePosition.Y
                 local MaxY = MinY + SatVipMap.AbsoluteSize.Y
-                local LocationY = math.clamp(Mouse.Y, MinY, MaxY)
+                local LocationY = math.clamp(Library:GetPointerLocation().Y, MinY, MaxY)
 
                 local OldSat = ColorPicker.Sat
                 local OldVib = ColorPicker.Vib
@@ -5989,7 +6001,7 @@ do
             while IsDragInput(Input) and not ColorPicker.Destroyed do
                 local Min = HueSelector.AbsolutePosition.Y
                 local Max = Min + HueSelector.AbsoluteSize.Y
-                local Location = math.clamp(Mouse.Y, Min, Max)
+                local Location = math.clamp(Library:GetPointerLocation().Y, Min, Max)
 
                 local OldHue = ColorPicker.Hue
                 ColorPicker.Hue = (Location - Min) / (Max - Min)
@@ -6007,7 +6019,7 @@ do
                 while IsDragInput(Input) and not ColorPicker.Destroyed do
                     local Min = TransparencySelector.AbsolutePosition.Y
                     local Max = TransparencySelector.AbsolutePosition.Y + TransparencySelector.AbsoluteSize.Y
-                    local Location = math.clamp(Mouse.Y, Min, Max)
+                    local Location = math.clamp(Library:GetPointerLocation().Y, Min, Max)
 
                     local OldTransparency = ColorPicker.Transparency
                     ColorPicker.Transparency = (Location - Min) / (Max - Min)
@@ -7116,7 +7128,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
-            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Mouse.X, Mouse.Y)) then return end
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)) then return end
             if Toggle.Disabled then
                 return
             end
@@ -7391,7 +7403,7 @@ do
         end
 
         table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
-            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Mouse.X, Mouse.Y)) then return end
+            if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)) then return end
             if Toggle.Disabled then
                 return
             end
@@ -8095,7 +8107,7 @@ do
             end
 
             while IsDragInput(Input) and not Slider.Destroyed do
-                local Location = Mouse.X
+                local Location = Library:GetPointerLocation().X
                 local Scale = math.clamp((Location - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
 
                 local OldValue = Slider.Value
@@ -10480,11 +10492,11 @@ function Library:AddFeatureSettings(Toggle, Info)
     end
     local function OwnerVisible()
         local Parent = Toggle.Holder
-        while Parent and Parent ~= ScreenGui do
+        while Parent and Parent ~= ScreenGui and Parent ~= Library.PhysicalGui do
             if Parent:IsA("GuiObject") and not Parent.Visible then return false end
             Parent = Parent.Parent
         end
-        return Parent == ScreenGui
+        return Parent == ScreenGui or (Library.PhysicalGui ~= nil and Parent == Library.PhysicalGui)
     end
     function Settings:Open()
         if Settings.Destroyed or not Library.Toggled or (not Toggle.Value and not Toggle.SettingsWhenDisabled) or not OwnerVisible() then return end
@@ -10494,7 +10506,7 @@ function Library:AddFeatureSettings(Toggle, Info)
         Header.Text = Toggle.TextLabel.Text
         Settings:Resize()
         local View, DPI = Floats.AbsoluteSize, Library.DPIScale
-        local Point = UserInputService:GetMouseLocation() - Floats.AbsolutePosition
+        local Point = Library:GetScreenPointerLocation() - Floats.AbsolutePosition
         local X = Settings.LastPosition and Settings.LastPosition.X.Offset or Point.X + 12
         local Y = Settings.LastPosition and Settings.LastPosition.Y.Offset or Point.Y + 12
         X = math.clamp(X, 8, math.max(8, View.X - Panel.Size.X.Offset * DPI - 8))
@@ -10560,7 +10572,7 @@ function Library:AddFeatureSettings(Toggle, Info)
         elseif Input.UserInputType == Enum.UserInputType.MouseButton1 or RightClick
             or Input.UserInputType == Enum.UserInputType.Touch then
             local Position = Input.Position
-            local Point = Position and Vector2.new(Position.X, Position.Y) or UserInputService:GetMouseLocation()
+            local Point = Position and Vector2.new(Position.X, Position.Y) or Library:GetScreenPointerLocation()
             if Settings:ContainsPoint(Point) then return end
             DismissedOnOwnerPress = RightClick and Library:MouseIsOverFrame(Toggle.Holder, Point)
             DismissedOnSettingsPress = not RightClick and Library:MouseIsOverFrame(SettingsButton, Point)
@@ -14187,10 +14199,10 @@ function Library:CreateWindow(WindowInfo)
         end
 
         if WindowInfo.UnlockMouseWhileOpen then
-            ModalElement.Modal = Library.Toggled
+            ModalElement.Modal = Library.Toggled and not Library.PhysicalGui
         end
 
-        if Library.Toggled and not Library.IsMobile then
+        if Library.Toggled and not Library.IsMobile and not Library.PhysicalGui then
             local ShowCursorBinding = Library.ShowCursorBinding
             Library.OriginalMouseIconEnabled = UserInputService.MouseIconEnabled
 
@@ -14198,13 +14210,17 @@ function Library:CreateWindow(WindowInfo)
             RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
-                Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
+                Cursor.Position = UDim2.fromOffset(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)
                 Cursor.Visible = Library.ShowCustomCursor
 
                 if Library.Unloaded == true or not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     RestoreMouseIcon()
                 end
             end)
+        elseif Library.PhysicalGui then
+            RestoreMouseIcon()
+            Cursor.Visible = false
+            UserInputService.MouseIconEnabled = false
         elseif not Library.Toggled then
             RestoreMouseIcon()
             TooltipLabel.Visible = false
@@ -14442,7 +14458,7 @@ function Library:CreateLoading(LoadingInfo)
 
     ScreenGui.DescendantRemoving:Connect(function(Instance)
         task.defer(function()
-            if Instance.Parent and Instance:IsDescendantOf(ScreenGui) then
+            if Instance.Parent and (Instance:IsDescendantOf(ScreenGui) or (Library.PhysicalGui and Instance:IsDescendantOf(Library.PhysicalGui))) then
                 return
             end
 

@@ -21,65 +21,64 @@ function cas:UnbindAction(name) self.callbacks[name]=nil end
 HIT_X=nil HIT_Y=nil
 workspace.Raycast=function(self,origin,direction,params)
  local p=self:FindFirstChild('PV_PhysicalMenu') if not p or not HIT_X then return nil end
+ local canvas=TEST_LIBRARY.PhysicalGui.CanvasSize
  local localPoint=Vector3.new((.5-HIT_X/1000)*p.Size.X,(.5-HIT_Y/720)*p.Size.Y,TEST_BACK and .04 or -.04)
  return {Instance=p,Position=p.CFrame:PointToWorldSpace(localPoint)}
 end
 ''')
 lua.execute(source)
 lua.execute('''
-local cas=TEST_SERVICES.ContextActionService
-local function panel()return workspace:FindFirstChild('PV_PhysicalMenu')end
+local function block()return workspace:FindFirstChild('PV_PhysicalMenu')end
 local function pressMenu()TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.RightControl},false)end
-local function click(x,y)
- HIT_X=x HIT_Y=y
- local handler=cas.callbacks.PrimePhysicalMenu assert(handler)
- local result=handler(nil,Enum.UserInputState.Begin)
- if cas.callbacks.PrimePhysicalMenu then cas.callbacks.PrimePhysicalMenu(nil,Enum.UserInputState.End)end
- return result
-end
-assert(TEST_OPTIONS.worldMenuEnabled.Value==false and not panel(),'experimental mode enabled by default')
+local main=TEST_LIBRARY.TestMain local parent=main.Parent local position=main.Position
+local option=TEST_OPTIONS.cameraFOV local tab=TEST_TAB_OBJECTS.Shaders
+for _,t in pairs(TEST_TAB_OBJECTS)do t.Container.Parent=main end
+assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block())
 TEST_SERVICES.UserInputService.MouseIconEnabled=true
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)
-assert(panel() and not TEST_LIBRARY.Toggled,'native menu not replaced')
-assert(panel().Anchored and not panel().CanCollide and panel().Transparency==.75)
-assert(panel():FindFirstChildOfClass('SurfaceGui') and TEST_SERVICES.UserInputService.MouseIconEnabled==false)
-HIT_X=nil
-assert(cas.callbacks.PrimePhysicalMenu(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'outside click intercepted')
-TEST_BACK=true assert(click(400,160)==Enum.ContextActionResult.Pass,'back-face click accepted')TEST_BACK=false
-local values={} for key,o in pairs(TEST_OPTIONS)do if o.Type=='Toggle'then values[key]=o.Value end end
-local clicked=false
-for _,node in ipairs(panel():FindFirstChildOfClass('SurfaceGui'):GetChildren())do
- if node.Text and (node.Text:sub(1,4)=='[ON]' or node.Text:sub(1,5)=='[OFF]')then
-  click(500,node.Position.Y.Offset+20)clicked=true break
- end
-end
-assert(clicked)
-local changed=0 for key,value in pairs(values)do if TEST_OPTIONS[key].Value~=value then changed=changed+1 end end
-assert(changed==1,'line click did not change exactly one registered toggle')
-click(350,100) click(500,155)
-assert(TEST_OPTIONS.visualPresetEnabled.Value,'physical shader selection not applied')
-HIT_X=500 HIT_Y=35
-assert(cas.callbacks.PrimePhysicalMenu(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
-local old=panel().CFrame.Position
-workspace.CurrentCamera.CFrame=CFrame.new(3,8,0)
-TEST_SERVICES.RunService.RenderStepped:Fire(.016)
-assert((panel().CFrame.Position-old).Magnitude>1,'header drag did not move panel')
-cas.callbacks.PrimePhysicalMenu(nil,Enum.UserInputState.End)
-local fixed=panel().CFrame.Position
-workspace.CurrentCamera.CFrame=CFrame.new(20,8,0) HIT_X=nil
-TEST_SERVICES.RunService.RenderStepped:Fire(.016)
-assert((panel().CFrame.Position-fixed).Magnitude<.001,'panel follows player after release')
-pressMenu() assert(not panel(),'menu key did not hide world panel')
-assert(not cas.callbacks.PrimePhysicalMenu and TEST_SERVICES.UserInputService.MouseIconEnabled==true)
-pressMenu() assert(panel() and panel().CFrame.Position.X==20,'reopen did not recenter at current camera')
-click(850,100)
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and not panel() and TEST_LIBRARY.Toggled,'2D fallback failed')
-TEST_OPTIONS.worldMenuEnabled:SetValue(true) assert(panel())
-TEST_DRAIN()
+assert(block() and block().Transparency==0 and block().CanCollide and block().Size.Z>.5)
+local surface=TEST_LIBRARY.PhysicalGui
+assert(surface and surface.Adornee==block() and surface.Parent==TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'))
+assert(main.Parent==surface and TEST_LIBRARY.Toggled and option==TEST_OPTIONS.cameraFOV)
+main.BackgroundTransparency=.5 assert(main.BackgroundTransparency==0,'physical UI became transparent')
+assert(tab.Container:IsDescendantOf(main),'actual shader page was not moved')
+local guard=TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard
+HIT_X=nil assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass)
+HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+HIT_X=nil assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)
+for _,o in ipairs(workspace:GetDescendants())do assert(not o:IsA('Beam'),'artificial beam created')end
+local original=option.Value option:SetValue(original+5)
+assert(workspace.CurrentCamera.FieldOfView==original+5,'original setter stopped working')
+HIT_X=750 HIT_Y=360
+local point=TEST_LIBRARY.PointerProvider()
+assert(math.abs(point.X-surface.CanvasSize.X*.75)<.001 and math.abs(point.Y-surface.CanvasSize.Y*.5)<.001)
+TEST_BACK=true assert(TEST_LIBRARY.PointerProvider().X<0,'back face accepted')TEST_BACK=false
+-- Ordinary clicks remain with the native SurfaceGui controls.
+local input={UserInputType=Enum.UserInputType.MouseButton1}
+local before=block().CFrame.Position
+TEST_SERVICES.UserInputService.InputBegan:Fire(input,true)
+workspace.CurrentCamera.CFrame=CFrame.new(3,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+assert((block().CFrame.Position-before).Magnitude<.001,'ordinary control click moves the block')
+TEST_SERVICES.UserInputService.InputEnded:Fire(input,false)
+-- Alt-drag works from any front pixel, including the body rather than a header.
+KEYS.LeftAlt=true
+TEST_SERVICES.UserInputService.InputBegan:Fire(input,true)
+workspace.CurrentCamera.CFrame=CFrame.new(8,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+assert((block().CFrame.Position-before).Magnitude>1 and TEST_LIBRARY.PhysicalDragging)
+TEST_SERVICES.UserInputService.InputEnded:Fire(input,false)KEYS.LeftAlt=false TEST_DRAIN()
+assert(not TEST_LIBRARY.PhysicalDragging)
+local fixed=block().CFrame.Position
+workspace.CurrentCamera.CFrame=CFrame.new(20,8,0)HIT_X=nil TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+assert((block().CFrame.Position-fixed).Magnitude<.001)
+pressMenu()assert(not block() and main.Parent==parent and main.Position==position and TEST_LIBRARY.PointerProvider==nil)
+pressMenu()assert(block() and block().CFrame.Position.X==20 and main.Parent==TEST_LIBRARY.PhysicalGui)
+KEYS.LeftShift=true pressMenu()KEYS.LeftShift=false
+assert(not TEST_OPTIONS.worldMenuEnabled.Value)
+assert(not block() and main.Parent==parent and TEST_LIBRARY.Toggled)
+TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
 TEST_ACTIONS['Unload script']()
-assert(not panel() and not cas.callbacks.PrimePhysicalMenu)
-for _,o in ipairs(workspace:GetDescendants())do assert(o.Name~='PV_PhysicalMenuLine','line survived unload')end
+assert(not block() and TEST_LIBRARY.PhysicalGui==nil and TEST_LIBRARY.PointerProvider==nil)
 ''')
 lua.execute(source)
 lua.execute("assert(TEST_OPTIONS.worldMenuEnabled.Value and workspace:FindFirstChild('PV_PhysicalMenu'));TEST_OPTIONS.worldMenuEnabled:SetValue(false);assert(TEST_LIBRARY.Toggled);TEST_ACTIONS['Unload script']()")
-print('PASS physical-menu default off, front-face line input, native setters, outside pass-through, header dragging, stationary release, menu hide/recenter, 2D fallback and cleanup')
+print('PASS original UI identity/callbacks on opaque local block, no Beam, local-block game-input guard, surface pointer, Alt-drag body, stationary release, recenter, 2D restore and cold reload')

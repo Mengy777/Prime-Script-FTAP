@@ -1,3 +1,11 @@
+## 3.2.4k — 2026-11-10
+
+- Replace the simplified physical-menu browser with the actual live Obsidian UI tree mounted on a local SurfaceGui. Existing controls, tabs, shader catalog, floating panels and callbacks are reparented rather than cloned/recreated, then restored to their exact original parents and transforms on exit.
+- Use an opaque solid 12-stud-wide block with2-stud depth, local collision and no toy/game-object prerequisite. Remove all artificial Beam rendering, ray-click button dispatcher. A scoped input guard prevents game grabbing against the local UI block while leaving outside clicks untouched. The hidden legacy transparency setting remains for profile compatibility but cannot make the physical UI transparent.
+- Adapt native library pointer coordinates, popup ownership, tooltip parent and registry retention for the surface canvas. Disable screen modal/cursor and native main-window drag/resize while mounted. Ordinary short clicks remain native UI interactions; Alt+LMB moves the block from any hit face without pressing underlying controls.
+- RightControl/menu binding hides/shows and recenters; Shift+menu binding disables the experiment and opens2D recovery. Preserve native menu state, profiles and551 settings, restore theme/opacity/cursor hooks and controls before destroying the surface.
+- Compilation,47 simulation scripts and additional native-pointer/identity/drag/restore regressions pass. Roblox SurfaceGui click delivery still requires live FTAP testing. Stock FTAP grabbing of the local block is not implemented or claimed; no server/native line is fabricated.
+
 ## 3.2.4j — 2026-11-09
 
 - Add default-off experimental Physical menu under Favorites. Existing menu key/HUD controls route to a local world-space SurfaceGui panel when enabled. The panel spawns in front of the current camera, stays anchored after release, and respawns at the current location after hide/show.

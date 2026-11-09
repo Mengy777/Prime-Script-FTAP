@@ -70,6 +70,8 @@ function IsDragInput()if DRAG_STEPS>0 then DRAG_STEPS=DRAG_STEPS-1 return true e
 function TEST_SERVICES.RunService.RenderStepped:Wait()end
 """)
 # Actual hit-test contract is intentionally not replaced by a forgiving test double.
+a=source.index('function Library:GetPointerLocation(');b=source.index('function Library:MouseIsOverFrame(',a)
+lua.execute(lua_compat(source[a:b]))
 a=source.index('function Library:MouseIsOverFrame(');b=source.index('function Library:IsInsideFrame',a)
 lua.execute(lua_compat(source[a:b]))
 lua.execute(r"""
@@ -141,3 +143,11 @@ task.spawn=oldSpawn
 button:Destroy()input:Destroy()asset:Destroy()slider:Destroy()
 """)
 print('PASS actual action-button clicks, disabled actions, live text, commit-on-blur/cancel and native slider drag')
+
+lua.execute(r"""
+Library.PointerProvider=function()return Vector2.new(333,222)end
+assert(Library:GetPointerLocation().X==333 and Library:GetScreenPointerLocation().Y==222)
+Library.PointerProvider=nil
+assert(Library:GetPointerLocation().X==Mouse.X)
+""")
+print('PASS actual native pointer adapter switches surface/screen coordinates without changing normal mouse fallback')
