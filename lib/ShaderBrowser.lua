@@ -13,7 +13,26 @@ return function(c)
         else for key,value in pairs(properties) do object[key]=value end end
     end
     local white=Color3.new(1,1,1)
-    local function tr(text) return c.Translate and c.Translate(text) or text end
+    local russian={
+        ["Pale Frost"]="Бледный иней",["Dreamy Night"]="Сказочная ночь",Tokyowami="Токиёвами",
+        Morning="Утро",Midday="Полдень",Afternoon="После полудня",Evening="Вечер",Night="Ночь",Midnight="Полночь",
+        Rain="Дождь",Snow="Снег",Fog="Туман",Sunny="Солнечный день",Cloudy="Облачность",Storm="Гроза",
+        Autumn="Осень",Spring="Весна",Summer="Лето",Winter="Зима",["Black & White"]="Чёрно-белый",
+        ["Red Theme"]="Красный",["Green Theme"]="Зелёный",["Blue Theme"]="Синий",
+        ["Scarlet Atmosphere"]="Алая атмосфера",["Golden Hour"]="Золотой час",["Neon Night"]="Неоновая ночь",
+        ["Lost Ocean"]="Затерянный океан",Dreamy="Сказочный",Colorful="Красочный",
+        ["Rainy Shader"]="Дождливый",["Sunset Shader"]="Закат",["Dreamy Shader"]="Мечтательный",
+        ["Purple Map"]="Фиолетовый мир",["Adaptive Map"]="Адаптивный",Neon="Неон",Cool="Холодный",Warm="Тёплый",
+        Classic="Классический",Twilight="Сумерки",Luminous="Сияние",Sandstorm="Песчаная буря",Arctic="Арктика",
+    }
+    local english={['Ночь']='Night',['Вечер']='Evening',['Неон']='Neon',['Холодный']='Cool',['Тёплый']='Warm'}
+    local uiRussian={Enable="Включить",Disable="Выключить",Name="Название",Time="Время",Brightness="Яркость",Saturation="Насыщенность",
+        ["Sort by"]="Сортировка",Ascending="По возрастанию",Descending="По убыванию",["All shaders"]="Все шейдеры",
+        Daylight="Дневные",Night="Ночные",Warm="Тёплые",Cool="Холодные",Foggy="Туман",Monochrome="Монохром",Vivid="Насыщенные",
+        ["Search shaders..."]="Поиск шейдеров...",["No shaders found"]="Шейдеры не найдены"}
+    local function language() return c.Language and c.Language() or "en" end
+    local function tr(text) return language()=="ru" and (uiRussian[text] or (c.Translate and c.Translate(text)) or text) or text end
+    local function displayTitle(title) return language()=="ru" and (russian[title] or title) or title end
     local upper,lower="АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ","абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
     local letters={} for i=1,#upper,2 do letters[upper:sub(i,i+1)]=lower:sub(i,i+1) end
     local function fold(text)
@@ -26,8 +45,8 @@ return function(c)
         holder.SearchAliases="Shaders shader catalog presets Шейдеры каталог пресеты "..table.concat(c.Names," ")
     end
     local listTop=c.Host and 44 or 140
-    local categories=make("Frame",{Name="Collections",BackgroundTransparency=1,Size=c.Sidebar and UDim2.new(1,0,0,310) or UDim2.new(1,0,0,67)},c.Sidebar or root)
-    make("UIGridLayout",{CellSize=c.Sidebar and UDim2.new(1,0,0,c.Thematic and 32 or 38) or UDim2.new(.25,-4.5,0,30),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},categories)
+    local categories=make("Frame",{Name="Collections",BackgroundTransparency=1,Size=c.Sidebar and UDim2.new(1,0,0,232) or UDim2.new(1,0,0,67)},c.Sidebar or root)
+    make("UIGridLayout",{CellSize=c.Sidebar and UDim2.new(1,-2,0,c.Thematic and 26 or 38) or UDim2.new(.25,-4.5,0,30),CellPadding=UDim2.fromOffset(3,3),SortOrder=Enum.SortOrder.LayoutOrder},categories)
     local search=make("TextBox",{Name="ShaderSearch",Position=UDim2.fromOffset(0,c.Host and 0 or 76),Size=UDim2.new(1,0,0,32),
         BorderSizePixel=0,ClearTextOnFocus=false,Text="",PlaceholderText=tr("Search shaders..."),Font=Enum.Font.Gotham,
         TextSize=13,TextXAlignment=Enum.TextXAlignment.Left},root)
@@ -41,15 +60,21 @@ return function(c)
         Position=UDim2.fromOffset(0,listTop),Size=UDim2.new(1,0,1,-listTop-40),CanvasSize=UDim2.new(),
         AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=4,Active=true},root)
     local content=make("Frame",{Name="Cards",BackgroundTransparency=1,Size=UDim2.new(1,-7,0,0),AutomaticSize=Enum.AutomaticSize.Y},scroll)
-    local grid=make("UIGridLayout",{CellSize=UDim2.new(1,0,0,60),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},content)
+    make("UIPadding",{PaddingLeft=UDim.new(0,1),PaddingRight=UDim.new(0,1),PaddingTop=UDim.new(0,1),PaddingBottom=UDim.new(0,1)},content)
+    local grid=make("UIGridLayout",{CellSize=UDim2.new(1,0,0,60),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder,FillDirection=Enum.FillDirection.Horizontal},content)
     local function columns() return 5 end
-    local function resize() local n=columns() grid.CellSize=UDim2.new(1/n,-6*(n-1)/n,0,52) grid.FillDirectionMaxCells=5 end
-    connect(root:GetPropertyChangedSignal("AbsoluteSize"),resize) resize()
+    local function resize()
+        local dpi=c.GetDPIScale and c.GetDPIScale() or 1
+        local width=math.max(1,math.floor((content.AbsoluteSize.X/math.max(.01,dpi)-28)/5))
+        grid.CellSize=UDim2.fromOffset(width,52) grid.FillDirectionMaxCells=5
+    end
+    connect(content:GetPropertyChangedSignal("AbsoluteSize"),resize) resize()
     local empty=make("TextLabel",{Name="EmptyResults",BackgroundTransparency=1,Position=UDim2.fromOffset(0,listTop+24),
         Size=UDim2.new(1,0,0,55),Font=Enum.Font.Gotham,TextSize=13,TextWrapped=true,Text=tr("No shaders found"),Visible=false},root)
     local selected=make("TextLabel",{Name="ShaderSelection",Position=UDim2.new(0,0,1,-60),Size=UDim2.new(1,0,0,20),
         BackgroundTransparency=1,Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd},root)
     local api={Category="All shaders",Sort="Name",Descending=false} local chips,cards,sortButtons={},{},{} local lastKey local hovered
+    local sortHeading,sortDirection
     local previous=make("TextButton",{Name="PreviousShader",Text="←",Position=UDim2.new(0,0,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=21},root)
     local power=make("TextButton",{Name="ShaderPower",Text="",Position=UDim2.new(.25,2,1,-32),Size=UDim2.new(.5,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=12},root)
     local nextButton=make("TextButton",{Name="NextShader",Text="→",Position=UDim2.new(.75,4,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=21},root)
@@ -91,28 +116,30 @@ return function(c)
         end)
     end
     if c.Thematic then
-        local sortRoot=make("Frame",{Name="SortControls",BackgroundTransparency=1,Position=UDim2.fromOffset(0,328),Size=UDim2.new(1,0,0,204)},c.Sidebar)
-        make("TextLabel",{Text=tr("Sort by"),BackgroundTransparency=1,Size=UDim2.new(1,0,0,18),TextColor3=white,
+        local sortRoot=make("Frame",{Name="SortControls",BackgroundTransparency=1,Position=UDim2.fromOffset(0,244),Size=UDim2.new(1,0,0,150)},c.Sidebar)
+        sortHeading=make("TextLabel",{Text=tr("Sort by"),BackgroundTransparency=1,Size=UDim2.new(1,0,0,18),TextColor3=white,
             Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left},sortRoot)
         for i,name in ipairs({"Name","Time","Brightness","Saturation"}) do
-            local button=make("TextButton",{Name="Sort_"..name,Text=tr(name),Position=UDim2.new(0,0,0,26+(i-1)*34),
-                Size=UDim2.new(1,-5,0,29),BorderSizePixel=0,TextSize=12,Font=Enum.Font.Gotham,TextWrapped=true},sortRoot)
+            local button=make("TextButton",{Name="Sort_"..name,Text=tr(name),Position=UDim2.new(0,0,0,20+(i-1)*26),
+                Size=UDim2.new(1,-3,0,24),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham,TextWrapped=true},sortRoot)
             make("UICorner",{CornerRadius=UDim.new(0,4)},button)
             sortButtons[#sortButtons+1]={name=name,button=button}
             connect(button.Activated,function()api.Sort=name api:Refresh(true)end)
         end
-        local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,166),Size=UDim2.new(1,0,0,28),
+        local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,126),Size=UDim2.new(1,-2,0,24),
             Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham},sortRoot)
         make("UICorner",{CornerRadius=UDim.new(0,4)},direction)
+        sortDirection=direction
         connect(direction.Activated,function() api.Descending=not api.Descending direction.Text=tr(api.Descending and "Descending" or "Ascending") api:Refresh(true) end)
     end
     for i,name in ipairs(c.Names) do
         local data=c.Presets[name]
         local source=data.source or "Prime Visuals"
         local title=name:sub(1,#source+3)==source.." / " and name:sub(#source+4) or name
+        title=english[title] or title
         local b=make("TextButton",{Name="Shader_"..i,Size=UDim2.new(.5,-4,0,64),LayoutOrder=i,Text="",BorderSizePixel=0,AutoButtonColor=false},content)
         b:SetAttribute("ShaderId",name)
-        make("UICorner",{CornerRadius=UDim.new(0,6)},b)
+        make("UICorner",{CornerRadius=UDim.new(0,4)},b)
         local stroke=make("UIStroke",{Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
         local tint=data.light.OutdoorAmbient or data.light.Ambient or white
         local saturation,density=0,0
@@ -121,18 +148,17 @@ return function(c)
             if effect[1]=="Atmosphere" then density=effect[2].Density or 0 end
         end
         local label=make("TextLabel",{Name="Title",BackgroundTransparency=1,Position=UDim2.fromOffset(5,4),Size=UDim2.new(1,-10,1,-8),
-            Text=title,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=11},b)
+            Text=displayTitle(title),TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=11},b)
         local check=make("TextLabel",{Name="Selected",BackgroundTransparency=1,Position=UDim2.new(1,-22,0,8),Size=UDim2.fromOffset(16,20),
             Text="",Font=Enum.Font.Gotham,TextSize=14,Visible=false},b)
-        local scale=make("UIScale",{Scale=1},b)
-        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,check=check,scale=scale,
+        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,check=check,
             time=data.light.ClockTime,brightness=data.light.Brightness,saturation=saturation,
             tags={Daylight=data.light.ClockTime and data.light.ClockTime>=6 and data.light.ClockTime<18,
                 Night=data.light.ClockTime and (data.light.ClockTime<6 or data.light.ClockTime>=18),
                 Warm=tint.R-tint.B>.08,Cool=tint.B-tint.R>.08,Foggy=density>=.35 or (data.light.FogEnd and data.light.FogEnd<=2000),
                 Monochrome=saturation<=-.5,Vivid=saturation>=.25}}
         connect(b.Activated,function()
-            select(name) scale.Scale=.97 animate(scale,{Scale=1},.22)
+            select(name)
         end)
         connect(b.MouseEnter,function() hovered=b api:Refresh(true) end)
         connect(b.MouseLeave,function() if hovered==b then hovered=nil api:Refresh(true) end end)
@@ -144,7 +170,7 @@ return function(c)
         local font=white
         local collection=c.Thematic and api.Category or c.Controls.shaderCollection or "All collections"
         local query=fold(search.Text):match("^%s*(.-)%s*$")
-        local key=table.concat({collection,query,tostring(c.Controls.visualPreset),tostring(c.Controls.visualPresetEnabled),tostring(accent),tostring(bg),tostring(font),tostring(outline),tr("Search shaders..."),api.Sort,tostring(api.Descending)},"|")
+        local key=table.concat({collection,query,tostring(c.Controls.visualPreset),tostring(c.Controls.visualPresetEnabled),tostring(accent),tostring(bg),tostring(font),tostring(outline),tr("Search shaders..."),api.Sort,tostring(api.Descending),language()},"|")
         if not force and key==lastKey then return end
         local filterChanged=api.Collection~=collection or api.Query~=query or api.LastSort~=api.Sort or api.LastDescending~=api.Descending
         lastKey=key api.Collection=collection api.Query=query api.LastSort=api.Sort api.LastDescending=api.Descending
@@ -155,7 +181,7 @@ return function(c)
             table.sort(cards,function(a,b)
                 local x,y
                 if api.Sort=="Time" then x,y=a.time,b.time elseif api.Sort=="Brightness" then x,y=a.brightness,b.brightness
-                elseif api.Sort=="Saturation" then x,y=a.saturation,b.saturation else x,y=fold(a.title),fold(b.title) end
+                elseif api.Sort=="Saturation" then x,y=a.saturation,b.saturation else x,y=fold(displayTitle(a.title)),fold(displayTitle(b.title)) end
                 if x==nil or y==nil then if x~=y then return x~=nil end
                 elseif x~=y then if api.Descending then return x>y else return x<y end end
                 return a.name<b.name
@@ -164,8 +190,9 @@ return function(c)
         local activeTitle=c.Controls.visualPreset
         for order,card in ipairs(cards) do
             card.button.LayoutOrder=order
+            card.label.Text=displayTitle(card.title)
             local matches=c.Thematic and (collection=="All shaders" or card.tags[collection]) or (not c.Thematic and (collection=="All collections" or collection==card.source))
-            local visible=matches and (query=="" or fold(card.title..(c.Thematic and "" or " "..card.source)):find(query,1,true)~=nil) or false
+            local visible=matches and (query=="" or fold(card.title.." "..(russian[card.title] or "")..(c.Thematic and "" or " "..card.source)):find(query,1,true)~=nil) or false
             card.button.Visible=visible if visible then count=count+1 end
             local active=card.name==c.Controls.visualPreset
             if active and c.Thematic then activeTitle=card.title end
@@ -174,7 +201,8 @@ return function(c)
             card.label.TextColor3=active and bg or white
             card.check.Visible=active card.check.TextColor3=bg
         end
-        for _,entry in ipairs(sortButtons) do animate(entry.button,{BackgroundColor3=entry.name==api.Sort and white or bg,TextColor3=entry.name==api.Sort and bg or white}) end
+        if sortHeading then sortHeading.Text=tr("Sort by") sortDirection.Text=tr(api.Descending and "Descending" or "Ascending") end
+        for _,entry in ipairs(sortButtons) do entry.button.Text=tr(entry.name) animate(entry.button,{BackgroundColor3=entry.name==api.Sort and white or bg,TextColor3=entry.name==api.Sort and bg or white}) end
         for _,chip in ipairs(chips) do
             local active=chip.name==collection
             chip.button.Text=tr(chip.name)

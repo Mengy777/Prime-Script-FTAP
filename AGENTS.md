@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4h**, tag `v3.2.4h`. Next normal runtime version: **3.2.4i**. Consult Git for the release commit.
+- Published runtime target: **3.2.4i**, tag `v3.2.4i`. Next normal runtime version: **3.2.4j**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -419,3 +419,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - User explicitly wants black/white ONLY inside Shaders, five presets per row, no brightness/time/palette clutter, no bold selection. ShaderBrowser ignores global Scheme for UI colors; shader data/Adaptive world colors remain unchanged. Regular Gotham; UIStroke.ApplyStrokeMode=Border is essential (default Contextual on TextButton was thickening glyphs).
 - Fixed five-column layout (CellSize .2 with 6px gaps, 52px height), name-only cards, narrower 112px sidebar. Source/palette UI removed; redundant count/selection captions hidden. Search/filter/sort/navigation remain.
 - shader_browser.py verifies monochrome colors despite accent changes, five columns, absence of extra card objects, regular font and border-only strokes; shader_window/catalog and compilation pass. Live confirmation pending.
+
+## 2026-11-09 — five-column rounding/sidebar/localization fix 3.2.4i
+
+- Percentage UIGridLayout sizes actually wrapped to four columns. Use integer widths floor((content.AbsoluteSize.X / Library.DPIScale - 28)/5), horizontal fill, fixed five-cell max and 1px inner padding. Listen to content size, not just root. No card UIScale press animation; consistent corners/strokes remain.
+- Sidebar is now a Frame, not ScrollingFrame; categories 232px, sort starts244 and ends394. Smaller rows expose all options at the current normal window size.
+- ShaderBrowser owns canonical EN/RU display names for every preset (original IDs unchanged). Main provides Language and GetDPIScale. Never use generic UI dictionary for preset titles: Spring had become Пружина; Night category wording leaked into titles. Search accepts canonical and Russian names; displayed name controls alphabetical order. Refresh updates title, sort heading/options/direction and power text on language switch.
+- Targeted shader_browser tests cover 30 DPI/width fits, all 45 names in RU/EN, compact sidebar and monochrome; shader_window/catalog and compile pass. No unrelated full-suite repetition. Live confirmation pending.

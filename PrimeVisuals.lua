@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4h"
+local VERSION="3.2.4i"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2943,6 +2943,7 @@ local function buildVisualSystems()
             GetAccent=function() return Library.Scheme.AccentColor end,
             GetScheme=function() return Library.Scheme end,
             TweenService=tweens,ShadersPage=categoryTabs.Shaders,
+            Language=function()return uiLanguage end,GetDPIScale=function()return Library.DPIScale or 1 end,
             IsShadersActive=function()return Library.ActiveTab==categoryTabs.Shaders end,
             EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })

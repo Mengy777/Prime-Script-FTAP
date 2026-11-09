@@ -1,3 +1,10 @@
+## 3.2.4i — 2026-11-09
+
+- Fix actual five-column wrapping: compute integer cell widths from content width divided by the library DPI scale, reserve padding/scrollbar room and use explicit horizontal layout. Five cards now fit without fractional rounding sending the fifth to another row.
+- Compact the left sidebar to 394px total: 26px category rows, smaller sort choices, no sidebar scrolling. Remove per-card press scaling and use consistent 4px corners for stable aligned cards.
+- Add dedicated bilingual shader names, including English names for Eris entries and Russian names for all other entries. Keep original preset IDs/data unchanged; search accepts both languages, name sorting uses displayed names. Fix catalog-specific controls such as Enable/Disable and avoid generic mistranslations (Spring = Весна).
+- Full compilation and targeted catalog/page/preset simulations pass, including 30 width/DPI combinations, sidebar bounds and every preset name in RU/EN. Live appearance remains to be confirmed.
+
 ## 3.2.4h — 2026-11-09
 
 - Make only the full-page shader catalog monochrome, independent of the global accent/theme. Black/white selection, regular Gotham throughout; all strokes use ApplyStrokeMode.Border so selection does not outline/thicken button text.
