@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4i"
+local VERSION="3.2.4j"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -141,7 +141,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","ShaderBrowser","WraithCatalogUI","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PrimeIcon","ConfigStore"}
+local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","ShaderBrowser","WraithCatalogUI","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PhysicalMenu","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -333,6 +333,7 @@ local ru={
     ["Scene presets"]="Каталог шейдеров",
     ["Collection"]="Коллекция",["All collections"]="Все коллекции",
     ["All shaders"]="Все шейдеры",["Daylight"]="Дневные",["Night"]="Ночные",["Warm"]="Тёплые",["Cool"]="Холодные",["Foggy"]="Туман",["Monochrome"]="Монохром",["Vivid"]="Насыщенные",["Sort by"]="Сортировка",["Time"]="Время",["Ascending"]="По возрастанию",["Descending"]="По убыванию",
+    ["Physical menu"]="Физическое меню",["Panel size"]="Размер панели",["Panel distance"]="Расстояние панели",["Functions"]="Функции",["2D menu"]="Обычное меню",["Aim + LMB · drag the header"]="Наведи прицел + ЛКМ · тяни за заголовок",
     ["Open shader catalog"]="Открыть каталог шейдеров",["Shader catalog"]="Каталог шейдеров",
     ["Search shaders..."]="Поиск шейдеров...",["No shaders found"]="Шейдеры не найдены",
     ["Atmosphere preset"]="Готовая атмосфера",
@@ -3121,7 +3122,10 @@ local function buildVisualSystems()
     end
 
     majorInterface=loadUIModule("MajorInterface")({Controls=controls,Setters=setters,Specs=settingSpecs,Widgets=widgets,
-        Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,HeaderTitle=nativeWindow.TitleLabel,Wordmark=loadUIModule("Wordmark"),
+        Library=Library,Input=UIS,Run=Run,Players=Players,PlayerGui=playerGui,Workspace=Workspace,
+        Actions=game:GetService("ContextActionService"),PhysicalMenu=loadUIModule("PhysicalMenu"),Patch=patch,Unpatch=unpatch,
+        Translate=function(text)return uiLanguage=="ru"and(ru[text]or text)or text end,
+        BeamTemplate=function()for beam in pairs(lineBeams)do if beam.Parent then return beam end end end,Main=nativeWindow.MainFrame,Header=nativeWindow.IconHolder,HeaderTitle=nativeWindow.TitleLabel,Wordmark=loadUIModule("Wordmark"),
         TrackCleanup=function(fn)majorInterface={Destroy=fn}end,
         Keybinds=loadUIModule("Keybinds"),Icon=loadUIModule("PrimeIcon"),Make=make,Safe=safe,Notify=notify,
         Group=group,Panel=featureSettings,Field=field,Action=action,Toggle=toggle,Slider=sliderControl,Color=color,Choice=choice})

@@ -1,3 +1,11 @@
+## 3.2.4j — 2026-11-09
+
+- Add default-off experimental Physical menu under Favorites. Existing menu key/HUD controls route to a local world-space SurfaceGui panel when enabled. The panel spawns in front of the current camera, stays anchored after release, and respawns at the current location after hide/show.
+- Aim with the game camera and LMB to operate actual registered toggles, numeric +/- controls, dropdown choices and shader selection. Paginated Controls/Shaders pages share the existing setters/config store. Header dragging uses a local FTAP-style beam; no server remotes, network ownership requests or replicated menu objects. An available tracked native beam provides style properties; fallback is a thin white beam.
+- Panel transparency defaults to75%, with size and spawn-distance controls. Four settings plus the feature bind add five persisted values (551 total). The on-panel 2D menu action disables the experiment and returns to the normal UI.
+- Pointer input is sunk only on the panel's front face; outside clicks pass through. Focus loss/hide/unload stop dragging, restore cursor layers and remove owned instances/action bindings. The original menu Toggle implementation is restored on unload.
+- First prototype exposes scalar controls and shader selection through a separate world-space control browser. Text entry/color pickers/native inspector windows stay in the normal 2D interface. Full compilation,47 simulation scripts/127 check groups and additional physical-mode cold-restore checks pass; actual FTAP beam/input/rendering still need live testing.
+
 ## 3.2.4i — 2026-11-09
 
 - Fix actual five-column wrapping: compute integer cell widths from content width divided by the library DPI scale, reserve padding/scrollbar room and use explicit horizontal layout. Five cards now fit without fractional rounding sending the fifth to another row.

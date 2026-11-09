@@ -26,7 +26,7 @@ TEST_DRAIN()
 """)
 assert D.writes==before,'presentation-only navigation saved/changed profile'
 auto=json.loads(D.files['PrimeVisuals/Configs/1234/autosave.json'])
-assert len(auto['payload']['values'])==546
+assert len(auto['payload']['values'])==551
 lua.execute(r"""
 local label
 for _,item in ipairs(TEST_LABELS)do if item.Text=='Tint'then label=item break end end assert(label)

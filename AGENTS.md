@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4i**, tag `v3.2.4i`. Next normal runtime version: **3.2.4j**. Consult Git for the release commit.
+- Published runtime target: **3.2.4j**, tag `v3.2.4j`. Next normal runtime version: **3.2.4k**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -426,3 +426,11 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - Sidebar is now a Frame, not ScrollingFrame; categories 232px, sort starts244 and ends394. Smaller rows expose all options at the current normal window size.
 - ShaderBrowser owns canonical EN/RU display names for every preset (original IDs unchanged). Main provides Language and GetDPIScale. Never use generic UI dictionary for preset titles: Spring had become Пружина; Night category wording leaked into titles. Search accepts canonical and Russian names; displayed name controls alphabetical order. Refresh updates title, sort heading/options/direction and power text on language switch.
 - Targeted shader_browser tests cover 30 DPI/width fits, all 45 names in RU/EN, compact sidebar and monochrome; shader_window/catalog and compile pass. No unrelated full-suite repetition. Live confirmation pending.
+
+## 2026-11-09 — experimental physical world menu 3.2.4j
+
+- lib/PhysicalMenu.lua default-off worldMenuEnabled in Favorites. worldMenuTransparency=.75, worldMenuScale=1, worldMenuDistance=9, plus bind_worldMenuEnabled =>551 persisted values. User meant a local world-space prototype: RightControl/menu HUD hides/shows and respawns before current camera; anchored panel remains where released. Header LMB drag moves it; on-panel 2D menu disables mode and opens native UI.
+- MajorInterface owns the PhysicalMenu API/cleanup and temporarily routes lib.Toggle; menu/HUD toggle helpers use physical visibility (native lib.Toggled remains false so game camera/movement stay usable). Restore original Toggle on Destroy. No separate menu key/default change.
+- SurfaceGui Front fixed1000x720 over12x8.64 studs, noncolliding anchored local Part. Manual front-face ray-to-canvas hit testing via camera aim + ContextActionService priority6000. Only panel clicks sink; outside/back hits pass. Local Beam copies known tracked native beam style where available; white fallback. No remotes, server object ownership or other-player effects.
+- Generic eight-row pages expose real Toggle/Slider/Dropdown setters and shader presets. Text inputs/color pickers excluded from this first prototype; they remain in2D. Renderer updates fingerprints of current page only at .25s, ray/drag while visible; no world descendant scan. Focus loss/hide/unload stops drag, unbinds action, restores cursor patch and destroys Part/beam attachments.
+- Full compile +47 scenario scripts/127 groups pass (docs/Simulation-3.2.4j.md). physical_menu.py additionally tests front/back/outside, real setting changes, header drag/release, stationary panel, RightControl/recenter, 2D fallback, active-mode unload and persisted-mode reload. These are mocked geometry/input, not proof of live FTAP pointer capture or rendering. Live test pending.

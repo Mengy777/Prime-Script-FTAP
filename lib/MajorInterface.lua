@@ -5,9 +5,29 @@ return function(c)
  local input=c.Keybinds({Input=c.Input,MenuOpen=function()return lib.Toggled end,Safe=c.Safe,
   Blocked=function(key)return key=="camThird" and v.minecraftEnabled==true end})
  local roots,connections={},{} local dead=false
+ local physical local nativeToggle=lib.Toggle
  local api={}
- function api:Destroy()if dead then return end dead=true input:Destroy()for _,link in ipairs(connections)do if link then link:Disconnect()end end for _,root in ipairs(roots)do root:Destroy()end end
+ function api:Destroy()if dead then return end dead=true if physical then physical:Destroy()end lib.Toggle=nativeToggle input:Destroy()for _,link in ipairs(connections)do if link then link:Disconnect()end end for _,root in ipairs(roots)do root:Destroy()end end
  if c.TrackCleanup then c.TrackCleanup(function()api:Destroy()end)end
+ physical=c.PhysicalMenu(c)
+ local function menuVisible()return v.worldMenuEnabled and physical:IsVisible() or lib.Toggled end
+ function lib:Toggle(value)
+  if v.worldMenuEnabled then
+   nativeToggle(self,false)
+   physical:SetVisible(value==nil and not physical:IsVisible() or value==true)
+  else
+   if physical:IsVisible()then physical:SetVisible(false)end
+   nativeToggle(self,value)
+  end
+ end
+ local physicalSettings=c.Group("Favorites","Physical menu",1)
+ c.Toggle(physicalSettings,"worldMenuEnabled","Physical menu",false,function(on)
+  if on then if lib.Toggled then nativeToggle(lib,false)physical:SetVisible(true)end
+  else local was=physical:IsVisible()physical:SetVisible(false)if was then nativeToggle(lib,true)end end
+ end)
+ c.Slider(physicalSettings,"worldMenuTransparency","Panel transparency",0,.95,.75,.05,function()physical:Configure()end)
+ c.Slider(physicalSettings,"worldMenuScale","Panel size",.5,2,1,.1,function()physical:Configure()end)
+ c.Slider(physicalSettings,"worldMenuDistance","Panel distance",5,20,9,1,function()end)
  local function own(o)roots[#roots+1]=o return o end
  if c.HeaderTitle then wordmark:Apply(c.HeaderTitle,18,172)end
  if c.Header then connections[#connections+1]=c.Icon(c.Header,c.Main,c.Run)end
@@ -29,7 +49,7 @@ return function(c)
   binding(key,function()c.Setters[key](not v[key],true)end,panel)
  end
  local general=c.Group("Settings","Keybinds",1)
- binding("menu",function()lib:Toggle(not lib.Toggled)end,general)
+ binding("menu",function()lib:Toggle(not menuVisible())end,general)
  c.Action(general,"Clear all keybinds",function()for key in pairs(c.Specs)do if key:sub(1,5)=="bind_"then c.Setters[key]("",true)end end end)
  local settings=c.Group("Settings","Menu appearance",1)
  local alphaOriginal=setmetatable({}, {__mode="k"})
@@ -106,7 +126,7 @@ return function(c)
  end)
  if c.Input.WindowFocusReleased then connections[#connections+1]=c.Input.WindowFocusReleased:Connect(finishDrag)end
  connections[#connections+1]=panel.MouseButton1Click:Connect(function()
-  if (drag and drag.moved)or os.clock()<suppressClickUntil then return end lib:Toggle(not lib.Toggled)
+  if (drag and drag.moved)or os.clock()<suppressClickUntil then return end lib:Toggle(not menuVisible())
  end)
  settings=c.Group("Settings","Status panel",2)
  local function update()panel.Visible=v.hudEnabled~=false launcher.Visible=not panel.Visible and not lib.Toggled end
