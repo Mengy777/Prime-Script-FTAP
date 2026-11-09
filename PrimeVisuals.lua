@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4d"
+local VERSION="3.2.4e"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2940,6 +2940,7 @@ local function buildVisualSystems()
             ApplySky=applySkyData,
             GetAccent=function() return Library.Scheme.AccentColor end,
             GetScheme=function() return Library.Scheme end,
+            TweenService=tweens,
             EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })
     end

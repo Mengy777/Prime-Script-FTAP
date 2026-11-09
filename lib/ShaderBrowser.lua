@@ -1,6 +1,17 @@
 -- Presentation only. Selection flows through the existing persisted setters.
 return function(c)
     local make,connect=c.Make,c.Connect
+    local animations={} local dead=false
+    local function animate(object,properties,duration)
+        if dead then return end
+        local changed=false for key,value in pairs(properties) do if object[key]~=value then changed=true break end end
+        if not changed then return end
+        if animations[object] then animations[object]:Cancel() animations[object]=nil end
+        if c.TweenService and (not c.AnimationsEnabled or c.AnimationsEnabled()) then
+            local tween=c.TweenService:Create(object,TweenInfo.new(duration or .16,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),properties)
+            animations[object]=tween tween:Play()
+        else for key,value in pairs(properties) do object[key]=value end end
+    end
     local white=Color3.fromRGB(235,235,240)
     local function tr(text) return c.Translate and c.Translate(text) or text end
     local upper,lower="АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ","абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
@@ -9,35 +20,65 @@ return function(c)
         local ascii=text:gsub("[A-Z]",function(letter) return string.char(letter:byte()+32) end)
         return ascii:gsub("\208[\128-\191]",function(letter) return letters[letter] or letter end)
     end
-    local root=make("Frame",{Name="PV_ShaderBrowser",Size=UDim2.new(1,0,0,384),BackgroundTransparency=1})
-    local holder=c.Group:AddUIPassthrough("shaderBrowserPanel",{Instance=root,Height=384})
+    local root=make("Frame",{Name="PV_ShaderBrowser",Size=UDim2.new(1,0,0,442),BackgroundTransparency=1})
+    local holder=c.Group:AddUIPassthrough("shaderBrowserPanel",{Instance=root,Height=442})
     holder.SearchAliases="Shaders shader catalog presets Шейдеры каталог пресеты "..table.concat(c.Names," ")
-    local categories=make("ScrollingFrame",{Name="Collections",BackgroundTransparency=1,BorderSizePixel=0,
-        Size=UDim2.new(1,0,0,34),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.X,
-        ScrollingDirection=Enum.ScrollingDirection.X,ScrollBarThickness=2,Active=true},root)
-    make("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5)},categories)
-    local search=make("TextBox",{Name="ShaderSearch",Position=UDim2.fromOffset(0,43),Size=UDim2.new(1,0,0,30),
+    local categories=make("Frame",{Name="Collections",BackgroundTransparency=1,Size=UDim2.new(1,0,0,67)},root)
+    make("UIGridLayout",{CellSize=UDim2.new(.25,-4.5,0,30),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},categories)
+    local search=make("TextBox",{Name="ShaderSearch",Position=UDim2.fromOffset(0,76),Size=UDim2.new(1,0,0,32),
         BorderSizePixel=0,ClearTextOnFocus=false,Text="",PlaceholderText=tr("Search shaders..."),Font=Enum.Font.BuilderSans,
         TextSize=13,TextXAlignment=Enum.TextXAlignment.Left},root)
     make("UICorner",{CornerRadius=UDim.new(0,5)},search)
-    make("UIPadding",{PaddingLeft=UDim.new(0,9),PaddingRight=UDim.new(0,9)},search)
+    make("UIPadding",{PaddingLeft=UDim.new(0,10),PaddingRight=UDim.new(0,30)},search)
+    local clear=make("TextButton",{Name="ClearSearch",Text="×",BackgroundTransparency=1,Position=UDim2.new(1,-29,0,77),Size=UDim2.fromOffset(28,30),Font=Enum.Font.BuilderSans,TextSize=20,Visible=false},root)
     local searchStroke=make("UIStroke",{Thickness=1},search)
-    local status=make("TextLabel",{Name="ShaderCount",BackgroundTransparency=1,Position=UDim2.fromOffset(0,80),
+    local status=make("TextLabel",{Name="ShaderCount",BackgroundTransparency=1,Position=UDim2.fromOffset(0,115),
         Size=UDim2.new(1,0,0,18),Font=Enum.Font.BuilderSans,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left},root)
     local scroll=make("ScrollingFrame",{Name="ShaderCards",BackgroundTransparency=1,BorderSizePixel=0,
-        Position=UDim2.fromOffset(0,105),Size=UDim2.new(1,0,1,-134),CanvasSize=UDim2.new(),
-        AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=3,Active=true},root)
+        Position=UDim2.fromOffset(0,140),Size=UDim2.new(1,0,1,-206),CanvasSize=UDim2.new(),
+        AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=4,Active=true},root)
     local content=make("Frame",{Name="Cards",BackgroundTransparency=1,Size=UDim2.new(1,-7,0,0),AutomaticSize=Enum.AutomaticSize.Y},scroll)
-    make("UIGridLayout",{CellSize=UDim2.new(.5,-4,0,64),CellPadding=UDim2.fromOffset(8,8),SortOrder=Enum.SortOrder.LayoutOrder},content)
-    local empty=make("TextLabel",{Name="EmptyResults",BackgroundTransparency=1,Position=UDim2.fromOffset(0,125),
+    local grid=make("UIGridLayout",{CellSize=UDim2.new(1,0,0,60),CellPadding=UDim2.fromOffset(8,8),SortOrder=Enum.SortOrder.LayoutOrder},content)
+    local function resize() grid.CellSize=root.AbsoluteSize.X>=360 and UDim2.new(.5,-4,0,68) or UDim2.new(1,0,0,60) end
+    connect(root:GetPropertyChangedSignal("AbsoluteSize"),resize) resize()
+    local empty=make("TextLabel",{Name="EmptyResults",BackgroundTransparency=1,Position=UDim2.fromOffset(0,164),
         Size=UDim2.new(1,0,0,55),Font=Enum.Font.BuilderSans,TextSize=13,TextWrapped=true,Text=tr("No shaders found"),Visible=false},root)
-    local selected=make("TextLabel",{Name="ShaderSelection",Position=UDim2.new(0,0,1,-23),Size=UDim2.new(1,0,0,23),
+    local selected=make("TextLabel",{Name="ShaderSelection",Position=UDim2.new(0,0,1,-60),Size=UDim2.new(1,0,0,20),
         BackgroundTransparency=1,Font=Enum.Font.BuilderSans,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd},root)
     local api={} local chips,cards={},{} local lastKey local hovered
+    local previous=make("TextButton",{Name="PreviousShader",Text="‹",Position=UDim2.new(0,0,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=21},root)
+    local power=make("TextButton",{Name="ShaderPower",Text="",Position=UDim2.new(.25,2,1,-32),Size=UDim2.new(.5,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=12},root)
+    local nextButton=make("TextButton",{Name="NextShader",Text="›",Position=UDim2.new(.75,4,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=21},root)
+    for _,button in ipairs({previous,power,nextButton}) do make("UICorner",{CornerRadius=UDim.new(0,5)},button) end
+    local function select(name)
+        c.Setters.visualPreset(name,true)
+        if not c.Controls.visualPresetEnabled then c.Setters.visualPresetEnabled(true,true) end
+        local columns=root.AbsoluteSize.X>=360 and 2 or 1
+        local height=columns==2 and 68 or 60
+        local index=0
+        for _,card in ipairs(cards) do if card.button.Visible then
+            index=index+1
+            if card.name==name then
+                local y=math.floor((index-1)/columns)*(height+8)
+                local top=scroll.CanvasPosition.Y
+                if y<top then top=y elseif y+height>top+scroll.AbsoluteSize.Y then top=y+height-scroll.AbsoluteSize.Y end
+                scroll.CanvasPosition=Vector2.new(0,math.max(0,top)) break
+            end
+        end end
+    end
+    local function step(direction)
+        local visible={} for _,card in ipairs(cards) do if card.button.Visible then visible[#visible+1]=card.name end end
+        if #visible==0 then return end
+        local index=table.find(visible,c.Controls.visualPreset)
+        select(visible[index and ((index-1+direction)%#visible)+1 or (direction>0 and 1 or #visible)])
+    end
+    connect(previous.Activated,function() step(-1) end) connect(nextButton.Activated,function() step(1) end)
+    connect(power.Activated,function() c.Setters.visualPresetEnabled(not c.Controls.visualPresetEnabled,true) end)
+    connect(clear.Activated,function() search.Text="" end)
     local collections={"All collections","Prime Visuals","Mercury","SAVITAR","Fosfor","Eris","Silent Target"}
     for i,name in ipairs(collections) do
         local b=make("TextButton",{Name="Collection_"..i,Size=UDim2.fromOffset(name=="All collections" and 106 or name=="Prime Visuals" and 102 or name=="Silent Target" and 102 or 85,28),
-            LayoutOrder=i,BorderSizePixel=0,AutoButtonColor=false,Text=tr(name),TextSize=12,Font=Enum.Font.BuilderSans},categories)
+            LayoutOrder=i,BorderSizePixel=0,AutoButtonColor=false,Text=tr(name),TextSize=11,TextWrapped=true,Font=Enum.Font.BuilderSans},categories)
         make("UICorner",{CornerRadius=UDim.new(0,5)},b)
         local stroke=make("UIStroke",{Thickness=1},b)
         chips[#chips+1]={name=name,button=b,stroke=stroke}
@@ -59,10 +100,10 @@ return function(c)
             Text=source,TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.BuilderSans,TextSize=10},b)
         local check=make("TextLabel",{Name="Selected",BackgroundTransparency=1,Position=UDim2.new(1,-22,0,8),Size=UDim2.fromOffset(16,20),
             Text="✓",Font=Enum.Font.BuilderSansBold,TextSize=14,Visible=false},b)
-        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,origin=origin,check=check}
+        local scale=make("UIScale",{Scale=1},b)
+        cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,origin=origin,check=check,scale=scale}
         connect(b.Activated,function()
-            c.Setters.visualPreset(name,true)
-            if not c.Controls.visualPresetEnabled then c.Setters.visualPresetEnabled(true,true) end
+            select(name) scale.Scale=.97 animate(scale,{Scale=1},.22)
         end)
         connect(b.MouseEnter,function() hovered=b api:Refresh(true) end)
         connect(b.MouseLeave,function() if hovered==b then hovered=nil api:Refresh(true) end end)
@@ -86,23 +127,31 @@ return function(c)
             local visible=(collection=="All collections" or collection==card.source) and (query=="" or fold(card.title.." "..card.source):find(query,1,true)~=nil)
             card.button.Visible=visible if visible then count=count+1 end
             local active=card.name==c.Controls.visualPreset
-            card.button.BackgroundColor3=active and bg:Lerp(accent,.2) or hovered==card.button and bg:Lerp(accent,.09) or bg
-            card.stroke.Color=active and accent or outline card.stroke.Thickness=active and 1.5 or 1
+            animate(card.button,{BackgroundColor3=active and bg:Lerp(accent,.2) or hovered==card.button and bg:Lerp(accent,.09) or bg})
+            animate(card.stroke,{Color=active and accent or outline,Thickness=active and 1.5 or 1})
             card.label.TextColor3=font card.origin.TextColor3=font:Lerp(bg,.4)
             card.check.Visible=active card.check.TextColor3=accent
         end
         for _,chip in ipairs(chips) do
             local active=chip.name==collection
-            chip.button.Text=tr(chip.name) chip.button.BackgroundColor3=active and bg:Lerp(accent,.22) or bg
-            chip.button.TextColor3=active and accent or font chip.stroke.Color=active and accent or outline
+            chip.button.Text=tr(chip.name)
+            animate(chip.button,{BackgroundColor3=active and bg:Lerp(accent,.22) or bg,TextColor3=active and accent or font})
+            animate(chip.stroke,{Color=active and accent or outline})
         end
-        if filterChanged then scroll.CanvasPosition=Vector2.new(0,0) end
+        if filterChanged then
+            scroll.CanvasPosition=Vector2.new(0,0)
+            scroll.Position=UDim2.fromOffset(0,146) animate(scroll,{Position=UDim2.fromOffset(0,140)},.2)
+        end
+        clear.Visible=query~="" clear.TextColor3=font
+        for _,button in ipairs({previous,power,nextButton}) do animate(button,{BackgroundColor3=bg,TextColor3=font}) end
+        power.Text=tr(c.Controls.visualPresetEnabled and "Disable" or "Enable")
         status.Text=tostring(count).." / "..tostring(#cards).."  ·  "..tr(collection) status.TextColor3=font:Lerp(bg,.35)
         empty.Text=tr("No shaders found") empty.Visible=count==0 empty.TextColor3=font
         selected.Text=(c.Controls.visualPresetEnabled and "●  " or "○  ")..tostring(c.Controls.visualPreset or "") selected.TextColor3=c.Controls.visualPresetEnabled and accent or font
-        scroll.ScrollBarImageColor3=accent categories.ScrollBarImageColor3=accent
+        scroll.ScrollBarImageColor3=accent
     end
     connect(search:GetPropertyChangedSignal("Text"),function() api:Refresh() end)
     api:Refresh(true)
+    function api:Destroy() dead=true for _,tween in pairs(animations) do tween:Cancel() end animations={} end
     return api
 end

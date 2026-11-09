@@ -1,3 +1,10 @@
+## 3.2.4e — 2026-11-09
+
+- Rework shader browsing: show all seven collection tabs in a two-row grid; responsive full-width rows on narrow cards and two columns on wide panels. Taller panel, clearer titles, fixed search and selection/actions areas.
+- Add clear search, previous/next in the filtered results, automatic selection visibility and a local enable/disable button. Keep all 45 preset definitions and 546 saved settings unchanged.
+- Smooth theme/hover/selection transitions, card press scale and filter slide use short cancelable tweens; no per-frame UI rebuild. Cancel panel tweens on unload and partial-startup cleanup.
+- Full Lua compilation and targeted browser/catalog/profile/lifecycle simulations pass. Actual Roblox layout and animation appearance still need live confirmation.
+
 ## 3.2.4d — 2026-11-08
 
 - Replace the visible shader dropdowns with a native embedded catalog panel: 45 clickable two-column cards, horizontally scrollable collection buttons, a search box, result count and selected-preset footer. Cards show source, palette accent and selection mark; clicking selects and enables the scene immediately.

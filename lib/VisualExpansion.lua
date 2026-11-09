@@ -20,6 +20,7 @@ return function(c)
     local objects,links={},{}
     local teardown=function()
         dead=true
+        if shaderBrowser then shaderBrowser:Destroy() end
         mapAppearance:Destroy()
         inputOverlay:Destroy()
         minecraft:Destroy()
@@ -687,7 +688,7 @@ return function(c)
         filterPresets()
         for _,key in ipairs({"shaderCollection","visualPreset"}) do c.Widgets[key]:SetVisible(false) end
         shaderBrowser=c.LoadModule("ShaderBrowser")({Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
-            Names=presetNames,Presets=presets,Translate=c.Translate,GetScheme=c.GetScheme})
+            Names=presetNames,Presets=presets,Translate=c.Translate,GetScheme=c.GetScheme,TweenService=c.TweenService})
         c.Action(g,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)
@@ -991,6 +992,7 @@ return function(c)
     else job("Camera",R.RenderStepped,updateCamera) end
     teardown=function()
         if dead then return end dead=true
+        if shaderBrowser then shaderBrowser:Destroy() end
         mapAppearance:Destroy()
         inputOverlay:Destroy()
         minecraft:Destroy()
