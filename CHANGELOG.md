@@ -1,3 +1,10 @@
+## 3.2.4g — 2026-11-09
+
+- Replace the entire Shaders tab body with the catalog itself. Hide the legacy lighting/preset group columns; remove the popup, opening button, modal backdrop and catalog-specific cursor switching. Other Obsidian tabs remain unchanged.
+- Full-page dark layout with sidebar filters, readable full-width sort options, wide search/results and responsive shader cards. Catalog typography changes to Gotham/GothamMedium; main menu font unchanged.
+- Preserve the 45 preset definitions, parameter-based filters/sorting and existing 546-setting registry. Legacy lighting controls stay internally registered for existing configs; they are not shown on the Shaders page.
+- Compilation and targeted full-page/navigation/catalog/persistence/cleanup checks pass. Live appearance acceptance pending.
+
 ## 3.2.4f — 2026-11-09
 
 - Keep the main Obsidian interface and move the shader catalog into a separate large Wraith.dev-inspired window, opened from Shaders. Dedicated sidebar, wide responsive 1/2/3-column grid, full search area, shared selected scene, editor handoff and close/backdrop controls. This is an adapted lightweight shell, not the full third-party Wraith/NeverLose engine.

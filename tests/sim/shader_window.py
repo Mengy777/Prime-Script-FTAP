@@ -3,37 +3,23 @@ lua,_,_,_=session(Disk())
 lua.execute('''
 local function find(name)
  for _,o in ipairs(ALL_INSTANCES) do if o.Name==name then return o end end
- error('missing '..name)
 end
-local screen=find('PV_WraithCatalog') local window=find('WraithWindow')
-assert(screen.Enabled==false,'catalog opens at startup')
-local originalTab=TEST_ACTIVE_TAB
-TEST_LIBRARY:Toggle(true)
-TEST_LIBRARY.ShowCustomCursor=true
-TEST_ACTIONS['Open shader catalog']()
-assert(screen.Enabled and window.GroupTransparency==0 and TEST_LIBRARY.Toggled)
-assert(TEST_LIBRARY.ShowCustomCursor==false and TEST_SERVICES.UserInputService.MouseIconEnabled)
-assert(TEST_ACTIVE_TAB==originalTab,'catalog changes main navigation')
-find('CloseCatalog').Activated:Fire()
--- Reopening cancels a pending close: old delayed callbacks cannot hide it.
-TEST_ACTIONS['Open shader catalog']() TEST_DRAIN()
-assert(screen.Enabled,'old close callback hid reopened catalog')
-TEST_LIBRARY:Toggle(false)
-TEST_SERVICES.RunService.Heartbeat:Fire(.6)
-assert(not screen.Enabled,'catalog outlived main menu input state')
-assert(TEST_LIBRARY.ShowCustomCursor==true,'main custom cursor was not restored')
-TEST_LIBRARY:Toggle(true) TEST_ACTIONS['Open shader catalog']()
-find('EditShader').Activated:Fire()
-assert(not screen.Enabled and TEST_OPTIONS.lightEnabled.Value,'edit did not return to native editor')
-TEST_ACTIONS['Open shader catalog']()
-local camera=workspace.CurrentCamera camera.ViewportSize=Vector2.new(400,300)
-TEST_SERVICES.RunService.Heartbeat:Fire(.6)
-assert(window:FindFirstChildOfClass('UIScale').Scale<1,'catalog does not fit small viewport')
-find('CatalogBackdrop').Activated:Fire() TEST_DRAIN()
-assert(not screen.Enabled)
-TEST_ACTIONS['Open shader catalog']()
-TEST_ACTIONS['Unload script']() TEST_DRAIN()
-assert(not screen.Parent and not screen.Enabled)
-find('CloseCatalog').Activated:Fire()
+local page=find('PV_ShaderPage')
+assert(page and page.Parent==TEST_TAB_OBJECTS.Shaders.Container)
+assert(page.Size.X.Scale==1 and page.Size.Y.Scale==1,'catalog does not fill shader page')
+for _,side in ipairs(TEST_TAB_OBJECTS.Shaders.Sides) do assert(side.Visible==false,'old lighting cards still visible') end
+assert(not find('PV_WraithCatalog') and not TEST_ACTIONS['Open shader catalog'],'separate popup remains')
+assert(TEST_TAB_OBJECTS.View.Sides[1].Visible~=false,'other tabs changed')
+TEST_LIBRARY:Toggle(true) TEST_TAB_OBJECTS.Shaders:Show()
+assert(TEST_LIBRARY.ActiveTab==TEST_TAB_OBJECTS.Shaders)
+for _,o in ipairs(page:GetDescendants()) do
+ if o:IsA('TextLabel') or o:IsA('TextButton') or o:IsA('TextBox') then
+  assert(o.Font~=Enum.Font.BuilderSans and o.Font~=Enum.Font.BuilderSansBold,'old catalog font remains')
+ end
+end
+TEST_TAB_OBJECTS.View:Show() TEST_TAB_OBJECTS.Shaders:Show()
+for _,side in ipairs(TEST_TAB_OBJECTS.Shaders.Sides) do assert(side.Visible==false) end
+TEST_ACTIONS['Unload script']()
+assert(not page.Parent)
 ''')
-print('PASS separate shader window: default closed, reopen race, main-menu ownership, native editor handoff, viewport fit and unload')
+print('PASS full-page catalog directly in Shaders, no popup/lighting cards, new font, stable tab navigation and cleanup')

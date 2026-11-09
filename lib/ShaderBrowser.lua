@@ -29,14 +29,14 @@ return function(c)
     local categories=make("Frame",{Name="Collections",BackgroundTransparency=1,Size=c.Sidebar and UDim2.new(1,0,0,310) or UDim2.new(1,0,0,67)},c.Sidebar or root)
     make("UIGridLayout",{CellSize=c.Sidebar and UDim2.new(1,0,0,c.Thematic and 32 or 38) or UDim2.new(.25,-4.5,0,30),CellPadding=UDim2.fromOffset(6,6),SortOrder=Enum.SortOrder.LayoutOrder},categories)
     local search=make("TextBox",{Name="ShaderSearch",Position=UDim2.fromOffset(0,c.Host and 0 or 76),Size=UDim2.new(1,0,0,32),
-        BorderSizePixel=0,ClearTextOnFocus=false,Text="",PlaceholderText=tr("Search shaders..."),Font=Enum.Font.BuilderSans,
+        BorderSizePixel=0,ClearTextOnFocus=false,Text="",PlaceholderText=tr("Search shaders..."),Font=Enum.Font.Gotham,
         TextSize=13,TextXAlignment=Enum.TextXAlignment.Left},root)
     make("UICorner",{CornerRadius=UDim.new(0,5)},search)
     make("UIPadding",{PaddingLeft=UDim.new(0,10),PaddingRight=UDim.new(0,30)},search)
-    local clear=make("TextButton",{Name="ClearSearch",Text="×",BackgroundTransparency=1,Position=UDim2.new(1,-29,0,c.Host and 1 or 77),Size=UDim2.fromOffset(28,30),Font=Enum.Font.BuilderSans,TextSize=20,Visible=false},root)
+    local clear=make("TextButton",{Name="ClearSearch",Text="×",BackgroundTransparency=1,Position=UDim2.new(1,-29,0,c.Host and 1 or 77),Size=UDim2.fromOffset(28,30),Font=Enum.Font.Gotham,TextSize=20,Visible=false},root)
     local searchStroke=make("UIStroke",{Thickness=1},search)
     local status=make("TextLabel",{Name="ShaderCount",BackgroundTransparency=1,Position=UDim2.fromOffset(0,listTop-25),
-        Size=UDim2.new(1,0,0,18),Font=Enum.Font.BuilderSans,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left},root)
+        Size=UDim2.new(1,0,0,18),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left},root)
     local scroll=make("ScrollingFrame",{Name="ShaderCards",BackgroundTransparency=1,BorderSizePixel=0,
         Position=UDim2.fromOffset(0,listTop),Size=UDim2.new(1,0,1,-listTop-66),CanvasSize=UDim2.new(),
         AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=4,Active=true},root)
@@ -46,13 +46,13 @@ return function(c)
     local function resize() local n=columns() grid.CellSize=UDim2.new(1/n,-8*(n-1)/n,0,n>1 and 68 or 60) end
     connect(root:GetPropertyChangedSignal("AbsoluteSize"),resize) resize()
     local empty=make("TextLabel",{Name="EmptyResults",BackgroundTransparency=1,Position=UDim2.fromOffset(0,listTop+24),
-        Size=UDim2.new(1,0,0,55),Font=Enum.Font.BuilderSans,TextSize=13,TextWrapped=true,Text=tr("No shaders found"),Visible=false},root)
+        Size=UDim2.new(1,0,0,55),Font=Enum.Font.Gotham,TextSize=13,TextWrapped=true,Text=tr("No shaders found"),Visible=false},root)
     local selected=make("TextLabel",{Name="ShaderSelection",Position=UDim2.new(0,0,1,-60),Size=UDim2.new(1,0,0,20),
-        BackgroundTransparency=1,Font=Enum.Font.BuilderSans,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd},root)
+        BackgroundTransparency=1,Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd},root)
     local api={Category="All shaders",Sort="Name",Descending=false} local chips,cards,sortButtons={},{},{} local lastKey local hovered
-    local previous=make("TextButton",{Name="PreviousShader",Text="‹",Position=UDim2.new(0,0,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=21},root)
-    local power=make("TextButton",{Name="ShaderPower",Text="",Position=UDim2.new(.25,2,1,-32),Size=UDim2.new(.5,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=12},root)
-    local nextButton=make("TextButton",{Name="NextShader",Text="›",Position=UDim2.new(.75,4,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.BuilderSans,TextSize=21},root)
+    local previous=make("TextButton",{Name="PreviousShader",Text="←",Position=UDim2.new(0,0,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=21},root)
+    local power=make("TextButton",{Name="ShaderPower",Text="",Position=UDim2.new(.25,2,1,-32),Size=UDim2.new(.5,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=12},root)
+    local nextButton=make("TextButton",{Name="NextShader",Text="→",Position=UDim2.new(.75,4,1,-32),Size=UDim2.new(.25,-4,0,30),BorderSizePixel=0,Font=Enum.Font.Gotham,TextSize=21},root)
     for _,button in ipairs({previous,power,nextButton}) do make("UICorner",{CornerRadius=UDim.new(0,5)},button) end
     local function select(name)
         c.Setters.visualPreset(name,true)
@@ -82,7 +82,7 @@ return function(c)
     local collections=c.Thematic and {"All shaders","Daylight","Night","Warm","Cool","Foggy","Monochrome","Vivid"} or {"All collections","Prime Visuals","Mercury","SAVITAR","Fosfor","Eris","Silent Target"}
     for i,name in ipairs(collections) do
         local b=make("TextButton",{Name="Collection_"..i,Size=UDim2.fromOffset(name=="All collections" and 106 or name=="Prime Visuals" and 102 or name=="Silent Target" and 102 or 85,28),
-            LayoutOrder=i,BorderSizePixel=0,AutoButtonColor=false,Text=tr(name),TextSize=11,TextWrapped=true,Font=Enum.Font.BuilderSans},categories)
+            LayoutOrder=i,BorderSizePixel=0,AutoButtonColor=false,Text=tr(name),TextSize=12,TextWrapped=true,Font=Enum.Font.Gotham},categories)
         make("UICorner",{CornerRadius=UDim.new(0,5)},b)
         local stroke=make("UIStroke",{Thickness=1},b)
         chips[#chips+1]={name=name,button=b,stroke=stroke}
@@ -91,18 +91,18 @@ return function(c)
         end)
     end
     if c.Thematic then
-        local sortRoot=make("Frame",{Name="SortControls",BackgroundTransparency=1,Position=UDim2.fromOffset(0,328),Size=UDim2.new(1,0,0,132)},c.Sidebar)
+        local sortRoot=make("Frame",{Name="SortControls",BackgroundTransparency=1,Position=UDim2.fromOffset(0,328),Size=UDim2.new(1,0,0,204)},c.Sidebar)
         make("TextLabel",{Text=tr("Sort by"),BackgroundTransparency=1,Size=UDim2.new(1,0,0,18),TextColor3=white,
-            Font=Enum.Font.BuilderSans,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left},sortRoot)
+            Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left},sortRoot)
         for i,name in ipairs({"Name","Time","Brightness","Saturation"}) do
-            local button=make("TextButton",{Name="Sort_"..name,Text=tr(name),Position=UDim2.new((i-1)%2*.5,0,0,26+math.floor((i-1)/2)*32),
-                Size=UDim2.new(.5,-4,0,27),BorderSizePixel=0,TextSize=11,Font=Enum.Font.BuilderSans,TextWrapped=true},sortRoot)
+            local button=make("TextButton",{Name="Sort_"..name,Text=tr(name),Position=UDim2.new(0,0,0,26+(i-1)*34),
+                Size=UDim2.new(1,-5,0,29),BorderSizePixel=0,TextSize=12,Font=Enum.Font.Gotham,TextWrapped=true},sortRoot)
             make("UICorner",{CornerRadius=UDim.new(0,4)},button)
             sortButtons[#sortButtons+1]={name=name,button=button}
             connect(button.Activated,function()api.Sort=name api:Refresh(true)end)
         end
-        local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,96),Size=UDim2.new(1,0,0,28),
-            Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.fromRGB(25,30,44),BorderSizePixel=0,TextSize=11,Font=Enum.Font.BuilderSans},sortRoot)
+        local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,166),Size=UDim2.new(1,0,0,28),
+            Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.fromRGB(25,30,44),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham},sortRoot)
         make("UICorner",{CornerRadius=UDim.new(0,4)},direction)
         connect(direction.Activated,function() api.Descending=not api.Descending direction.Text=tr(api.Descending and "Descending" or "Ascending") api:Refresh(true) end)
     end
@@ -120,14 +120,14 @@ return function(c)
             if effect[1]=="ColorCorrectionEffect" then tint=effect[2].TintColor or tint saturation=effect[2].Saturation or 0 end
             if effect[1]=="Atmosphere" then density=effect[2].Density or 0 end
         end
-        make("Frame",{Name="Palette",BackgroundColor3=tint,BorderSizePixel=0,Position=UDim2.fromOffset(8,12),Size=UDim2.fromOffset(3,40)},b)
+        make("Frame",{Name="Palette",BackgroundColor3=tint,BorderSizePixel=0,Position=UDim2.fromOffset(10,10),Size=UDim2.fromOffset(3,44)},b)
         local label=make("TextLabel",{Name="Title",BackgroundTransparency=1,Position=UDim2.fromOffset(18,9),Size=UDim2.new(1,-40,0,30),
-            Text=title,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.BuilderSans,TextSize=12},b)
+            Text=title,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.GothamMedium,TextSize=14},b)
         local origin=make("TextLabel",{Name="Source",BackgroundTransparency=1,Position=UDim2.fromOffset(18,42),Size=UDim2.new(1,-24,0,14),
             Text=c.Thematic and ((data.light.ClockTime and string.format("%02d:%02d",math.floor(data.light.ClockTime)%24,math.floor(data.light.ClockTime%1*60))) or "—").."  ·  "..tr("Brightness").." "..tostring(data.light.Brightness or "—") or source,
-            TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.BuilderSans,TextSize=10},b)
+            TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.Gotham,TextSize=10},b)
         local check=make("TextLabel",{Name="Selected",BackgroundTransparency=1,Position=UDim2.new(1,-22,0,8),Size=UDim2.fromOffset(16,20),
-            Text="✓",Font=Enum.Font.BuilderSansBold,TextSize=14,Visible=false},b)
+            Text="●",Font=Enum.Font.GothamBold,TextSize=14,Visible=false},b)
         local scale=make("UIScale",{Scale=1},b)
         cards[#cards+1]={name=name,source=source,title=title,button=b,stroke=stroke,label=label,origin=origin,check=check,scale=scale,
             time=data.light.ClockTime,brightness=data.light.Brightness,saturation=saturation,

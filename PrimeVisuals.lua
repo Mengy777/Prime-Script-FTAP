@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4f"
+local VERSION="3.2.4g"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -2942,15 +2942,8 @@ local function buildVisualSystems()
             ApplySky=applySkyData,
             GetAccent=function() return Library.Scheme.AccentColor end,
             GetScheme=function() return Library.Scheme end,
-            TweenService=tweens,MenuGui=Library.ScreenGui,
-            CatalogCursor=function(open)
-                if open then
-                    if startup.CatalogCursor==nil then startup.CatalogCursor=Library.ShowCustomCursor end
-                    Library.ShowCustomCursor=false UIS.MouseIconEnabled=true
-                elseif startup.CatalogCursor~=nil then
-                    Library.ShowCustomCursor=startup.CatalogCursor startup.CatalogCursor=nil
-                end
-            end,
+            TweenService=tweens,ShadersPage=categoryTabs.Shaders,
+            IsShadersActive=function()return Library.ActiveTab==categoryTabs.Shaders end,
             EditLighting=function(data,name) lightingEditor:Import(data,name) end,
         })
     end

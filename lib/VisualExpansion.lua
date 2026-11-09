@@ -688,15 +688,12 @@ return function(c)
         choice(g,"visualPreset","Preset",presetNames,"Pale Frost",function() filterPresets() updatePreset() end)
         filterPresets()
         for _,key in ipairs({"shaderCollection","visualPreset"}) do c.Widgets[key]:SetVisible(false) end
-        shaderWindow=c.LoadModule("WraithCatalogUI")({Make=create,Connect=connect,PlayerGui=c.PlayerGui,MenuGui=c.MenuGui,
-            Workspace=W,MenuOpen=c.MenuOpen,TweenService=c.TweenService,Translate=c.Translate,Cursor=c.CatalogCursor,
-            Edit=function()c.EditLighting(presets[v.visualPreset],v.visualPreset)end})
+        shaderWindow=c.LoadModule("WraithCatalogUI")({Make=create,Page=c.ShadersPage,MenuOpen=c.MenuOpen,
+            IsPageActive=c.IsShadersActive,Translate=c.Translate})
         shaderBrowser=c.LoadModule("ShaderBrowser")({Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
             Host=shaderWindow.Host,Sidebar=shaderWindow.Sidebar,Thematic=true,Names=presetNames,Presets=presets,Translate=c.Translate,
-            GetScheme=function()return {MainColor=rgb(14,18,28),OutlineColor=rgb(36,43,58),FontColor=rgb(230,235,245),AccentColor=c.GetAccent()}end,
+            GetScheme=function()return {MainColor=rgb(22,23,28),OutlineColor=rgb(40,42,49),FontColor=rgb(232,234,240),AccentColor=c.GetAccent()}end,
             TweenService=c.TweenService})
-        shaderWindow.OnOpen=function()shaderBrowser:Refresh(true)end
-        c.Action(g,"Open shader catalog",function()shaderWindow:Open()end)
         c.Action(g,"Edit selected preset",function() c.EditLighting(presets[v.visualPreset],v.visualPreset) end)
         toggle(g,"fullbrightEnabled","Fullbright",false,fullbright)
         g=group("Sky","Skybox collection",2)

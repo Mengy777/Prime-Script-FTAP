@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4f**, tag `v3.2.4f`. Next normal runtime version: **3.2.4g**. Consult Git for the release commit.
+- Published runtime target: **3.2.4g**, tag `v3.2.4g`. Next normal runtime version: **3.2.4h**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -407,3 +407,9 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - ShaderBrowser hosts full-size in this shell, sidebar uses parameter themes (not source names), 1/2/3-column responsive grid. Sort Name/Time/Brightness/Saturation with direction; missing fields last. Theme derived from raw lighting/CC/Atmosphere parameters. Source identities retained internally via ShaderId attribute and original registry keys. 45 presets/546 persisted settings unchanged; filter/sort session-local.
 - Shell uses same GUI parent as Obsidian and higher DisplayOrder; modal backdrop blocks underlying clicks. Opens only while main menu is open; closes on main-menu hide. CatalogCursor temporarily disables Obsidian's custom cursor so native cursor is visible on top; restores original flag on close/destroy. No second keybind/config engine.
 - Short tweens, viewport fit and generation-guarded delayed close; cleanup in both VisualExpansion teardown paths. Edit closes catalog and opens existing native lighting editor. Tests: shader_browser.py (thematic filters, ascending/descending parameter order), shader_window.py (open/reopen/hide/editor/cursor/viewport/unload), shader_catalog.py, ui_navigation.py, startup_resilience.py, controls_matrix.py; compilation passed. Live appearance/input acceptance pending.
+
+## 2026-11-09 — direct full-page catalog 3.2.4g (supersedes popup)
+
+- User explicitly rejected the separate window and visible Lighting/Lighting presets cards. WraithCatalogUI.lua now builds PV_ShaderPage directly under categoryTabs.Shaders.Container, filling its area. Both legacy tab.Sides are hidden; registry/config callbacks retained internally (546 keys). No modal ScreenGui/open action/cursor override. Other tabs remain unchanged.
+- Catalog uses Gotham/GothamMedium (not main Builder Sans), neutral dark palette, sidebar with scrollable parameter themes and larger full-width sort choices. Same 45 definitions and direction/search/next/previous. Existing lib filename retained for dependency compatibility; this is now page presentation, not a foreign runtime.
+- shader_window.py now verifies full-page parent/size, hidden native columns, absence of popup/open action, font replacement, navigation and unload. Targeted shader_browser/catalog/ui_navigation and compilation pass. Live layout acceptance pending.

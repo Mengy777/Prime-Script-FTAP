@@ -7,8 +7,7 @@ lua.execute('''
 local root
 for _,o in ipairs(ALL_INSTANCES) do if o.Name=='PV_ShaderBrowser' then root=o end end
 assert(root and root.Parent and root.Parent.Name=='CatalogContent')
-TEST_LIBRARY:Toggle(true) TEST_ACTIONS['Open shader catalog']()
-assert(TEST_LIBRARY.ShowCustomCursor==false and TEST_SERVICES.UserInputService.MouseIconEnabled==true)
+TEST_LIBRARY:Toggle(true) TEST_TAB_OBJECTS.Shaders:Show()
 assert(TEST_OPTIONS.visualPreset.Visible==false and TEST_OPTIONS.shaderCollection.Visible==false,'list controls still visible')
 local cards=root:FindFirstChild('ShaderCards'):FindFirstChild('Cards')
 local categories for _,o in ipairs(ALL_INSTANCES) do if o.Name=='Collections' then categories=o end end
