@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4k**, tag `v3.2.4k`. Next normal runtime version: **3.2.4l**. Consult Git for the release commit.
+- Published runtime target: **3.2.4l**, tag `v3.2.4l`. Next normal runtime version: **3.2.4m**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -442,3 +442,12 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - Short click = native SurfaceGui UI. Alt+LMB anywhere on block = local drag; temporarily disable GUI interaction while dragging and restore next task after release. RightControl/current menu bind hide/recenter; SHIFT+same menu binding disables experiment and opens2D as recovery. Mode remains default off.
 - Real FTAP-native line/grabbing of the client-only block is NOT implemented; user clarified local visual block, and no synthetic line is presented as stock gameplay. Live surface click delivery and perspective rendering need user test; do not claim runtime equivalence from mocks.
 - Full suite47 scripts and native-pointer harness/identity/cold-mode restore pass (docs/Simulation-3.2.4k.md). native_clicks.py/ui_navigation.py load actual new pointer helpers for extracted-handler tests. Physical test checks exact native object identity, no new Beam, scoped local-block input guard, opaque collision block, any-body Alt drag, stationary release, recenter, SHIFT recovery, original parents/transforms and cold reload.
+
+## 2026-11-10 — physical lifecycle/notifications/grab 3.2.4l
+
+- SurfaceGui now ResetOnSpawn=false (previously reset could delete original reparented UI). CharacterAdded closes world mode to original parents; menuVisible uses physical health exclusively while worldMenuEnabled, not a fallback to stale lib.Toggled. Deleted-block reopen and camera/surface-mount failure recover to valid2D; truly destroyed native UI gets reload notice. Existing v3.2.4k session with destroyed UI needs loader restart.
+- lib.NotificationArea exported, Name=ObsidianNotifications; PhysicalMenu excludes it from root reparenting. Notifications stay screen-space while main UI is on block. Main IsOwnUI recognizes PhysicalGui for local menu/HUD filters.
+- RMB hold on any face starts local grab directly (Alt+LMB retained). No stock FTAP grab/Beam is claimed. Paired input release map supports both buttons; epoch guards deferred GUI reenabling; local collision disabled to avoid avatar interference. Controls/values551 unchanged.
+- physical_menu.py tests screen notifications, ResetOnSpawn, CharacterAdded/reopen, removed block, RMB grab/release, failure injection and missing-camera fallback plus identity/cleanup/cold reload. major3/native_clicks/startup_resilience and compile pass. Live water/respawn/cursor delivery awaits user check.
+
+- 3.2.4l input correction: ordinary front-face LMB returns Pass to native SurfaceGui instead of CAS Sink; PV_MenuInputBackplane (Active=true, transparent) captures world input behind the widgets. RMB/Alt grab and back/edge hits retain the scoped guard. Tests assert front clicks pass.

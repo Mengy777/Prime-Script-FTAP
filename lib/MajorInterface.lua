@@ -11,7 +11,7 @@ return function(c)
  if c.TrackCleanup then c.TrackCleanup(function()api:Destroy()end)end
  c.NativeToggle=nativeToggle
  physical=c.PhysicalMenu(c)
- local function menuVisible()return v.worldMenuEnabled and physical:IsVisible() or lib.Toggled end
+ local function menuVisible()if v.worldMenuEnabled then return physical:IsVisible()end return lib.Toggled end
  function lib:Toggle(value)
   if v.worldMenuEnabled then
    physical:SetVisible(value==nil and not physical:IsVisible() or value==true)

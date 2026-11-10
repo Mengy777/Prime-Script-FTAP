@@ -1,3 +1,11 @@
+## 3.2.4l — 2026-11-10
+
+- Prevent physical SurfaceGui reset on character respawn (ResetOnSpawn=false). On CharacterAdded, restore native controls to their original parents and reset physical visibility so the next menu press reopens correctly. Fix visibility logic that treated a missing block as still open because Library.Toggled stayed true.
+- Make mounting transactional: failed surface/camera creation restores original UI and opens2D recovery instead of leaving only an unlocked cursor. A destroyed native UI receives an explicit reload message rather than a false recovery claim.
+- Keep the notification area on the user's screen; export/mark its native container and exclude it from world reparenting. Protect the physical UI from own HUD/menu-hiding routines.
+- Pass ordinary front-face LMB input to native SurfaceGui widgets instead of swallowing it in the grab guard; an active transparent backplane handles world input. Add local RMB hold-to-grab from any block face without Alt; retain Alt+LMB. Capture paired button releases, cancel drag cleanly and guard deferred restoration across reopen. Disable collision with the avatar. This is a local controller, not stock FTAP grabbing; no artificial Beam or server grab is added.
+- Full Lua compilation and targeted physical-menu, menu bindings, native widgets and startup resilience regressions pass. Tests cover respawn/reopen, deleted block, screen notifications, RMB grab, missing camera and injected surface failure; live water/respawn behavior still needs FTAP verification.
+
 ## 3.2.4k — 2026-11-10
 
 - Replace the simplified physical-menu browser with the actual live Obsidian UI tree mounted on a local SurfaceGui. Existing controls, tabs, shader catalog, floating panels and callbacks are reparented rather than cloned/recreated, then restored to their exact original parents and transforms on exit.

@@ -1763,6 +1763,7 @@ local NotificationArea
 local NotifyOrder = {}
 do
     NotificationArea = New("Frame", {
+        Name = "ObsidianNotifications",
         AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
         Position = UDim2.new(1, -6, 0, 6),
@@ -1777,6 +1778,8 @@ do
         })
     )
 end
+Library.NotificationArea = NotificationArea
+
 
 local CheckIcon, ArrowIcon, ResizeIcon, KeyIcon, MoveIcon, PopOutIcon, CloseIcon
 function Library:SetIconModule(module: IconModule)

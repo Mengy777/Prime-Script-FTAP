@@ -35,17 +35,24 @@ local option=TEST_OPTIONS.cameraFOV local tab=TEST_TAB_OBJECTS.Shaders
 for _,t in pairs(TEST_TAB_OBJECTS)do t.Container.Parent=main end
 assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block())
 TEST_SERVICES.UserInputService.MouseIconEnabled=true
+local notice=Instance.new('Frame') notice.Name='ObsidianNotifications' notice.ZIndex=200 notice.Parent=TEST_LIBRARY.ScreenGui
+TEST_LIBRARY.NotificationArea=notice
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)
-assert(block() and block().Transparency==0 and block().CanCollide and block().Size.Z>.5)
+assert(notice.Parent==TEST_LIBRARY.ScreenGui,'notifications moved into the world menu')
+assert(block() and block().Transparency==0 and block().CanCollide==false and block().Size.Z>.5)
 local surface=TEST_LIBRARY.PhysicalGui
+assert(surface.ResetOnSpawn==false,'surface destroys original UI on respawn')
 assert(surface and surface.Adornee==block() and surface.Parent==TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'))
 assert(main.Parent==surface and TEST_LIBRARY.Toggled and option==TEST_OPTIONS.cameraFOV)
 main.BackgroundTransparency=.5 assert(main.BackgroundTransparency==0,'physical UI became transparent')
 assert(tab.Container:IsDescendantOf(main),'actual shader page was not moved')
 local guard=TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard
 HIT_X=nil assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass)
-HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
-HIT_X=nil assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)
+HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'normal GUI click swallowed')
+assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Pass)
+TEST_BACK=true assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
+HIT_X=nil assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)TEST_BACK=false
+assert(surface:FindFirstChild('PV_MenuInputBackplane').Active)
 for _,o in ipairs(workspace:GetDescendants())do assert(not o:IsA('Beam'),'artificial beam created')end
 local original=option.Value option:SetValue(original+5)
 assert(workspace.CurrentCamera.FieldOfView==original+5,'original setter stopped working')
@@ -67,14 +74,35 @@ workspace.CurrentCamera.CFrame=CFrame.new(8,8,0)TEST_SERVICES.RunService.RenderS
 assert((block().CFrame.Position-before).Magnitude>1 and TEST_LIBRARY.PhysicalDragging)
 TEST_SERVICES.UserInputService.InputEnded:Fire(input,false)KEYS.LeftAlt=false TEST_DRAIN()
 assert(not TEST_LIBRARY.PhysicalDragging)
+local right={UserInputType=Enum.UserInputType.MouseButton2}
+local guard=TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard
+assert(guard(nil,Enum.UserInputState.Begin,right)==Enum.ContextActionResult.Sink and TEST_LIBRARY.PhysicalDragging)
+workspace.CurrentCamera.CFrame=CFrame.new(12,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+assert(guard(nil,Enum.UserInputState.End,right)==Enum.ContextActionResult.Sink)TEST_DRAIN()
+assert(not TEST_LIBRARY.PhysicalDragging)
 local fixed=block().CFrame.Position
 workspace.CurrentCamera.CFrame=CFrame.new(20,8,0)HIT_X=nil TEST_SERVICES.RunService.RenderStepped:Fire(.016)
 assert((block().CFrame.Position-fixed).Magnitude<.001)
 pressMenu()assert(not block() and main.Parent==parent and main.Position==position and TEST_LIBRARY.PointerProvider==nil)
 pressMenu()assert(block() and block().CFrame.Position.X==20 and main.Parent==TEST_LIBRARY.PhysicalGui)
+-- Respawn/water teleport recovery preserves the SAME native UI and screen notifications.
+TEST_SERVICES.Players.LocalPlayer.CharacterAdded:Fire(TEST_SERVICES.Players.LocalPlayer.Character)
+assert(not block() and main.Parent==parent and notice.Parent==TEST_LIBRARY.ScreenGui)
+pressMenu()assert(block() and main.Parent==TEST_LIBRARY.PhysicalGui,'cannot reopen after respawn')
+-- An externally deleted block does not lose its surface controls.
+block():Destroy()
+pressMenu()assert(block() and main.Parent==TEST_LIBRARY.PhysicalGui,'stale native Toggled prevents reopening')
 KEYS.LeftShift=true pressMenu()KEYS.LeftShift=false
 assert(not TEST_OPTIONS.worldMenuEnabled.Value)
 assert(not block() and main.Parent==parent and TEST_LIBRARY.Toggled)
+local rawNew=Instance.new
+Instance.new=function(class)if class=='SurfaceGui'then error('injected surface construction failure')end return rawNew(class)end
+TEST_OPTIONS.worldMenuEnabled:SetValue(true)
+Instance.new=rawNew
+assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and main.Parent==parent and TEST_LIBRARY.Toggled,'failed mount trapped UI')
+local camera=workspace.CurrentCamera workspace.CurrentCamera=nil
+TEST_OPTIONS.worldMenuEnabled:SetValue(true)workspace.CurrentCamera=camera
+assert(not TEST_OPTIONS.worldMenuEnabled.Value and TEST_LIBRARY.Toggled,'missing camera trapped UI')
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
 TEST_ACTIONS['Unload script']()
 assert(not block() and TEST_LIBRARY.PhysicalGui==nil and TEST_LIBRARY.PointerProvider==nil)

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4k"
+local VERSION="3.2.4l"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -333,6 +333,7 @@ local ru={
     ["Scene presets"]="Каталог шейдеров",
     ["Collection"]="Коллекция",["All collections"]="Все коллекции",
     ["All shaders"]="Все шейдеры",["Daylight"]="Дневные",["Night"]="Ночные",["Warm"]="Тёплые",["Cool"]="Холодные",["Foggy"]="Туман",["Monochrome"]="Монохром",["Vivid"]="Насыщенные",["Sort by"]="Сортировка",["Time"]="Время",["Ascending"]="По возрастанию",["Descending"]="По убыванию",
+    ["Physical menu failed; returned to 2D"]="Не удалось открыть физическое меню — возвращено обычное",["Menu UI was removed; reload script"]="Интерфейс удалён игрой — перезапусти скрипт",
     ["Physical menu"]="Физическое меню",["Panel size"]="Размер панели",["Panel distance"]="Расстояние панели",["Functions"]="Функции",["2D menu"]="Обычное меню",["Aim + LMB · drag the header"]="Наведи прицел + ЛКМ · тяни за заголовок",
     ["Open shader catalog"]="Открыть каталог шейдеров",["Shader catalog"]="Каталог шейдеров",
     ["Search shaders..."]="Поиск шейдеров...",["No shaders found"]="Шейдеры не найдены",
@@ -2929,7 +2930,7 @@ local function buildVisualSystems()
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,
             PlayerPicker=addPlayerPicker,IsLocalGrabBeam=ownGrabBeam,
             Notify=notify,
-            IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or object==gui or object:IsDescendantOf(gui) end,
+            IsOwnUI=function(object) return object==Library.ScreenGui or object:IsDescendantOf(Library.ScreenGui) or (Library.PhysicalGui and (object==Library.PhysicalGui or object:IsDescendantOf(Library.PhysicalGui))) or object==gui or object:IsDescendantOf(gui) end,
             Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,
             FreecamIcon=function(holder,frame) return loadUIModule("PrimeIcon")(holder,frame,Run) end,
             TrackCleanup=function(fn) visualExpansion={Destroy=fn} end,

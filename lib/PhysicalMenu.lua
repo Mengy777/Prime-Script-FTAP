@@ -4,7 +4,9 @@ return function(c)
  local block,surface local saved={} local links={} local mountLinks={} local pending
  local oldPointer,oldPhysical,oldCantDrag
  local watched={} local enforcing=false
- local action="PrimePhysicalMenuGuard" local captured=false
+ local action="PrimePhysicalMenuGuard" local captured={}
+ local beginDrag,finish
+ local epoch=0
  local function make(class,props,parent)return c.Make(class,props,parent)end
  local function rayHit()
   local camera=c.Workspace.CurrentCamera if not camera or not block then return end
@@ -33,8 +35,8 @@ return function(c)
   end)
  end
  local function restore()
-  pending=nil
-  if not captured then c.Actions:UnbindAction(action)end
+  epoch=epoch+1 pending=nil
+  if not next(captured) then c.Actions:UnbindAction(action)end
   for _,link in ipairs(mountLinks)do link:Disconnect()end mountLinks={}
   -- Restore native controls before destroying their temporary GUI parent.
   for _,item in ipairs(saved)do
@@ -47,30 +49,32 @@ return function(c)
   surface=nil block=nil
   if c.RestoreMenuStyle then c.RestoreMenuStyle()end
  end
- function api:IsVisible()return shown end
+ function api:IsVisible()return shown and block~=nil and block.Parent~=nil and surface~=nil and surface.Parent~=nil and c.Main.Parent~=nil end
  function api:SetVisible(on)
   if dead then return end
   if shown or block or surface then
    pcall(c.NativeToggle,lib,false) shown=false restore()
   end
   if not on then return end
-  local camera=c.Workspace.CurrentCamera if not camera then return end
+  local ok,message=xpcall(function()
+  local camera=c.Workspace.CurrentCamera assert(camera,"Camera unavailable")
   c.NativeToggle(lib,false)
   oldPointer,oldPhysical,oldCantDrag=lib.PointerProvider,lib.PhysicalGui,lib.CantDragForced
   local width=math.max(1,math.ceil(c.Main.AbsoluteSize.X))local height=math.max(1,math.ceil(c.Main.AbsoluteSize.Y))
   local scale=v.worldMenuScale or 1
   block=make("Part",{Name="PV_PhysicalMenu",Size=Vector3.new(12*scale,12*scale*(height+32)/(width+32),2*scale),
    CFrame=camera.CFrame*CFrame.new(0,0,-(v.worldMenuDistance or 9))*CFrame.Angles(0,math.pi,0),
-   Anchored=true,CanCollide=true,CanTouch=false,CanQuery=true,Transparency=0,Color=Color3.new(0,0,0),Material=Enum.Material.SmoothPlastic},c.Workspace)
+   Anchored=true,CanCollide=false,CanTouch=false,CanQuery=true,Transparency=0,Color=Color3.new(0,0,0),Material=Enum.Material.SmoothPlastic},c.Workspace)
   surface=make("SurfaceGui",{Name="PV_PhysicalMenuSurface",Adornee=block,Face=Enum.NormalId.Front,
    SizingMode=Enum.SurfaceGuiSizingMode.FixedSize,CanvasSize=Vector2.new(width+32,height+32),LightInfluence=0,
-   AlwaysOnTop=false,Active=true,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},c.PlayerGui)
+   AlwaysOnTop=false,Active=true,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},c.PlayerGui)
+  make("Frame",{Name="PV_MenuInputBackplane",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,Active=true,ZIndex=0},surface)
   lib.PhysicalGui=surface lib.CantDragForced=true
   if lib.Animations then c.Patch("physicalMenuUI",lib.Animations,"ToggleWindow",false)end
   lib.PointerProvider=function()return api:Pointer()or Vector2.new(-100000,-100000)end
   local roots={}
   for _,o in ipairs(lib.ScreenGui:GetChildren())do
-   if o:IsA("GuiObject")and (o.ZIndex or 1)>=0 and (o.ZIndex or 1)<10000 then roots[#roots+1]=o end
+   if o~=lib.NotificationArea and o.Name~="ObsidianNotifications" and o:IsA("GuiObject")and (o.ZIndex or 1)>=0 and (o.ZIndex or 1)<10000 then roots[#roots+1]=o end
   end
   if not table.find(roots,c.Main)then roots[#roots+1]=c.Main end
   for _,o in ipairs(roots)do saved[#saved+1]={object=o,parent=o.Parent}o.Parent=surface end
@@ -82,38 +86,70 @@ return function(c)
   for _,o in ipairs(surface:GetDescendants())do opaque(o)end
   mountLinks[#mountLinks+1]=surface.DescendantAdded:Connect(opaque)
   shown=true
-  c.Actions:BindActionAtPriority(action,function(_,state)
+  c.Actions:BindActionAtPriority(action,function(_,state,input)
+   local kind=input and input.UserInputType or Enum.UserInputType.MouseButton1
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
-    local consume=captured captured=false
-    if not shown then c.Actions:UnbindAction(action)end
+    local consume=captured[kind] captured[kind]=nil
+    if pending and pending.input==kind then finish()end
+    if not shown and not next(captured)then c.Actions:UnbindAction(action)end
     return consume and Enum.ContextActionResult.Sink or Enum.ContextActionResult.Pass
    end
-   if shown and state==Enum.UserInputState.Begin and rayHit() then captured=true return Enum.ContextActionResult.Sink end
+   if shown and state==Enum.UserInputState.Begin then
+    local pos,from=rayHit()
+    if pos then
+     local grab=kind==Enum.UserInputType.MouseButton2 or (c.Input.IsKeyDown and (c.Input:IsKeyDown(Enum.KeyCode.LeftAlt)or c.Input:IsKeyDown(Enum.KeyCode.RightAlt)))
+     -- Let native SurfaceGui receive ordinary front-face clicks. Its active
+     -- backplane handles game input; CAS must not swallow widget activation.
+     if not grab and api:Pointer()then return Enum.ContextActionResult.Pass end
+     captured[kind]=true
+     if grab then beginDrag(pos,from,kind)end
+     return Enum.ContextActionResult.Sink
+    end
+   end
    return Enum.ContextActionResult.Pass
-  end,false,6000,Enum.UserInputType.MouseButton1)
+  end,false,6000,Enum.UserInputType.MouseButton1,Enum.UserInputType.MouseButton2)
   c.NativeToggle(lib,true)
   c.Patch("physicalMenuCursor",c.Input,"MouseIconEnabled",false)
+  end,debug.traceback)
+  if not ok then
+   shown=false pcall(c.NativeToggle,lib,false)restore()
+   if c.Setters.worldMenuEnabled then c.Setters.worldMenuEnabled(false,true)end
+   pcall(c.NativeToggle,lib,true)
+   c.Notify(c.Main.Parent and "Physical menu failed; returned to 2D" or "Menu UI was removed; reload script") warn(message)
+  end
  end
  function api:Configure()
   if block then local scale=v.worldMenuScale or 1
    block.Size=Vector3.new(12*scale,12*scale*surface.CanvasSize.Y/surface.CanvasSize.X,2*scale)block.Transparency=0
   end
  end
- local function finish()
+ finish=function()
   local dragging=pending and pending.dragging pending=nil
   if dragging then
-   task.defer(function()if not dead then c.Unpatch("physicalMenuDrag")lib.PhysicalDragging=false if surface then surface.Active=true end end end)
+   local token=epoch
+   task.defer(function()if not dead and token==epoch then c.Unpatch("physicalMenuDrag")lib.PhysicalDragging=false if surface then surface.Active=true end end end)
   end
+ end
+ beginDrag=function(pos,from,kind)
+  if not shown or pending then return end
+  pending={depth=(pos-from).Magnitude,offset=pos-block.CFrame.Position,rotation=block.CFrame-block.CFrame.Position,input=kind,dragging=true}
+  lib.PhysicalDragging=true surface.Active=false
+  for _,o in ipairs(surface:GetDescendants())do if o:IsA("GuiButton")then pcall(c.Patch,"physicalMenuDrag",o,"Interactable",false)end end
  end
  links[#links+1]=c.Input.InputBegan:Connect(function(input)
   if dead or not shown or input.UserInputType~=Enum.UserInputType.MouseButton1 or c.Input:GetFocusedTextBox()then return end
   if not c.Input:IsKeyDown(Enum.KeyCode.LeftAlt) and not c.Input:IsKeyDown(Enum.KeyCode.RightAlt) then return end
   local pos,from=rayHit() if pos then
-   pending={at=os.clock(),depth=(pos-from).Magnitude,offset=pos-block.CFrame.Position,rotation=block.CFrame-block.CFrame.Position}
+   beginDrag(pos,from,Enum.UserInputType.MouseButton1)
   end
  end)
- links[#links+1]=c.Input.InputEnded:Connect(function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 then finish()end end)
- if c.Input.WindowFocusReleased then links[#links+1]=c.Input.WindowFocusReleased:Connect(finish)end
+ links[#links+1]=c.Input.InputEnded:Connect(function(input)if pending and pending.input==input.UserInputType then finish()end end)
+ if c.Input.WindowFocusReleased then links[#links+1]=c.Input.WindowFocusReleased:Connect(function()
+  finish()captured={}if not shown then c.Actions:UnbindAction(action)end
+ end)end
+ links[#links+1]=c.Players.LocalPlayer.CharacterAdded:Connect(function()
+  if shown or surface or block then api:SetVisible(false)end
+ end)
  links[#links+1]=c.Run.RenderStepped:Connect(function()
   if dead or not shown then return end
   if not block or not block.Parent or not surface or not surface.Parent then api:SetVisible(false)return end
@@ -134,7 +170,7 @@ return function(c)
  function api:Destroy()
   if dead then return end
   if shown or block or surface then pcall(c.NativeToggle,lib,false)shown=false restore()end
-  dead=true captured=false c.Actions:UnbindAction(action) for _,link in ipairs(links)do link:Disconnect()end links={}
+  dead=true captured={} c.Actions:UnbindAction(action) for _,link in ipairs(links)do link:Disconnect()end links={}
  end
  return api
 end
