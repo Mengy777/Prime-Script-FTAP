@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4l"
+local VERSION="3.2.4m"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()

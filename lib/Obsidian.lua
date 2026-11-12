@@ -1950,6 +1950,9 @@ end
 
 function Library:MouseIsOverFrame(Frame: GuiObject, Point: Vector2?): boolean
     if not Frame then return false end
+    if Library.PhysicalGui and Frame:IsDescendantOf(Library.PhysicalGui) then
+        Point = Library:GetPointerLocation()
+    end
     Point = Point or Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
     return Point.X >= AbsPos.X
@@ -14202,7 +14205,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         if WindowInfo.UnlockMouseWhileOpen then
-            ModalElement.Modal = Library.Toggled and not Library.PhysicalGui
+            ModalElement.Modal = Library.Toggled
         end
 
         if Library.Toggled and not Library.IsMobile and not Library.PhysicalGui then

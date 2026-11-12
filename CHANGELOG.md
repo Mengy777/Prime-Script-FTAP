@@ -1,3 +1,10 @@
+## 3.2.4m — 2026-11-13
+
+- Physical menu now searches for clear ground, faces the player upright, checks spawn visibility and full-volume overlap, and falls back to 2D if no placement fits. The local body is unanchored and collidable when released.
+- Grab movement sweeps the panel volume with Blockcast and checks the destination instead of teleporting through walls. RMB or Alt+LMB holds the body; release clears velocity and restores physics. Resizing also checks available space.
+- Disable native fade before the first close during mounting, preventing an in-flight Toggle guard from leaving the surface visually open but logically closed. Unlock the pointer, retain native modal unlock and give SurfaceGui clicks priority over held Tools. Ordinary LMB remains native UI input; the transparent backplane no longer actively intercepts it.
+- Compilation and targeted physical-menu/native-widget/menu-binding/startup regressions pass, including blocked placement, missing ground and swept-drag counterexamples. Actual FTAP surface-click delivery and engine physics still need live verification; no server-side object or stock FTAP grab is claimed.
+
 ## 3.2.4l — 2026-11-10
 
 - Prevent physical SurfaceGui reset on character respawn (ResetOnSpawn=false). On CharacterAdded, restore native controls to their original parents and reset physical visibility so the next menu press reopens correctly. Fix visibility logic that treated a missing block as still open because Library.Toggled stayed true.

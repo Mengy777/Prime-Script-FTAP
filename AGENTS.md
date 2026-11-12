@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4l**, tag `v3.2.4l`. Next normal runtime version: **3.2.4m**. Consult Git for the release commit.
+- Published runtime target: **3.2.4m**, tag `v3.2.4m`. Next normal runtime version: **3.2.4n**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -451,3 +451,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - physical_menu.py tests screen notifications, ResetOnSpawn, CharacterAdded/reopen, removed block, RMB grab/release, failure injection and missing-camera fallback plus identity/cleanup/cold reload. major3/native_clicks/startup_resilience and compile pass. Live water/respawn/cursor delivery awaits user check.
 
 - 3.2.4l input correction: ordinary front-face LMB returns Pass to native SurfaceGui instead of CAS Sink; PV_MenuInputBackplane (Active=true, transparent) captures world input behind the widgets. RMB/Alt grab and back/edge hits retain the scoped guard. Tests assert front clicks pass.
+
+
+## 2026-11-13 — grounded colliding physical menu 3.2.4m
+
+- Supersedes l noncolliding body: local unanchored CanCollide=true Part, upright clear ground placement, visibility ray + volume overlap, 2D fallback when blocked/no ground. Holding RMB/Alt+LMB anchors temporarily; sweep full box and validate destination before moving. Release zeroes linear/angular velocity and restores unanchored physics. Resize checks overlap.
+- Native fade must be patched OFF before the initial NativeToggle(false), otherwise Fading may reject the following Toggle(true). Keep modal mouse unlock in physical mode; SurfaceGui.ToolPunchThroughDistance=100, ordinary front LMB Pass and non-active transparent backplane. These fixes need actual FTAP input/physics confirmation; mocks are not live evidence.
+- Targeted physical_menu/native_clicks/major3/startup_resilience and full Luau compilation pass. Physical regression includes ground alignment, collision/anchor state, blocked sweep, missing-ground/overlap fallback, restore/respawn/reopen. Controls551 unchanged; notifications stay screen-space.
