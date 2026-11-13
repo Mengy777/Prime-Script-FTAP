@@ -1,3 +1,9 @@
+## 3.2.4o — 2026-11-13
+
+- Physical menu no longer forces MouseBehavior.Default on mount/every frame. Restore the native library's physical-mode modal exclusion so the world panel does not unlock the game camera as a screen menu. Keep the game's current mouse/camera mode; pointer projection uses that mode.
+- Preserve worldMenuEnabled after placement/controller errors. Restore2D as emergency access without silently changing the chosen mode; the next menu press retries the physical panel. Shift+menu and the user's mode toggle still explicitly return to2D.
+- Physical regression verifies LockCenter survives mount/frame updates and failed placement/query recovery retains mode and supports retry. Live FTAP camera/movement needs verification.
+
 ## 3.2.4n — 2026-11-13
 
 - Release downloaded source buffers after function modules compile successfully. Keep compiled factories for reuse and retain source only for restartable non-factory modules; reset/reload compatibility is tested. Prefetch records no longer pin consumed source through the startup state.

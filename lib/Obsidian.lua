@@ -14205,7 +14205,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         if WindowInfo.UnlockMouseWhileOpen then
-            ModalElement.Modal = Library.Toggled
+            ModalElement.Modal = Library.Toggled and not Library.PhysicalGui
         end
 
         if Library.Toggled and not Library.IsMobile and not Library.PhysicalGui then

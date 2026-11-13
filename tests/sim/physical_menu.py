@@ -46,6 +46,7 @@ local option=TEST_OPTIONS.cameraFOV local tab=TEST_TAB_OBJECTS.Shaders
 for _,t in pairs(TEST_TAB_OBJECTS)do t.Container.Parent=main end
 assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block())
 TEST_SERVICES.UserInputService.MouseIconEnabled=true
+TEST_SERVICES.UserInputService.MouseBehavior=Enum.MouseBehavior.LockCenter
 local notice=Instance.new('Frame') notice.Name='ObsidianNotifications' notice.ZIndex=200 notice.Parent=TEST_LIBRARY.ScreenGui
 TEST_LIBRARY.NotificationArea=notice
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)
@@ -54,6 +55,7 @@ assert(block() and block().Transparency==0 and block().CanCollide==true and bloc
 local surface=TEST_LIBRARY.PhysicalGui
 assert(math.abs(block().CFrame.Position.Y-block().Size.Y/2-.06)<.001,'not placed on ground')
 assert(surface.ToolPunchThroughDistance==100)
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'mount changed game camera mouse mode')
 assert(surface.ResetOnSpawn==false,'surface destroys original UI on respawn')
 assert(surface and surface.Adornee==block() and surface.Parent==TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'))
 assert(main.Parent==surface and TEST_LIBRARY.Toggled and option==TEST_OPTIONS.cameraFOV)
@@ -79,6 +81,7 @@ local before=block().CFrame.Position
 TEST_SERVICES.UserInputService.InputBegan:Fire(input,true)
 workspace.CurrentCamera.CFrame=CFrame.new(3,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
 assert((block().CFrame.Position-before).Magnitude<.001,'ordinary control click moves the block')
+assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'frame forced camera mouse mode')
 TEST_SERVICES.UserInputService.InputEnded:Fire(input,false)
 -- Alt-drag works from any front pixel, including the body rather than a header.
 KEYS.LeftAlt=true
@@ -116,15 +119,15 @@ local rawNew=Instance.new
 Instance.new=function(class)if class=='SurfaceGui'then error('injected surface construction failure')end return rawNew(class)end
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)
 Instance.new=rawNew
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and main.Parent==parent and TEST_LIBRARY.Toggled,'failed mount trapped UI')
+assert(TEST_OPTIONS.worldMenuEnabled.Value and not block() and main.Parent==parent and TEST_LIBRARY.Toggled,'failed mount trapped UI')
 local camera=workspace.CurrentCamera workspace.CurrentCamera=nil
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)workspace.CurrentCamera=camera
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and TEST_LIBRARY.Toggled,'missing camera trapped UI')
+assert(TEST_OPTIONS.worldMenuEnabled.Value and TEST_LIBRARY.Toggled,'missing camera trapped UI')
 TEST_NO_GROUND=true TEST_OPTIONS.worldMenuEnabled:SetValue(true)
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'no ground trapped UI')TEST_NO_GROUND=false
+assert(TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'no ground trapped UI')TEST_NO_GROUND=false
 TEST_MENU_OVERLAP=true TEST_OPTIONS.worldMenuEnabled:SetValue(true)
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'blocked placement trapped UI')TEST_MENU_OVERLAP=false
-TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
+assert(TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'blocked placement trapped UI')TEST_MENU_OVERLAP=false
+pressMenu()assert(block()) TEST_DRAIN()
 -- Engine query failures close the experimental mode once, rather than throwing every frame.
 HIT_X=500 HIT_Y=360
 local right={UserInputType=Enum.UserInputType.MouseButton2}
@@ -132,8 +135,8 @@ TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard(nil,Enum.Use
 local sweep=workspace.Blockcast workspace.Blockcast=function()error('injected engine query failure')end
 workspace.CurrentCamera.CFrame=CFrame.new(30,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
 workspace.Blockcast=sweep
-assert(not block() and TEST_LIBRARY.Toggled and not TEST_OPTIONS.worldMenuEnabled.Value,'physics error trapped UI')
-TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
+assert(not block() and TEST_LIBRARY.Toggled and TEST_OPTIONS.worldMenuEnabled.Value,'physics error trapped UI')
+pressMenu()assert(block()) TEST_DRAIN()
 TEST_ACTIONS['Unload script']()
 assert(not block() and TEST_LIBRARY.PhysicalGui==nil and TEST_LIBRARY.PointerProvider==nil)
 ''')

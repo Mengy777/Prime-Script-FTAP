@@ -158,12 +158,12 @@ return function(c)
    return Enum.ContextActionResult.Pass
   end,false,6000,Enum.UserInputType.MouseButton1,Enum.UserInputType.MouseButton2)
   c.NativeToggle(lib,true)
-  c.Patch("physicalMenuCursor",c.Input,"MouseBehavior",Enum.MouseBehavior.Default)
+  -- Keep the game camera/movement mouse mode; ray input works from its
+  -- current pointer (including a locked first-person crosshair).
   c.Patch("physicalMenuCursor",c.Input,"MouseIconEnabled",true)
   end,debug.traceback)
   if not ok then
    shown=false pcall(c.NativeToggle,lib,false)restore()
-   if c.Setters.worldMenuEnabled then c.Setters.worldMenuEnabled(false,true)end
    pcall(c.NativeToggle,lib,true)
    c.Notify(c.Main.Parent and "Physical menu failed; returned to 2D" or "Menu UI was removed; reload script") warn(message)
   end
@@ -209,7 +209,6 @@ return function(c)
  local function step()
   if dead or not shown then return end
   if not block or not block.Parent or not surface or not surface.Parent then api:SetVisible(false)return end
-  c.Input.MouseBehavior=Enum.MouseBehavior.Default c.Input.MouseIconEnabled=true
   if pending then
    if not pending.dragging then
     pending.dragging=true lib.PhysicalDragging=true surface.Active=false
@@ -229,7 +228,6 @@ return function(c)
   local ok,message=pcall(step)
   if not ok then
    api:SetVisible(false)
-   if c.Setters.worldMenuEnabled then c.Setters.worldMenuEnabled(false,true)end
    pcall(c.NativeToggle,lib,true)
    c.Notify("Physical menu failed; returned to 2D")warn(message)
   end
