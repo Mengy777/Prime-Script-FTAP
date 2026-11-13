@@ -38,7 +38,7 @@ TweenInfo={new=function(...) return {...} end}
 CFrame={new=function(...) return {Position=Vector3.new(),LookVector=Vector3.new(0,0,-1)} end}
 local function signal()
  local s={handlers={}}
- function s:Connect(f) local c={active=true,fn=f} function c:Disconnect() self.active=false end self.handlers[#self.handlers+1]=c return c end
+ function s:Connect(f) local c={active=true,Connected=true,fn=f} function c:Disconnect() self.active=false self.Connected=false end self.handlers[#self.handlers+1]=c return c end
  function s:Once(f) return self:Connect(f) end
  function s:Fire(...) for _,c in ipairs(self.handlers) do if c.active then c.fn(...) end end end
  return s

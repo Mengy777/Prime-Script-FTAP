@@ -1642,6 +1642,7 @@ local ScreenGui = New("ScreenGui", {
 ParentUI(ScreenGui)
 Library.ScreenGui = ScreenGui
 if type(registerStartup)=="function" then registerStartup(Library) end
+requireModule("WorldUIInput")(Library)
 
 ScreenGui.DescendantRemoving:Connect(function(Instance)
     task.defer(function()
@@ -2184,7 +2185,7 @@ function Library:MakeDraggable(
         end
     end
 
-    InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
+    InputBegan = Library:ConnectUI(DragFrame,"InputBegan",function(Input: InputObject)
         if not IsClickInput(Input) or IsMainWindow and Library.CantDragForced then
             return
         end
@@ -2309,7 +2310,7 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
     local InputBegan
     local InputChanged
 
-    InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
+    InputBegan = Library:ConnectUI(DragFrame,"InputBegan",function(Input: InputObject)
         if Library.PhysicalGui or not IsClickInput(Input) then
             return
         end
@@ -2666,7 +2667,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
                 Parent = Frame,
             })
             Library:ApplyLucideIcon(PlaceholderDockIcon, PopOutIcon)
-            PlaceholderDockIcon.MouseButton1Click:Connect(function()
+            Library:ConnectUI(PlaceholderDockIcon,"MouseButton1Click",function()
                 Box:SetPoppedOut(false)
             end)
         end
@@ -2981,7 +2982,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
     end
 
     local function BindDragSource(Gui: GuiObject)
-        Library:GiveSignal(Gui.InputBegan:Connect(function(Input: InputObject)
+        Library:GiveSignal(Library:ConnectUI(Gui,"InputBegan",function(Input: InputObject)
             if IsClickInput(Input) then
                 BeginDrag(Input)
             end
@@ -3234,7 +3235,7 @@ function Library:AddDraggableButton(...)
     Library:AddOutline(Button)
 
     local MaxClickDistance = ExcludeDragging and 12 or math.huge
-    Button.InputBegan:Connect(function(Input: InputObject)
+    Library:ConnectUI(Button,"InputBegan",function(Input: InputObject)
         if not IsClickInput(Input) then
             return
         end
@@ -3430,7 +3431,7 @@ function Library:AddDraggableImageButton(...)
     Library:AddOutline(Button)
 
     local MaxClickDistance = ExcludeDragging and 12 or math.huge
-    Button.InputBegan:Connect(function(Input: InputObject)
+    Library:ConnectUI(Button,"InputBegan",function(Input: InputObject)
         if not IsClickInput(Input) then
             return
         end
@@ -4453,7 +4454,7 @@ do
             end
 
             KeyPicker.DoClick = function(...) end 
-            table.insert(KeyPicker.Connections, Holder.MouseButton1Click:Connect(function()
+            table.insert(KeyPicker.Connections, Library:ConnectUI(Holder,"MouseButton1Click",function()
                 if KeybindsToggle.Normal then
                     return
                 end
@@ -4592,7 +4593,7 @@ do
                 Button.TextTransparency = 0.5
             end
 
-            table.insert(KeyPicker.Connections, Button.MouseButton1Click:Connect(function()
+            table.insert(KeyPicker.Connections, Library:ConnectUI(Button,"MouseButton1Click",function()
                 ModeButton:Select()
             end))
 
@@ -4932,7 +4933,7 @@ do
             KeyPicker:Update()
         end
 
-        table.insert(KeyPicker.Connections, Picker.MouseButton1Click:Connect(function()
+        table.insert(KeyPicker.Connections, Library:ConnectUI(Picker,"MouseButton1Click",function()
             if Picking or Library.IsPicking or ParentObj.Disabled then
                 return
             end
@@ -5600,7 +5601,7 @@ do
                 Library:ApplyLucideIcon(ResizeGrabberIcon, ResizeIcon)
             end
 
-            table.insert(ColorPicker.Connections, ResizeGrabber.InputBegan:Connect(function(Input: InputObject)
+            table.insert(ColorPicker.Connections, Library:ConnectUI(ResizeGrabber,"InputBegan",function(Input: InputObject)
                 Library.CantDragForced = true
                 local StartMouse = Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)
                 local StartWidth = ColorPicker.MapWidth
@@ -5706,7 +5707,7 @@ do
                     Parent = ContextMenu.Menu,
                 })
 
-                table.insert(ColorPicker.Connections, Button.MouseButton1Click:Connect(function()
+                table.insert(ColorPicker.Connections, Library:ConnectUI(Button,"MouseButton1Click",function()
                     Library:SafeCallback(Func)
                     ContextMenu:Close()
                 end))
@@ -5831,7 +5832,7 @@ do
             }):Play()
         end))
 
-        table.insert(ColorPicker.Connections, CopyColorButton.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:ConnectUI(CopyColorButton,"MouseButton1Click",function()
             Library.CopiedColor = { ColorPicker.Value, ColorPicker.Transparency }
 
             CopyColorResetId += 1
@@ -5847,7 +5848,7 @@ do
             end)
         end))
 
-        table.insert(ColorPicker.Connections, PasteColorButton.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:ConnectUI(PasteColorButton,"MouseButton1Click",function()
             PasteColorResetId += 1
             local ThisResetId = PasteColorResetId
 
@@ -5964,7 +5965,7 @@ do
             ColorPicker:Update()
         end
 
-        table.insert(ColorPicker.Connections, Holder.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:ConnectUI(Holder,"MouseButton1Click",function()
             if ParentObj.Disabled then
                 return
             end
@@ -5980,7 +5981,7 @@ do
             ContextMenu:Toggle()
         end))
 
-        table.insert(ColorPicker.Connections, SatVipMap.InputBegan:Connect(function(Input: InputObject)
+        table.insert(ColorPicker.Connections, Library:ConnectUI(SatVipMap,"InputBegan",function(Input: InputObject)
             while IsDragInput(Input) and not ColorPicker.Destroyed do
                 local MinX = SatVipMap.AbsolutePosition.X
                 local MaxX = MinX + SatVipMap.AbsoluteSize.X
@@ -6003,7 +6004,7 @@ do
             end
         end))
 
-        table.insert(ColorPicker.Connections, HueSelector.InputBegan:Connect(function(Input: InputObject)
+        table.insert(ColorPicker.Connections, Library:ConnectUI(HueSelector,"InputBegan",function(Input: InputObject)
             while IsDragInput(Input) and not ColorPicker.Destroyed do
                 local Min = HueSelector.AbsolutePosition.Y
                 local Max = Min + HueSelector.AbsoluteSize.Y
@@ -6021,7 +6022,7 @@ do
         end))
 
         if TransparencySelector then
-            table.insert(ColorPicker.Connections, TransparencySelector.InputBegan:Connect(function(Input: InputObject)
+            table.insert(ColorPicker.Connections, Library:ConnectUI(TransparencySelector,"InputBegan",function(Input: InputObject)
                 while IsDragInput(Input) and not ColorPicker.Destroyed do
                     local Min = TransparencySelector.AbsolutePosition.Y
                     local Max = TransparencySelector.AbsolutePosition.Y + TransparencySelector.AbsoluteSize.Y
@@ -6659,7 +6660,7 @@ do
                 end
             end))
 
-            table.insert(Button.Connections, Button.Base.MouseButton1Click:Connect(function()
+            table.insert(Button.Connections, Library:ConnectUI(Button.Base,"MouseButton1Click",function()
                 if Button.Disabled or Button.Locked then
                     return
                 end
@@ -7133,7 +7134,7 @@ do
             Label.Text = Text
         end
 
-        table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+        table.insert(Toggle.Connections, Library:ConnectUI(Button,"MouseButton1Click",function()
             if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)) then return end
             if Toggle.Disabled then
                 return
@@ -7408,7 +7409,7 @@ do
             Label.Text = Text
         end
 
-        table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+        table.insert(Toggle.Connections, Library:ConnectUI(Button,"MouseButton1Click",function()
             if Toggle.SettingsButton and Library:MouseIsOverFrame(Toggle.SettingsButton, Vector2.new(Library:GetPointerLocation().X, Library:GetPointerLocation().Y)) then return end
             if Toggle.Disabled then
                 return
@@ -8070,7 +8071,7 @@ do
         end
 
         local LastTap = 0
-        table.insert(Slider.Connections, Bar.InputBegan:Connect(function(Input: InputObject)
+        table.insert(Slider.Connections, Library:ConnectUI(Bar,"InputBegan",function(Input: InputObject)
             local ValidInput = IsClickInput(Input) or Input.UserInputType == Enum.UserInputType.MouseButton2
             if not ValidInput or Slider.Disabled then
                 return
@@ -8854,7 +8855,7 @@ do
                 end
             end
 
-            table.insert(Dropdown.Connections, Button.MouseButton1Click:Connect(function()
+            table.insert(Dropdown.Connections, Library:ConnectUI(Button,"MouseButton1Click",function()
                 local Entry = Row.Entry
                 if not Entry or Entry.IsDisabled or DragSelecting then
                     return
@@ -8936,7 +8937,7 @@ do
                 end
             end))
 
-            table.insert(Dropdown.Connections, Button.InputBegan:Connect(function(StartInput)
+            table.insert(Dropdown.Connections, Library:ConnectUI(Button,"InputBegan",function(StartInput)
                 if not (Info.Multi and Dropdown.DragSelect and not Library.IsMobile) then
                     return
                 end
@@ -9214,8 +9215,8 @@ do
             MenuTable:Toggle()
         end
 
-        table.insert(Dropdown.Connections, DisplayContainer.MouseButton1Click:Connect(ToggleDropdown))
-        table.insert(Dropdown.Connections, DisplayButton.MouseButton1Click:Connect(ToggleDropdown))
+        table.insert(Dropdown.Connections, Library:ConnectUI(DisplayContainer,"MouseButton1Click",ToggleDropdown))
+        table.insert(Dropdown.Connections, Library:ConnectUI(DisplayButton,"MouseButton1Click",ToggleDropdown))
 
         if SearchBox then
             table.insert(Dropdown.Connections, SearchBox:GetPropertyChangedSignal("Text"):Connect(Dropdown.BuildDropdownList))
@@ -9441,7 +9442,7 @@ do
             end
         end))
 
-        table.insert(Viewport.Connections, ViewportFrame.InputBegan:Connect(function(input)
+        table.insert(Viewport.Connections, Library:ConnectUI(ViewportFrame,"InputBegan",function(input)
             if not Viewport.Interactive then
                 return
             end
@@ -10475,7 +10476,7 @@ function Library:AddFeatureSettings(Toggle, Info)
             Other.Button.Position = UDim2.new((I - 1) / #Settings.Pages, 1, 0, 0)
         end
         Library:GiveSignal(Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() Page:Resize() end))
-        Library:GiveSignal(Button.MouseButton1Click:Connect(function() Page:Show() end))
+        Library:GiveSignal(Library:ConnectUI(Button,"MouseButton1Click",function() Page:Show() end))
         local SelectedPage = Settings.ActivePage or Page
         SelectedPage:Show()
         return Page
@@ -10564,8 +10565,8 @@ function Library:AddFeatureSettings(Toggle, Info)
         if DismissedOnOwnerPress then DismissedOnOwnerPress = false return end
         Settings:Open()
     end))
-    Library:GiveSignal(CloseButton.MouseButton1Click:Connect(function() Settings:Close() end))
-    Library:GiveSignal(SettingsButton.MouseButton1Click:Connect(function()
+    Library:GiveSignal(Library:ConnectUI(CloseButton,"MouseButton1Click",function() Settings:Close() end))
+    Library:GiveSignal(Library:ConnectUI(SettingsButton,"MouseButton1Click",function()
         if DismissedOnSettingsPress then DismissedOnSettingsPress = false return end
         Settings:Open()
     end))
@@ -10779,7 +10780,7 @@ function Library:Notify(...)
                 ImageTransparency = 0.5,
             }):Play()
         end)
-        CloseButton.MouseButton1Click:Connect(function()
+        Library:ConnectUI(CloseButton,"MouseButton1Click",function()
             Data:Destroy("user")
         end)
     end
@@ -12552,7 +12553,7 @@ function Library:CreateWindow(WindowInfo)
                     Tab:Show()
                 end
 
-                Button.MouseButton1Click:Connect(Tab.Show)
+                Library:ConnectUI(Button,"MouseButton1Click",Tab.Show)
 
                 Tab.AddTabbox = AddTabbox
                 setmetatable(Tab, BaseGroupbox)
@@ -13015,7 +13016,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             if Info.DisableCollapsing ~= true then
-                GroupboxCollapseArrow.MouseButton1Click:Connect(function()
+                Library:ConnectUI(GroupboxCollapseArrow,"MouseButton1Click",function()
                     Groupbox:ToggleCollapsed()
                 end)
             end
@@ -13220,7 +13221,7 @@ function Library:CreateWindow(WindowInfo)
         TabButton.MouseLeave:Connect(function()
             Tab:Hover(false)
         end)
-        TabButton.MouseButton1Click:Connect(Tab.Show)
+        Library:ConnectUI(TabButton,"MouseButton1Click",Tab.Show)
 
         Library.Tabs[Name] = Tab
 
@@ -13454,7 +13455,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end)
 
-            Button.InputBegan:Connect(function(Input)
+            Library:ConnectUI(Button,"InputBegan",function(Input)
                 if not IsClickInput(Input) then
                     return
                 end
@@ -13617,7 +13618,7 @@ function Library:CreateWindow(WindowInfo)
         TabButton.MouseLeave:Connect(function()
             Tab:Hover(false)
         end)
-        TabButton.MouseButton1Click:Connect(Tab.Show)
+        Library:ConnectUI(TabButton,"MouseButton1Click",Tab.Show)
 
         Tab.Container = TabContainer
         setmetatable(Tab, BaseGroupbox)
@@ -13908,7 +13909,7 @@ function Library:CreateWindow(WindowInfo)
             Library.Dialogues[Idx] = nil
         end
 
-        DialogOverlay.MouseButton1Click:Connect(function()
+        Library:ConnectUI(DialogOverlay,"MouseButton1Click",function()
             if Info.OutsideClickDismiss then
                 Dialog:Dismiss()
             end
@@ -14062,7 +14063,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end)
 
-            TextBtn.MouseButton1Click:Connect(function()
+            Library:ConnectUI(TextBtn,"MouseButton1Click",function()
                 if not IsActive then return end
                 if ButtonInfo.Callback then
                     ButtonInfo.Callback(Dialog)
@@ -14274,7 +14275,7 @@ function Library:CreateWindow(WindowInfo)
             }):Play()
         end)
 
-        SidebarGrabber.InputBegan:Connect(function(Input: InputObject)
+        Library:ConnectUI(SidebarGrabber,"InputBegan",function(Input: InputObject)
             if not IsClickInput(Input) then
                 return
             end
@@ -15064,7 +15065,7 @@ function Library:CreateLoading(LoadingInfo)
                 }):Play()
             end)
 
-            TextBtn.MouseButton1Click:Connect(function()
+            Library:ConnectUI(TextBtn,"MouseButton1Click",function()
                 if ButtonInfo.Callback then
                     ButtonInfo.Callback(Loading)
                 end

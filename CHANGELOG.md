@@ -1,3 +1,10 @@
+## 3.2.4q — 2026-11-13
+
+- Add source-owned WorldUIInput routing for the physical panel. CAS captures paired front-face LMB and dispatches existing UI callbacks by ray/canvas hit, visibility, ancestor clipping and sibling layer order. Native delivery is suppressed only for registered controls on the world surface to prevent duplicate activation;2D signals remain unchanged.
+- Register native Obsidian click/InputBegan handlers through ConnectUI, retaining actual connection objects and callback semantics. Support native toggle/button/tab/settings/dropdown callbacks, slider/color InputBegan and TextBox focus. ShaderBrowser Activated handlers use the same registry.
+- Preserve RMB/Alt dragging and camera behavior. Release outside/cancel, hidden/disabled controls, disconnected handlers and world hide do not activate clicks.
+- Actual extracted native toggle is exercised through the ray router, including exact-once native-event suppression and cancellation; physical CAS fixture now tests the explicit route. Mock connections expose the real Connected contract. Live FTAP input still requires confirmation.
+
 ## 3.2.4p — 2026-11-13
 
 - Treat physical UI as a world panel, not a gameplay-blocking screen menu: third-person pan, visual-expansion/Minecraft menu predicates and shared menuOpen now exclude Library.PhysicalGui. Keep native UI Toggled for widget logic without pausing these gameplay paths.

@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4p"
+local VERSION="3.2.4q"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -146,7 +146,7 @@ end)
 introTween=tweens:Create(backdrop,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=0})introTween:Play()
 cardTween=tweens:Create(card,TweenInfo.new(.14,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{GroupTransparency=0})cardTween:Play()
 -- Download only sources concurrently; constructors still execute in dependency order.
-local preload={"Library","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","ShaderBrowser","WraithCatalogUI","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PhysicalMenu","PrimeIcon","ConfigStore"}
+local preload={"Library","WorldUIInput","Icons","Navigation","AvatarVisibility","LightingEditor","ShaderCatalog","ShaderBrowser","WraithCatalogUI","CoinIcon","ToyCollection","SoundOverrides","SoundPresets","CrosshairStyles","MapAppearance","MapPresets","InputOverlay","MinecraftMode","MinecraftAssets","AntiKick","VisualPresets","VisualExpansion","Wordmark","Keybinds","MajorInterface","PhysicalMenu","PrimeIcon","ConfigStore"}
 startup.Downloads={}local nextDownload=0 local downloaded=0
 for _,name in ipairs(preload)do startup.Downloads[name]={Done=sourceCache[name]~=nil,Source=sourceCache[name]}end
 for worker=1,4 do task.defer(function()
@@ -2929,7 +2929,7 @@ local function buildVisualSystems()
             InputOverlayAssetRoot="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/input-overlay/",
             MinecraftAssetRoot="https://raw.githubusercontent.com/Mengy777/Prime-Script-FTAP/refs/tags/v"..VERSION.."/assets/minecraft/",
             Workspace=Workspace,Players=Players,Run=Run,Input=UIS,Lighting=Lighting,PlayerGui=playerGui,
-            LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
+            Library=Library,LoadModule=loadUIModule,Widgets=widgets,Patches=patches,Controls=controls,Setters=setters,ColorOwners=colorOwners,Data=loadUIModule("VisualPresets"),
             Group=group,Toggle=toggle,Slider=sliderControl,Color=color,Field=field,Choice=choice,Panel=featureSettings,
             RefreshAvatarVisibility=function()avatarVisibility:Refresh()end,
             Make=make,Patch=patch,Unpatch=unpatch,Job=job,Action=action,ImageId=imageId,Selected=playerSelected,

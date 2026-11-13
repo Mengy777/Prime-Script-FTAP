@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4p**, tag `v3.2.4p`. Next normal runtime version: **3.2.4q**. Consult Git for the release commit.
+- Published runtime target: **3.2.4q**, tag `v3.2.4q`. Next normal runtime version: **3.2.4r**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -481,3 +481,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - PhysicalGui keeps Library.Toggled for native widgets, but gameplay MenuOpen callbacks/shared menuOpen and thirdPan suppression must distinguish2D (Toggled and not PhysicalGui). World UI should not pause these gameplay/camera controllers.
 - Removed Shift+menu disable/recovery shortcut: it collided with normal FTAP crouch while hiding and silently changed mode. Explicit worldMenuEnabled toggle remains available. Physical test verifies Shift/hide/reopen preserves mode.
 - Full compile and targeted physical_menu/visual_expansion/major3 pass; no live FTAP camera proof yet.
+
+
+## 2026-11-13 — explicit world UI input 3.2.4q
+
+- User confirmed movement/hover but no clicks. Native SurfaceGui event delivery wasn't sufficient; WorldUIInput.lua attaches Library.ConnectUI, registry of source-owned native callbacks. Native engine events ignored ONLY for registered objects under PhysicalGui;2D continues normally. Physical CAS now owns front LMB and calls WorldPointerBegin/End; no getconnections/firesignal/remote used.
+- Native Obsidian GuiObject InputBegan/MouseButton1Click registrations use helper, original RBXScriptConnections returned. Ray hit selection respects sibling layering, visibility, ancestor clipping; callbacks are task.spawn to allow slider yielding. InputBegan bubbles to ancestors; click chooses first registered click ancestor. TextBox focus supported. ShaderBrowser receives Library through VisualExpansion and registers Activated.
+- No camera/movement/physics change. Native extracted toggle ray regression verifies exact-once, native duplicate suppression, cancelled/hidden/disabled behavior; physical fixture exercises CAS Sink and pairing. Mock connections now expose Connected. Live FTAP remains unverified.

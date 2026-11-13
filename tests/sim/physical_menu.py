@@ -38,6 +38,7 @@ workspace.Raycast=function(self,origin,direction,params)
 end
 ''')
 lua.execute(source)
+lua.execute((ROOT/"lib/WorldUIInput.lua").read_text(encoding="utf-8"))(lua.globals().TEST_LIBRARY)
 lua.execute('''
 local function block()return workspace:FindFirstChild('PV_PhysicalMenu')end
 local function pressMenu()TEST_SERVICES.UserInputService.InputBegan:Fire({UserInputType=Enum.UserInputType.Keyboard,KeyCode=Enum.KeyCode.RightControl},false)end
@@ -63,8 +64,8 @@ main.BackgroundTransparency=.5 assert(main.BackgroundTransparency==0,'physical U
 assert(tab.Container:IsDescendantOf(main),'actual shader page was not moved')
 local guard=TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard
 HIT_X=nil assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass)
-HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'normal GUI click swallowed')
-assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Pass)
+HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink,'world click was not owned by UI router')
+assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)
 TEST_BACK=true assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
 HIT_X=nil assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)TEST_BACK=false
 assert(not surface:FindFirstChild('PV_MenuInputBackplane').Active)

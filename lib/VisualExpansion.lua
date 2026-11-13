@@ -690,7 +690,7 @@ return function(c)
         for _,key in ipairs({"shaderCollection","visualPreset"}) do c.Widgets[key]:SetVisible(false) end
         shaderWindow=c.LoadModule("WraithCatalogUI")({Make=create,Page=c.ShadersPage,MenuOpen=c.MenuOpen,
             IsPageActive=c.IsShadersActive,Translate=c.Translate})
-        shaderBrowser=c.LoadModule("ShaderBrowser")({Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
+        shaderBrowser=c.LoadModule("ShaderBrowser")({Library=c.Library,Group=g,Make=create,Connect=connect,Controls=v,Setters=c.Setters,
             Host=shaderWindow.Host,Sidebar=shaderWindow.Sidebar,Thematic=true,Language=c.Language,GetDPIScale=c.GetDPIScale,Names=presetNames,Presets=presets,Translate=c.Translate,
             GetScheme=function()return {MainColor=rgb(22,23,28),OutlineColor=rgb(40,42,49),FontColor=rgb(232,234,240),AccentColor=c.GetAccent()}end,
             TweenService=c.TweenService})

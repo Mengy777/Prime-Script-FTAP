@@ -95,6 +95,7 @@ pointers=native[native.index('function Library:GetPointerLocation('):native.inde
 pointers=re.sub(r':\s*Vector2\b','',pointers)
 lua.execute("Mouse=CURRENT_POINT")
 lua.execute(pointers)
+lua.execute((ROOT/"lib/WorldUIInput.lua").read_text(encoding="utf-8"))(lua.globals().Library)
 lua.execute(drag)
 lua.execute(block)
 lua.execute(r"""

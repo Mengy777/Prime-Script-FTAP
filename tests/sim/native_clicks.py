@@ -69,6 +69,7 @@ DRAG_STEPS=0
 function IsDragInput()if DRAG_STEPS>0 then DRAG_STEPS=DRAG_STEPS-1 return true end return false end
 function TEST_SERVICES.RunService.RenderStepped:Wait()end
 """)
+lua.execute((ROOT/"lib/WorldUIInput.lua").read_text(encoding="utf-8"))(lua.globals().Library)
 # Actual hit-test contract is intentionally not replaced by a forgiving test double.
 a=source.index('function Library:GetPointerLocation(');b=source.index('function Library:MouseIsOverFrame(',a)
 lua.execute(lua_compat(source[a:b]))
@@ -151,3 +152,31 @@ Library.PointerProvider=nil
 assert(Library:GetPointerLocation().X==Mouse.X)
 """)
 print('PASS actual native pointer adapter switches surface/screen coordinates without changing normal mouse fallback')
+
+lua.execute(r"""
+local surface=Instance.new('SurfaceGui')surface.Parent=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui')
+Library.PhysicalGui=surface
+local g=GROUP()g.Container.Parent=surface
+local calls=0
+local toggle=g:AddToggle('world_native',{Text='World native',Callback=function()calls=calls+1 end})
+local o=toggle.Holder
+local p=o.AbsolutePosition+Vector2.new(o.AbsoluteSize.X*.2,o.AbsoluteSize.Y*.5)
+Library.PointerProvider=function()return p end
+local input={UserInputType=Enum.UserInputType.MouseButton1,UserInputState=Enum.UserInputState.Begin}
+assert(Library:WorldPointerBegin(p,input))
+Library:WorldPointerEnd(p,input,false)TEST_DRAIN()
+assert(toggle.Value and calls==1,'ray dispatch did not invoke actual native toggle')
+o.MouseButton1Click:Fire()TEST_DRAIN()
+assert(calls==1,'engine click duplicated world callback')
+assert(Library:WorldPointerBegin(p,input))
+Library:WorldPointerEnd(p,input,true)TEST_DRAIN()
+assert(calls==1,'cancelled click activated')
+g.Container.Visible=false
+assert(not Library:WorldPointerBegin(p,input),'hidden UI captured ray input')
+g.Container.Visible=true
+toggle:SetDisabled(true)
+Library:WorldPointerBegin(p,input)Library:WorldPointerEnd(p,input,false)TEST_DRAIN()
+assert(calls==1,'disabled native toggle activated')
+toggle:Destroy()surface:Destroy()Library.PhysicalGui=nil Library.PointerProvider=nil
+""")
+print('PASS ray-dispatched actual native toggle, exact-once, cancel, hidden and disabled guards')

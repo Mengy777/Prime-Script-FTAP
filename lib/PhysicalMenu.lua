@@ -81,6 +81,7 @@ return function(c)
  end
  local function restore()
   epoch=epoch+1 pending=nil
+  if lib.WorldPointerCancel then lib:WorldPointerCancel()end
   if not next(captured) then c.Actions:UnbindAction(action)end
   for _,link in ipairs(mountLinks)do link:Disconnect()end mountLinks={}
   -- Restore native controls before destroying their temporary GUI parent.
@@ -139,6 +140,9 @@ return function(c)
    local kind=input and input.UserInputType or Enum.UserInputType.MouseButton1
    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
     local consume=captured[kind] captured[kind]=nil
+    if consume and kind==Enum.UserInputType.MouseButton1 and lib.WorldPointerEnd then
+     lib:WorldPointerEnd(api:Pointer(),input,state==Enum.UserInputState.Cancel)
+    end
     if pending and pending.input==kind then finish()end
     if not shown and not next(captured)then c.Actions:UnbindAction(action)end
     return consume and Enum.ContextActionResult.Sink or Enum.ContextActionResult.Pass
@@ -149,7 +153,13 @@ return function(c)
      local grab=kind==Enum.UserInputType.MouseButton2 or (c.Input.IsKeyDown and (c.Input:IsKeyDown(Enum.KeyCode.LeftAlt)or c.Input:IsKeyDown(Enum.KeyCode.RightAlt)))
      -- Let native SurfaceGui receive ordinary front-face clicks. Its active
      -- canvas handles GUI input; CAS must not swallow widget activation.
-     if not grab and api:Pointer()then return Enum.ContextActionResult.Pass end
+     if not grab and api:Pointer()then
+      if lib.WorldPointerBegin then
+       captured[kind]=true lib:WorldPointerBegin(api:Pointer(),input)
+       return Enum.ContextActionResult.Sink
+      end
+      return Enum.ContextActionResult.Pass
+     end
      captured[kind]=true
      if grab then beginDrag(pos,from,kind)end
      return Enum.ContextActionResult.Sink

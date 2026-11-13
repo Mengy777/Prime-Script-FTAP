@@ -1,6 +1,10 @@
 -- Presentation only. Selection flows through the existing persisted setters.
 return function(c)
     local make,connect=c.Make,c.Connect
+    local function click(object,callback)
+        if c.Library and c.Library.ConnectUI then return c.Library:ConnectUI(object,"Activated",callback)end
+        return connect(object.Activated,callback)
+    end
     local animations={} local dead=false
     local function animate(object,properties,duration)
         if dead then return end
@@ -101,9 +105,9 @@ return function(c)
         local index=table.find(visible,c.Controls.visualPreset)
         select(visible[index and ((index-1+direction)%#visible)+1 or (direction>0 and 1 or #visible)])
     end
-    connect(previous.Activated,function() step(-1) end) connect(nextButton.Activated,function() step(1) end)
-    connect(power.Activated,function() c.Setters.visualPresetEnabled(not c.Controls.visualPresetEnabled,true) end)
-    connect(clear.Activated,function() search.Text="" end)
+    click(previous,function() step(-1) end) click(nextButton,function() step(1) end)
+    click(power,function() c.Setters.visualPresetEnabled(not c.Controls.visualPresetEnabled,true) end)
+    click(clear,function() search.Text="" end)
     local collections=c.Thematic and {"All shaders","Daylight","Night","Warm","Cool","Foggy","Monochrome","Vivid"} or {"All collections","Prime Visuals","Mercury","SAVITAR","Fosfor","Eris","Silent Target"}
     for i,name in ipairs(collections) do
         local b=make("TextButton",{Name="Collection_"..i,Size=UDim2.fromOffset(name=="All collections" and 106 or name=="Prime Visuals" and 102 or name=="Silent Target" and 102 or 85,28),
@@ -111,7 +115,7 @@ return function(c)
         make("UICorner",{CornerRadius=UDim.new(0,5)},b)
         local stroke=make("UIStroke",{Thickness=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
         chips[#chips+1]={name=name,button=b,stroke=stroke}
-        connect(b.Activated,function()
+        click(b,function()
             if c.Thematic then api.Category=name api:Refresh(true) else c.Setters.shaderCollection(name,true) end
         end)
     end
@@ -124,13 +128,13 @@ return function(c)
                 Size=UDim2.new(1,-3,0,24),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham,TextWrapped=true},sortRoot)
             make("UICorner",{CornerRadius=UDim.new(0,4)},button)
             sortButtons[#sortButtons+1]={name=name,button=button}
-            connect(button.Activated,function()api.Sort=name api:Refresh(true)end)
+            click(button,function()api.Sort=name api:Refresh(true)end)
         end
         local direction=make("TextButton",{Name="SortDirection",Position=UDim2.fromOffset(0,126),Size=UDim2.new(1,-2,0,24),
             Text=tr("Ascending"),TextColor3=white,BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,TextSize=11,Font=Enum.Font.Gotham},sortRoot)
         make("UICorner",{CornerRadius=UDim.new(0,4)},direction)
         sortDirection=direction
-        connect(direction.Activated,function() api.Descending=not api.Descending direction.Text=tr(api.Descending and "Descending" or "Ascending") api:Refresh(true) end)
+        click(direction,function() api.Descending=not api.Descending direction.Text=tr(api.Descending and "Descending" or "Ascending") api:Refresh(true) end)
     end
     for i,name in ipairs(c.Names) do
         local data=c.Presets[name]
@@ -157,7 +161,7 @@ return function(c)
                 Night=data.light.ClockTime and (data.light.ClockTime<6 or data.light.ClockTime>=18),
                 Warm=tint.R-tint.B>.08,Cool=tint.B-tint.R>.08,Foggy=density>=.35 or (data.light.FogEnd and data.light.FogEnd<=2000),
                 Monochrome=saturation<=-.5,Vivid=saturation>=.25}}
-        connect(b.Activated,function()
+        click(b,function()
             select(name)
         end)
         connect(b.MouseEnter,function() hovered=b api:Refresh(true) end)
