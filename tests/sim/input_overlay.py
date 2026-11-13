@@ -81,3 +81,22 @@ assert(TEST_MOUSE_FETCHES==6,'re-enable refetched artwork')
 TEST_ACTIONS['Unload script']()
 """)
 print('PASS real lazy artwork loader, six mask/body assets, no startup requests, cache reuse and native PNG alpha/dimensions')
+
+lua,_,_,_=session(Disk())
+lua.execute(r"""
+-- Once interpolation settles, idle frames must not rewrite key properties.
+TEST_OPTIONS.inputOverlayEnabled:SetValue(true)
+local screen=TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'):FindFirstChild('PrimeInputOverlay')
+local key=screen:FindFirstChild('Keyboard'):FindFirstChild('W')
+for i=1,30 do TEST_SERVICES.RunService.RenderStepped:Fire(.1)end
+local mt=getmetatable(key)local original=mt.__newindex local writes=0
+mt.__newindex=function(o,k,value)
+ if o==key and (k=='BackgroundColor3' or k=='BackgroundTransparency' or k=='TextColor3')then writes=writes+1 end
+ return original(o,k,value)
+end
+for i=1,120 do TEST_SERVICES.RunService.RenderStepped:Fire(1/60)end
+mt.__newindex=original
+assert(writes==0,'idle overlay rewrites properties every frame: '..writes)
+TEST_ACTIONS['Unload script']()
+""")
+print('PASS settled overlay: zero key-property writes over120 idle frames')

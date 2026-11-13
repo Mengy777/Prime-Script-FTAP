@@ -14,12 +14,12 @@ function mt:PointToObjectSpace(p)
  return Vector3.new(cs*d.X-sn*d.Z,d.Y,sn*d.X+cs*d.Z)
 end
 mt.__sub=function(a,b)local f=CFrame.new(a.Position-b)f.yaw=a.yaw return f end
-TEST_OVERLAP=false TEST_WALL=false TEST_SWEEPS=0 TEST_NO_GROUND=false
+TEST_MENU_OVERLAP=false TEST_WALL=false TEST_SWEEPS=0 TEST_NO_GROUND=false
 OverlapParams={new=function()return {}end}
 local oldAdd=mt.__add
 mt.__add=function(a,b)local f=CFrame.new(a.Position+b)f.yaw=a.yaw return f end
 CFrame.lookAt=function(pos,target)local f=CFrame.new(pos)f.yaw=math.pi return f end
-workspace.GetPartBoundsInBox=function()return TEST_OVERLAP and {{}}or{}end
+workspace.GetPartBoundsInBox=function()return TEST_MENU_OVERLAP and {{}}or{}end
 workspace.Blockcast=function(self,cf,size,delta,params)
  TEST_SWEEPS=(TEST_SWEEPS or 0)+1
  if TEST_WALL then return {Distance=0}end
@@ -122,8 +122,17 @@ TEST_OPTIONS.worldMenuEnabled:SetValue(true)workspace.CurrentCamera=camera
 assert(not TEST_OPTIONS.worldMenuEnabled.Value and TEST_LIBRARY.Toggled,'missing camera trapped UI')
 TEST_NO_GROUND=true TEST_OPTIONS.worldMenuEnabled:SetValue(true)
 assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'no ground trapped UI')TEST_NO_GROUND=false
-TEST_OVERLAP=true TEST_OPTIONS.worldMenuEnabled:SetValue(true)
-assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'blocked placement trapped UI')TEST_OVERLAP=false
+TEST_MENU_OVERLAP=true TEST_OPTIONS.worldMenuEnabled:SetValue(true)
+assert(not TEST_OPTIONS.worldMenuEnabled.Value and not block() and TEST_LIBRARY.Toggled,'blocked placement trapped UI')TEST_MENU_OVERLAP=false
+TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
+-- Engine query failures close the experimental mode once, rather than throwing every frame.
+HIT_X=500 HIT_Y=360
+local right={UserInputType=Enum.UserInputType.MouseButton2}
+TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard(nil,Enum.UserInputState.Begin,right)
+local sweep=workspace.Blockcast workspace.Blockcast=function()error('injected engine query failure')end
+workspace.CurrentCamera.CFrame=CFrame.new(30,8,0)TEST_SERVICES.RunService.RenderStepped:Fire(.016)
+workspace.Blockcast=sweep
+assert(not block() and TEST_LIBRARY.Toggled and not TEST_OPTIONS.worldMenuEnabled.Value,'physics error trapped UI')
 TEST_OPTIONS.worldMenuEnabled:SetValue(true)assert(block()) TEST_DRAIN()
 TEST_ACTIONS['Unload script']()
 assert(not block() and TEST_LIBRARY.PhysicalGui==nil and TEST_LIBRARY.PointerProvider==nil)

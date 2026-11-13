@@ -1,3 +1,11 @@
+## 3.2.4n — 2026-11-13
+
+- Release downloaded source buffers after function modules compile successfully. Keep compiled factories for reuse and retain source only for restartable non-factory modules; reset/reload compatibility is tested. Prefetch records no longer pin consumed source through the startup state.
+- Input overlay settles interpolations to exact endpoints and stops rewriting unchanged key/mouse styling. Share per-frame colors instead of allocating them for every key. Regression measures zero key-property writes over120 settled idle frames, while existing press/release/color/artwork tests remain.
+- Move HUD visibility polling out of every frame to its one-second statistics update (setting callbacks still apply immediately). Reuse physical-menu query parameters and filters until character/block identity changes.
+- Recover to native2D if the physical-menu frame controller encounters an engine query failure instead of repeating exceptions every frame. Regression injects a failing Blockcast and verifies cleanup and reopening.
+- Update simulation input-action ownership and share the physical geometry fixture with the controls matrix. No claim of measured live FPS/loading speedup or elimination of Roblox/executor crashes; native crash diagnosis still requires client logs.
+
 ## 3.2.4m — 2026-11-13
 
 - Physical menu now searches for clear ground, faces the player upright, checks spawn visibility and full-volume overlap, and falls back to 2D if no placement fits. The local body is unanchored and collidable when released.

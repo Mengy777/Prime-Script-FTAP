@@ -75,7 +75,7 @@ local input=TEST_SERVICES.UserInputService
 KEYS={};input.IsKeyDown=function(_,key)return KEYS[key.Name] or false end
 RMB=false input.IsMouseButtonPressed=function()return RMB end
 input.WindowFocused=Instance.new('Folder').Changed
-TEST_SERVICES.ContextActionService={BindActionAtPriority=function(self,name,fn)self.bound=fn end,UnbindAction=function(self)self.bound=nil end}
+TEST_SERVICES.ContextActionService={BindActionAtPriority=function(self,name,fn)if name=="PrimeVisualsFreecam"then self.bound=fn end end,UnbindAction=function(self,name)if name=="PrimeVisualsFreecam"then self.bound=nil end end}
 function TICK(dt)
  TEST_CLOCK=TEST_CLOCK+dt
  TEST_SERVICES.RunService.Heartbeat:Fire(dt)

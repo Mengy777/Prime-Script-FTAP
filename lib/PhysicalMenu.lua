@@ -7,6 +7,9 @@ return function(c)
  local action="PrimePhysicalMenuGuard" local captured={}
  local beginDrag,finish
  local epoch=0
+ local pointerParams
+ local queryRay,queryOverlap
+ local pointerCharacter,queryCharacter,queryBlock
  local function make(class,props,parent)return c.Make(class,props,parent)end
  local function rayHit()
   local camera=c.Workspace.CurrentCamera if not camera or not block then return end
@@ -14,9 +17,10 @@ return function(c)
   if c.Input.GetMouseLocation and camera.ScreenPointToRay then
    local p=c.Input:GetMouseLocation() local r=camera:ScreenPointToRay(p.X,p.Y)from=r.Origin direction=r.Direction
   end
-  local params=RaycastParams.new()params.FilterType=Enum.RaycastFilterType.Exclude
-  local char=c.Players.LocalPlayer.Character params.FilterDescendantsInstances=char and {char}or{}
-  local hit=c.Workspace:Raycast(from,direction*100,params)
+  if not pointerParams then pointerParams=RaycastParams.new()pointerParams.FilterType=Enum.RaycastFilterType.Exclude end
+  local char=c.Players.LocalPlayer.Character
+  if pointerCharacter~=char then pointerCharacter=char pointerParams.FilterDescendantsInstances=char and {char}or{}end
+  local hit=c.Workspace:Raycast(from,direction*100,pointerParams)
   if hit and hit.Instance==block then return hit.Position,from,direction end
  end
  function api:Pointer()
@@ -27,12 +31,16 @@ return function(c)
  end
  -- World queries exclude our avatar/UI body, but respect solid map geometry.
  local function worldParams(overlap)
-  local params=overlap and OverlapParams.new()or RaycastParams.new()
-  params.FilterType=Enum.RaycastFilterType.Exclude
+  if not queryRay then queryRay=RaycastParams.new()queryOverlap=OverlapParams.new()end
   local char=c.Players.LocalPlayer.Character
-  params.FilterDescendantsInstances=char and {char,block}or{block}
-  params.RespectCanCollide=true
-  return params
+  if queryCharacter~=char or queryBlock~=block then
+   queryCharacter,queryBlock=char,block
+   local filter={}if char then filter[#filter+1]=char end if block then filter[#filter+1]=block end
+   for _,params in ipairs({queryRay,queryOverlap})do
+    params.FilterType=Enum.RaycastFilterType.Exclude params.FilterDescendantsInstances=filter params.RespectCanCollide=true
+   end
+  end
+  return overlap and queryOverlap or queryRay
  end
  local function fits(cf,size)
   return #c.Workspace:GetPartBoundsInBox(cf,size-Vector3.new(.06,.06,.06),worldParams(true))==0
@@ -198,7 +206,7 @@ return function(c)
  links[#links+1]=c.Players.LocalPlayer.CharacterAdded:Connect(function()
   if shown or surface or block then api:SetVisible(false)end
  end)
- links[#links+1]=c.Run.RenderStepped:Connect(function()
+ local function step()
   if dead or not shown then return end
   if not block or not block.Parent or not surface or not surface.Parent then api:SetVisible(false)return end
   c.Input.MouseBehavior=Enum.MouseBehavior.Default c.Input.MouseIconEnabled=true
@@ -214,6 +222,16 @@ return function(c)
     if c.Input.GetMouseLocation and camera.ScreenPointToRay then local p=c.Input:GetMouseLocation()local r=camera:ScreenPointToRay(p.X,p.Y)from=r.Origin dir=r.Direction end
     moveBody(CFrame.new(from+dir*pending.depth-pending.offset)*pending.rotation)
    end
+  end
+ end
+ links[#links+1]=c.Run.RenderStepped:Connect(function()
+  if dead or not shown then return end
+  local ok,message=pcall(step)
+  if not ok then
+   api:SetVisible(false)
+   if c.Setters.worldMenuEnabled then c.Setters.worldMenuEnabled(false,true)end
+   pcall(c.NativeToggle,lib,true)
+   c.Notify("Physical menu failed; returned to 2D")warn(message)
   end
  end)
  function api:Destroy()

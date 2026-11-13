@@ -148,9 +148,10 @@ return function(c)
  local elapsed,frames=0,0
  connections[#connections+1]=c.Run.RenderStepped:Connect(function(dt)
   if dead or dt<=0 or dt~=dt or dt==math.huge then return end
-  update()elapsed=elapsed+dt frames=frames+1 themeElapsed=themeElapsed+dt
+  elapsed=elapsed+dt frames=frames+1 themeElapsed=themeElapsed+dt
   if themePending and themeElapsed>=.12 then local ok,message=pcall(applyTheme)themePending=false themeElapsed=0 if not ok then c.Notify(message)end end
   if elapsed<1 then return end
+  update()
   local items={}
   if v.hudFPS then items[#items+1]=tostring(math.floor(frames/elapsed+.5)).." FPS"end
   if v.hudClock then items[#items+1]=os.date("%H:%M")end

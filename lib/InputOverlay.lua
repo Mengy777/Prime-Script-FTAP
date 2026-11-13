@@ -126,12 +126,17 @@ return function(c)
   if dead or not screen.Enabled or dt<=0 or dt~=dt or dt==math.huge then return end
   wheelUp=math.max(0,wheelUp-dt)wheelDown=math.max(0,wheelDown-dt)
   local blend=1-math.exp(-24*math.min(dt,.1))
+  local idle=Color3.fromRGB(25,25,32)local accent=v.inputOverlayAccent or Color3.fromRGB(160,106,255)
+  local text=v.inputOverlayText or Color3.new(1,1,1)
   for name,entry in pairs(keys)do
    local down=held[name]
    if name=="Shift"then down=held.LeftShift or held.RightShift elseif name=="Ctrl"then down=held.LeftControl or held.RightControl
    elseif name=="WheelUp"then down=wheelUp>0 elseif name=="WheelDown"then down=wheelDown>0 end
-   entry.amount=entry.amount+((down and 1 or 0)-entry.amount)*blend
-   local idle=Color3.fromRGB(25,25,32)local accent=v.inputOverlayAccent or Color3.fromRGB(160,106,255)
+   local target=down and 1 or 0
+   local amount=entry.amount+(target-entry.amount)*blend
+   if math.abs(target-amount)<.001 then amount=target end
+   if entry.drawnAmount~=amount or entry.drawnAccent~=accent or entry.drawnText~=text or entry.drawnArt~=artReady then
+   entry.amount=amount entry.drawnAmount=amount entry.drawnAccent=accent entry.drawnText=text entry.drawnArt=artReady
    if entry.mouse then
     entry.frame.ImageColor3=accent entry.frame.ImageTransparency=1-.32*entry.amount
     entry.fallback.Visible=not artReady
@@ -139,8 +144,9 @@ return function(c)
    else
    entry.frame.BackgroundColor3=idle:Lerp(accent,entry.amount)
    entry.frame.BackgroundTransparency=.12*(1-entry.amount)
-   entry.frame.TextColor3=v.inputOverlayText or Color3.new(1,1,1)
+   entry.frame.TextColor3=text
    entry.outline.Color=accent entry.outline.Transparency=.8-.65*entry.amount
+   end
    end
   end
  end)

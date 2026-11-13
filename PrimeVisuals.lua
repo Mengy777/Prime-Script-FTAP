@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4m"
+local VERSION="3.2.4n"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -39,8 +39,13 @@ local function loadUIModule(name,state)
     local ok,result=pcall(chunk,function(child) return loadUIModule(child,state) end,
         function(library) if state then state.Library=library end end)
     if not ok then sourceCache[name]=nil error("Prime Visuals module "..filename.." failed: "..tostring(result),0) end
-    sourceCache[name]=source
-    if type(result)=="function" then factoryCache[name]=result end
+    -- Factories are already compiled: retaining their full source pins large
+    -- downloads for the entire session (including through startup closures).
+    if type(result)=="function" then factoryCache[name]=result sourceCache[name]=nil
+    else sourceCache[name]=source end
+    if state and state.Downloads and state.Downloads[name] then
+        state.Downloads[name].Source=nil
+    end
     return result
 end
 local function cleanupFailedStartup(state)

@@ -2,8 +2,8 @@ from pathlib import Path
 import json
 from support import ROOT
 # Reuse the deterministic geometry/input fixture, not its assertions or runtime.
-setup=(ROOT/'tests/sim/visual_expansion.py').read_text(encoding='utf-8')
-exec(setup[:setup.index('lua.execute(source)')])
+setup=(ROOT/'tests/sim/physical_menu.py').read_text(encoding='utf-8')
+exec(setup[:setup.index('\nlua.execute(source)\n')])
 lua.execute("CFrame.fromOrientation=CFrame.fromEulerAnglesYXZ")
 lua.execute("AUDIT_WARNINGS={} warn=function(...) local t={...} for i,v in ipairs(t)do t[i]=tostring(v)end table.insert(AUDIT_WARNINGS,table.concat(t,' '))end")
 lua.execute(source)

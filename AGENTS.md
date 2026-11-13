@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4m**, tag `v3.2.4m`. Next normal runtime version: **3.2.4n**. Consult Git for the release commit.
+- Published runtime target: **3.2.4n**, tag `v3.2.4n`. Next normal runtime version: **3.2.4o**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -458,3 +458,12 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - Supersedes l noncolliding body: local unanchored CanCollide=true Part, upright clear ground placement, visibility ray + volume overlap, 2D fallback when blocked/no ground. Holding RMB/Alt+LMB anchors temporarily; sweep full box and validate destination before moving. Release zeroes linear/angular velocity and restores unanchored physics. Resize checks overlap.
 - Native fade must be patched OFF before the initial NativeToggle(false), otherwise Fading may reject the following Toggle(true). Keep modal mouse unlock in physical mode; SurfaceGui.ToolPunchThroughDistance=100, ordinary front LMB Pass and non-active transparent backplane. These fixes need actual FTAP input/physics confirmation; mocks are not live evidence.
 - Targeted physical_menu/native_clicks/major3/startup_resilience and full Luau compilation pass. Physical regression includes ground alignment, collision/anchor state, blocked sweep, missing-ground/overlap fallback, restore/respawn/reopen. Controls551 unchanged; notifications stay screen-space.
+
+
+## 2026-11-13 — performance/stability pass 3.2.4n
+
+- Loader drops successful function-module sourceCache + consumed startup.Downloads.Source, retaining compiled factoryCache and restartable table-module source. performance_cache.py verifies actual lexical caches and reset. No disk cache/trust changes.
+- InputOverlay snaps interpolation within.001 to endpoints and skips unchanged styling (including art/accent/text fingerprints), hoisting common colors outside key loop. Counter checks zero key-property writes for120 settled frames. HUD visibility polling once per statistics interval; setter updates immediate.
+- PhysicalMenu query params lazy/reused, refreshed when character/block changes. Frame-step exceptions close/restore and disable experiment once; injected Blockcast error test verifies recovery. Other game rendering remains unchanged. Live crash reduction/FPS/loading gains unmeasured: require client logs/profiling before attributing crashes.
+- Test-only CAS fixture now unbinds by action name, physical flags are namespaced (do not overwrite visual fixture TEST_OVERLAP water list), controls matrix uses grounded physical fixture. No suppressed assertion/warning categories.
+- Validation: full Luau compilation and48 scenario scripts /130 check groups pass (docs/Simulation-3.2.4n.md); all551 persisted controls retained.
