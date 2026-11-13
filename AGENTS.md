@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4r**, tag `v3.2.4r`. Next normal runtime version: **3.2.4s**. Consult Git for the release commit.
+- Published runtime target: **3.2.4s**, tag `v3.2.4s`. Next normal runtime version: **3.2.4t**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -495,3 +495,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - User confirms ray-dispatched clicks work, but below pointer and no native line. Raw UIS:GetMouseLocation must pair with Camera:ViewportPointToRay, not ScreenPointToRay (reapplies top-bar inset). Updated both hit/drag rays; physical fixture throws if wrong ray method is used.
 - UI LMB captures marked "ui" dispatch callbacks but pass both Begin/End to game. True grab captures (RMB/Alt) still Sink. Surface Active=false/ToolPunchThroughDistance=0, including after local drag, avoids GUI sink of tool input. Explicit registry does not depend on engine GUI events. No invented Beam or game remotes; actual FTAP owns line and grabbing. Native line live behavior unverified.
 - physical_menu/native_clicks + compilation pass. No camera/physics/layout changes.
+
+
+## 2026-11-13 — Minecraft ghost HUD/lifecycle 3.2.4s
+
+- Texture HTTP yields let stale update() continue build after disable/unload. Add generation invalidation in clear(), single-flight loading and post-load state checks; rapid reenable retries only current generation. loadImages checks cancellation before/after each download and returns readiness. HUD starts Enabled=false. Do not allow old request to patch camera/build UI.
+- Avoid arm/sword reparent unless changed, arm.Size/scale writes unless changed; skip pose math when invisible, hide HUD in freecam/spectate, preserve death hearts. Missing camera hides HUD/releases cursor patches. Frame sees cleared enable flag => clear(). Existing native input/hits untouched.
+- Full compile and49 scenario scripts/134 groups pass; minecraft_lifecycle.py interrupts actual HTTP fixture with disable/reenable/unload, checks no ghost, one rebuilt HUD and only one fetch after cancellation. Latest defensive absent-camera guard additionally validated via targeted Minecraft test. Live behavior pending.

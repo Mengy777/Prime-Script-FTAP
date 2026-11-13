@@ -1,6 +1,8 @@
 -- Minecraft viewmodel and nearby object impulses. No damage/remotes/ownership changes.
 return function(c)
  local v=c.Controls local me=c.Players.LocalPlayer
+ local generation,loading=0,false
+ local update
  local dead=false local screen,arm,sword,handView,handCamera local blend=0 local selected=1
  local age,swing,step,pitch=0,1,0,0
  local swordScale
@@ -49,6 +51,7 @@ return function(c)
  end
  local selection local data local images local hearts={} local previousHealth
  local function clear()
+  generation=generation+1
   c.Job("Minecraft presentation")
   c.Job("Minecraft native hit")
   pendingHit=nil hitQueue={}hitNotice=false
@@ -64,8 +67,8 @@ return function(c)
   swordScale=nil selection=nil crosshair=nil unlocker=nil hearts={}previousHealth=nil handView=nil handCamera=nil blend=0 age=0 swing=1 step=0 pitch=0 lagPitch=nil lagYaw=nil lastCamera=nil
   c.Unpatch("minecraftCamera")
  end
- local function loadImages()
-  if images then return end
+ local function loadImages(token)
+  if images then return true end
   data=data or c.LoadModule("MinecraftAssets")
   local getAsset=getcustomasset or getsynasset
   assert(type(getAsset)=="function","Minecraft textures require executor local image support")
@@ -74,11 +77,13 @@ return function(c)
   local loaded={}
   local version=c.MinecraftAssetRoot:match("tags/v([^/]+)/") or "test"
   for key,file in pairs(data.Files)do
+   if dead or not v.minecraftEnabled or token~=generation then return false end
    local path="PrimeVisuals/Assets/Minecraft/"..version.."-"..file.Name
    local function valid(bytes)return type(bytes)=="string"and #bytes==file.Bytes and bytes:sub(1,8)==string.char(137,80,78,71,13,10,26,10)end
    local ok,bytes=pcall(readfile,path)
    if not ok or not valid(bytes)then
     bytes=game:HttpGet(c.MinecraftAssetRoot..file.Name)
+    if dead or not v.minecraftEnabled or token~=generation then return false end
     assert(valid(bytes),"Invalid Minecraft texture: "..file.Name)
     writefile(path,bytes)
    end
@@ -86,9 +91,10 @@ return function(c)
    loaded[key]=uri
   end
   images=loaded
+  return true
  end
  local function build()
-  screen=c.Make("ScreenGui",{Name="PrimeMinecraft",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=20},c.PlayerGui)
+  screen=c.Make("ScreenGui",{Name="PrimeMinecraft",Enabled=false,ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=20},c.PlayerGui)
   -- A visible Modal button unlocks Roblox's first-person camera cursor; zero-size never blocks clicks.
   unlocker=c.Make("TextButton",{Name="MinecraftCursorUnlocker",Size=UDim2.fromOffset(0,0),
    BackgroundTransparency=1,Text="",Modal=true,Visible=false,AutoButtonColor=false},screen)
@@ -222,7 +228,7 @@ return function(c)
   hitQueue[#hitQueue+1]=hit
 
  end
- local function update()
+ update=function()
   if dead then return end
   if not v.minecraftEnabled then
    local wasActive=screen~=nil
@@ -230,7 +236,13 @@ return function(c)
    if wasActive then c.Notify(c.Translate("Minecraft mode disabled."))end
    return
   end
-  loadImages()
+  if loading then return end
+  local token=generation
+  loading=true local ok,ready=pcall(loadImages,token)loading=false
+  if dead or not v.minecraftEnabled then return end
+  if token~=generation then update()return end
+  if not ok then error(ready,0)end
+  if not ready then return end
   local wasThird=v.camThird==true
   if c.Setters.camThird then c.Setters.camThird(false,true)end
   c.Patch("minecraftCamera",me,"CameraMode",Enum.CameraMode.LockFirstPerson)
@@ -328,13 +340,19 @@ return function(c)
 
   c.Notify(c.Translate(wasThird and "Third-person disabled. Minecraft mode enabled."or"Minecraft mode enabled."))
   c.Job("Minecraft presentation",c.Run.RenderStepped,function(dt)
-   if dead or not v.minecraftEnabled or not arm then return end
-   local camera=c.Workspace.CurrentCamera if not camera then return end
+   if dead or token~=generation or not arm then return end
+   if not v.minecraftEnabled then clear()return end
+   local camera=c.Workspace.CurrentCamera
+   if not camera then
+    screen.Enabled=false handView.Visible=false
+    c.Unpatch("minecraftPointer")c.Unpatch("minecraftLook")c.Unpatch("minecraftCursor")
+    return
+   end
    local character=me.Character local humanoid=character and character:FindFirstChildOfClass("Humanoid")
    local living=humanoid and humanoid.Health>0
    local visible=living and not v.freeCameraEnabled and not v.spectateEnabled
    if not visible and injectedDown then nativeButton(false)end
-   screen.Enabled=humanoid~=nil
+   screen.Enabled=humanoid~=nil and not v.freeCameraEnabled and not v.spectateEnabled
    local health=humanoid and math.clamp(humanoid.Health/math.max(humanoid.MaxHealth or 100,1),0,1)or 0
    local units=health>0 and math.ceil(health*20-1e-6)or 0
    if units~=previousHealth then
@@ -364,6 +382,7 @@ return function(c)
    local nativeCross=c.PlayerGui:FindFirstChild("Crosshairs")
    if nativeCross and nativeCross:IsA("ScreenGui")then c.Patch("minecraftCursor",nativeCross,"Enabled",false)end
 
+   if not visible then return end
    local direction=humanoid and humanoid.MoveDirection
    local moving=visible and direction and direction.Magnitude>.05 and 1 or 0
    blend=blend+(moving-blend)*(1-math.exp(-12*math.min(dt,.1)))
@@ -410,11 +429,14 @@ return function(c)
    local lookLag=CFrame.Angles((lookPitch-lagPitch)*.1,0,0)
     *CFrame.Angles(0,math.atan2(math.sin(lookYaw-lagYaw),math.cos(lookYaw-lagYaw))*.1,0)
    local handScale=(v.minecraftHandScale or .7)/.7
-   arm.Size=Vector3.new(.25,.75,.25)*handScale
+   local armSize=Vector3.new(.25,.75,.25)*handScale
+   if arm.Size~=armSize then arm.Size=armSize end
    -- Offset zoom only for explicit hand-size setting, never the world camera FOV.
    local equipped=selected==9
-   arm.Parent=not equipped and handView or nil
-   sword.Parent=equipped and handView or nil
+   local armParent=not equipped and handView or nil
+   local swordParent=equipped and handView or nil
+   if arm.Parent~=armParent then arm.Parent=armParent end
+   if sword.Parent~=swordParent then sword.Parent=swordParent end
    arm.CFrame=bob*lookLag*pose
    if equipped then
     local desiredScale=.68*handScale
@@ -429,7 +451,8 @@ return function(c)
      *CFrame.Angles(0,math.rad(-90),math.rad(25))
     sword:PivotTo(bob*lookLag*item)
    end
-   scale.Scale=v.minecraftHotbarScale or 1
+   local hudScale=v.minecraftHotbarScale or 1
+   if scale.Scale~=hudScale then scale.Scale=hudScale end
   end)
  end
  local group=c.Group("Favorites","Minecraft",1)

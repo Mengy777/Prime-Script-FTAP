@@ -1,3 +1,10 @@
+## 3.2.4s — 2026-11-13
+
+- Cancel stale Minecraft texture loads when mode is disabled, unloaded or re-enabled during a yielding HTTP request. Single-flight initialization and generation checks prevent a completed old request from resurrecting the HUD or camera/action bindings. Stop downloading remaining textures after cancellation.
+- Build HUD initially disabled; presentation enables it for a valid character. Hide HUD in freecam/spectate, preserve death-health display, skip hidden hand pose calculations, and hide/release cursor overrides when camera is absent. Defensive presentation cleanup handles an externally cleared enable flag.
+- Avoid redundant arm/sword Parent assignments and unchanged hand Size/hotbar Scale writes every frame. Existing bob/swing, sword, health and native hit behaviors remain.
+-49 simulation scripts /134 check groups pass, including disable/reenable/unload during the first asset request, no ghost HUD, single rebuilt HUD and cancelled download count. Actual FTAP performance remains unmeasured.
+
 ## 3.2.4r — 2026-11-13
 
 - Use ViewportPointToRay for raw GetMouseLocation coordinates in both hit testing and panel dragging; ScreenPointToRay reapplied the Roblox top-bar inset and shifted selection below the cursor.
