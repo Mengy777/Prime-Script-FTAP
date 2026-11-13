@@ -1,5 +1,5 @@
 -- Prime Visuals | FTAP visual customization
-local VERSION="3.2.4o"
+local VERSION="3.2.4p"
 local vortexLaunching=false
 local lastProfileBeforeLoad
 local sessionStarted=os.clock()
@@ -1540,7 +1540,7 @@ local function buildVisualSystems()
     end
     local function updateThirdPan()
         local camera=Workspace.CurrentCamera
-        local active=alive and controls.camThird and not Library.Toggled and not UIS:GetFocusedTextBox()
+        local active=alive and controls.camThird and not (Library.Toggled and not Library.PhysicalGui) and not UIS:GetFocusedTextBox()
             and not controls.freeCameraEnabled and not controls.spectateEnabled and not controls.camNoclip
             and camera and camera.CameraType~=Enum.CameraType.Scriptable
         if not active or not thirdPan then releaseThirdPan() return end
@@ -2094,7 +2094,7 @@ local function buildVisualSystems()
                 mannequins=loadUIModule("Mannequins")({
                     Players=Players,Workspace=Workspace,Input=UIS,Run=Run,
                     RagdollFactory=loadUIModule("MannequinRagdoll"),
-                    MenuOpen=function() return Library.Toggled end,
+                    MenuOpen=function() return Library.Toggled and not Library.PhysicalGui end,
                     Notify=function(en,russian) notify(uiLanguage=="ru" and russian or en) end,
                     Success=function(en,russian)if controls.uiActionNotifications~=false then notify(uiLanguage=="ru"and russian or en)end end,
                 })
@@ -2939,7 +2939,7 @@ local function buildVisualSystems()
             Translate=function(text) return uiLanguage=="ru" and (ru[text] or text) or text end,
             FreecamIcon=function(holder,frame) return loadUIModule("PrimeIcon")(holder,frame,Run) end,
             TrackCleanup=function(fn) visualExpansion={Destroy=fn} end,
-            MenuOpen=function() return Library.Toggled end,
+            MenuOpen=function() return Library.Toggled and not Library.PhysicalGui end,
             WarnOnce=function(name,message)
                 if os.clock()-(lastWarning[name] or -math.huge)>=30 then
                     lastWarning[name]=os.clock() warn("Prime Visuals / "..name..": "..tostring(message))
@@ -3615,7 +3615,7 @@ local function buildVisualSystems()
     end)
     -- Lightweight lifecycle handling. No scans run every frame.
     job("Crosshair visibility",Run.RenderStepped,function()
-        menuOpen=Library.Toggled
+        menuOpen=Library.Toggled and not Library.PhysicalGui
         if controls.crossEnabled then crossGui.Enabled=not menuOpen and not controls.minecraftEnabled end
         grabbedInfo.Enabled=controls.grabInfo and not menuOpen
     end)

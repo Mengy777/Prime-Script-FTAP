@@ -113,6 +113,9 @@ pressMenu()assert(block() and main.Parent==TEST_LIBRARY.PhysicalGui,'cannot reop
 block():Destroy()
 pressMenu()assert(block() and main.Parent==TEST_LIBRARY.PhysicalGui,'stale native Toggled prevents reopening')
 KEYS.LeftShift=true pressMenu()KEYS.LeftShift=false
+assert(TEST_OPTIONS.worldMenuEnabled.Value and not block(),'crouch+menu silently disabled physical mode')
+pressMenu()assert(block())
+TEST_OPTIONS.worldMenuEnabled:SetValue(false)
 assert(not TEST_OPTIONS.worldMenuEnabled.Value)
 assert(not block() and main.Parent==parent and TEST_LIBRARY.Toggled)
 local rawNew=Instance.new

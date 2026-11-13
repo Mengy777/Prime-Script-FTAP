@@ -1,3 +1,9 @@
+## 3.2.4p — 2026-11-13
+
+- Treat physical UI as a world panel, not a gameplay-blocking screen menu: third-person pan, visual-expansion/Minecraft menu predicates and shared menuOpen now exclude Library.PhysicalGui. Keep native UI Toggled for widget logic without pausing these gameplay paths.
+- Remove Shift+menu shortcut that silently disabled physical mode when the user hid the menu while crouching. Mode changes now require its explicit toggle; Shift+menu only hides/shows like the normal menu key.
+- Targeted physical, camera/visual expansion and menu-binding regressions pass, including crouch/hide/reopen without changing worldMenuEnabled. Live FTAP behavior still needs confirmation.
+
 ## 3.2.4o — 2026-11-13
 
 - Physical menu no longer forces MouseBehavior.Default on mount/every frame. Restore the native library's physical-mode modal exclusion so the world panel does not unlock the game camera as a screen menu. Keep the game's current mouse/camera mode; pointer projection uses that mode.

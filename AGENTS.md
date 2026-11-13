@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4o**, tag `v3.2.4o`. Next normal runtime version: **3.2.4p**. Consult Git for the release commit.
+- Published runtime target: **3.2.4p**, tag `v3.2.4p`. Next normal runtime version: **3.2.4q**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -474,3 +474,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - User reported third-person/movement interference and subsequent2D opens. Remove PhysicalMenu forced MouseBehavior.Default (mount/frame) and restore Obsidian ModalElement physical exclusion. World menu uses game mouse/camera behavior; no CameraMode/WalkSpeed override added.
 - Placement/query error recovery must NOT set worldMenuEnabled=false: this silently changed persisted choice. Keep emergency native2D visible but next menu key retries physical. Explicit toggle/Shift recovery still disables as requested.
 - physical_menu.py tests LockCenter preserved and mode retained/retry after missing camera, construction failure, missing/blocked ground and frame query failure. Live FTAP validation pending.
+
+
+## 2026-11-13 — world UI/gameplay state separation 3.2.4p
+
+- PhysicalGui keeps Library.Toggled for native widgets, but gameplay MenuOpen callbacks/shared menuOpen and thirdPan suppression must distinguish2D (Toggled and not PhysicalGui). World UI should not pause these gameplay/camera controllers.
+- Removed Shift+menu disable/recovery shortcut: it collided with normal FTAP crouch while hiding and silently changed mode. Explicit worldMenuEnabled toggle remains available. Physical test verifies Shift/hide/reopen preserves mode.
+- Full compile and targeted physical_menu/visual_expansion/major3 pass; no live FTAP camera proof yet.

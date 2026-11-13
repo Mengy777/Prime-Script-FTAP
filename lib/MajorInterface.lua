@@ -51,9 +51,6 @@ return function(c)
  end
  local general=c.Group("Settings","Keybinds",1)
  binding("menu",function()
-  if v.worldMenuEnabled and c.Input.IsKeyDown and (c.Input:IsKeyDown(Enum.KeyCode.LeftShift)or c.Input:IsKeyDown(Enum.KeyCode.RightShift))then
-   c.Setters.worldMenuEnabled(false,true)nativeToggle(lib,true)return
-  end
   lib:Toggle(not menuVisible())
  end,general)
  c.Action(general,"Clear all keybinds",function()for key in pairs(c.Specs)do if key:sub(1,5)=="bind_"then c.Setters[key]("",true)end end end)
