@@ -14,8 +14,8 @@ return function(c)
  local function rayHit()
   local camera=c.Workspace.CurrentCamera if not camera or not block then return end
   local from,direction=camera.CFrame.Position,camera.CFrame.LookVector
-  if c.Input.GetMouseLocation and camera.ScreenPointToRay then
-   local p=c.Input:GetMouseLocation() local r=camera:ScreenPointToRay(p.X,p.Y)from=r.Origin direction=r.Direction
+  if c.Input.GetMouseLocation and camera.ViewportPointToRay then
+   local p=c.Input:GetMouseLocation() local r=camera:ViewportPointToRay(p.X,p.Y)from=r.Origin direction=r.Direction
   end
   if not pointerParams then pointerParams=RaycastParams.new()pointerParams.FilterType=Enum.RaycastFilterType.Exclude end
   local char=c.Players.LocalPlayer.Character
@@ -118,7 +118,7 @@ return function(c)
    Anchored=false,CanCollide=true,CanTouch=false,CanQuery=true,Transparency=0,Color=Color3.new(0,0,0),Material=Enum.Material.SmoothPlastic},c.Workspace)
   surface=make("SurfaceGui",{Name="PV_PhysicalMenuSurface",Adornee=block,Face=Enum.NormalId.Front,
    SizingMode=Enum.SurfaceGuiSizingMode.FixedSize,CanvasSize=Vector2.new(width+32,height+32),LightInfluence=0,
-   AlwaysOnTop=false,Active=true,ToolPunchThroughDistance=100,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},c.PlayerGui)
+   AlwaysOnTop=false,Active=false,ToolPunchThroughDistance=0,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},c.PlayerGui)
   make("Frame",{Name="PV_MenuInputBackplane",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,Active=false,ZIndex=0},surface)
   lib.PhysicalGui=surface lib.CantDragForced=true
   lib.PointerProvider=function()return api:Pointer()or Vector2.new(-100000,-100000)end
@@ -145,7 +145,7 @@ return function(c)
     end
     if pending and pending.input==kind then finish()end
     if not shown and not next(captured)then c.Actions:UnbindAction(action)end
-    return consume and Enum.ContextActionResult.Sink or Enum.ContextActionResult.Pass
+    return consume==true and Enum.ContextActionResult.Sink or Enum.ContextActionResult.Pass
    end
    if shown and state==Enum.UserInputState.Begin then
     local pos,from=rayHit()
@@ -155,8 +155,9 @@ return function(c)
      -- canvas handles GUI input; CAS must not swallow widget activation.
      if not grab and api:Pointer()then
       if lib.WorldPointerBegin then
-       captured[kind]=true lib:WorldPointerBegin(api:Pointer(),input)
-       return Enum.ContextActionResult.Sink
+       captured[kind]="ui" lib:WorldPointerBegin(api:Pointer(),input)
+       -- Dispatch UI ourselves, but let FTAP render its native grab line.
+       return Enum.ContextActionResult.Pass
       end
       return Enum.ContextActionResult.Pass
      end
@@ -192,7 +193,7 @@ return function(c)
   end
   if dragging then
    local token=epoch
-   task.defer(function()if not dead and token==epoch then c.Unpatch("physicalMenuDrag")lib.PhysicalDragging=false if surface then surface.Active=true end end end)
+   task.defer(function()if not dead and token==epoch then c.Unpatch("physicalMenuDrag")lib.PhysicalDragging=false if surface then surface.Active=false end end end)
   end
  end
  beginDrag=function(pos,from,kind)
@@ -228,7 +229,7 @@ return function(c)
    end
    local camera=c.Workspace.CurrentCamera if camera then
     local from,dir=camera.CFrame.Position,camera.CFrame.LookVector
-    if c.Input.GetMouseLocation and camera.ScreenPointToRay then local p=c.Input:GetMouseLocation()local r=camera:ScreenPointToRay(p.X,p.Y)from=r.Origin dir=r.Direction end
+    if c.Input.GetMouseLocation and camera.ViewportPointToRay then local p=c.Input:GetMouseLocation()local r=camera:ViewportPointToRay(p.X,p.Y)from=r.Origin dir=r.Direction end
     moveBody(CFrame.new(from+dir*pending.depth-pending.offset)*pending.rotation)
    end
   end

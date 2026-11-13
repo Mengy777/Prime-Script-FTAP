@@ -11,7 +11,7 @@ Updated 2026-10-28. Read before modifying this repository. Verify details agains
 
 - Prime Visuals is a personal Roblox **Fling Things and People (FTAP)** project. Author Roblox username: **876osamuha**. GitHub owner: **Mengy777**.
 - Repository: https://github.com/Mengy777/Prime-Script-FTAP ; branch `main`.
-- Published runtime target: **3.2.4q**, tag `v3.2.4q`. Next normal runtime version: **3.2.4r**. Consult Git for the release commit.
+- Published runtime target: **3.2.4r**, tag `v3.2.4r`. Next normal runtime version: **3.2.4s**. Consult Git for the release commit.
 - Prime Vortex: **0.2.2**, tag `vortex-v0.2.2`: separate black/red UI shell, no gameplay functionality. Do not develop it without a new user request.
 - The user is considering a separate script for another game and wants this project preserved for later. No new game/name/project is selected. Do not silently port FTAP remotes or repurpose this repo.
 - Documentation-only edits need no runtime version/tag; functional releases do.
@@ -488,3 +488,10 @@ Favorites now contains Minecraft (explicit user request). Only first-mode presen
 - User confirmed movement/hover but no clicks. Native SurfaceGui event delivery wasn't sufficient; WorldUIInput.lua attaches Library.ConnectUI, registry of source-owned native callbacks. Native engine events ignored ONLY for registered objects under PhysicalGui;2D continues normally. Physical CAS now owns front LMB and calls WorldPointerBegin/End; no getconnections/firesignal/remote used.
 - Native Obsidian GuiObject InputBegan/MouseButton1Click registrations use helper, original RBXScriptConnections returned. Ray hit selection respects sibling layering, visibility, ancestor clipping; callbacks are task.spawn to allow slider yielding. InputBegan bubbles to ancestors; click chooses first registered click ancestor. TextBox focus supported. ShaderBrowser receives Library through VisualExpansion and registers Activated.
 - No camera/movement/physics change. Native extracted toggle ray regression verifies exact-once, native duplicate suppression, cancelled/hidden/disabled behavior; physical fixture exercises CAS Sink and pairing. Mock connections now expose Connected. Live FTAP remains unverified.
+
+
+## 2026-11-13 — cursor inset/native line input 3.2.4r
+
+- User confirms ray-dispatched clicks work, but below pointer and no native line. Raw UIS:GetMouseLocation must pair with Camera:ViewportPointToRay, not ScreenPointToRay (reapplies top-bar inset). Updated both hit/drag rays; physical fixture throws if wrong ray method is used.
+- UI LMB captures marked "ui" dispatch callbacks but pass both Begin/End to game. True grab captures (RMB/Alt) still Sink. Surface Active=false/ToolPunchThroughDistance=0, including after local drag, avoids GUI sink of tool input. Explicit registry does not depend on engine GUI events. No invented Beam or game remotes; actual FTAP owns line and grabbing. Native line live behavior unverified.
+- physical_menu/native_clicks + compilation pass. No camera/physics/layout changes.

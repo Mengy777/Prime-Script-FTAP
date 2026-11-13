@@ -29,6 +29,14 @@ cas.callbacks={}
 function cas:BindActionAtPriority(name,fn,touch,priority) self.callbacks[name]=fn end
 function cas:UnbindAction(name) self.callbacks[name]=nil end
 HIT_X=nil HIT_Y=nil
+local input=TEST_SERVICES.UserInputService
+function input:GetMouseLocation()return Vector2.new(500,360)end
+function workspace.CurrentCamera:ViewportPointToRay(x,y)
+ assert(x==500 and y==360,'raw mouse coordinate mismatch')
+ TEST_VIEWPORT_RAYS=(type(TEST_VIEWPORT_RAYS)=='number'and TEST_VIEWPORT_RAYS or 0)+1
+ return {Origin=self.CFrame.Position,Direction=self.CFrame.LookVector}
+end
+function workspace.CurrentCamera:ScreenPointToRay()error('GUI inset applied to raw mouse coordinates')end
 workspace.Raycast=function(self,origin,direction,params)
  if direction.Y < -100 then if TEST_NO_GROUND then return nil end return {Position=Vector3.new(origin.X,0,origin.Z),Normal=Vector3.new(0,1,0)}end
  local p=self:FindFirstChild('PV_PhysicalMenu') if not p or not HIT_X then return nil end
@@ -55,7 +63,7 @@ assert(notice.Parent==TEST_LIBRARY.ScreenGui,'notifications moved into the world
 assert(block() and block().Transparency==0 and block().CanCollide==true and block().Anchored==false and block().Size.Z>.5)
 local surface=TEST_LIBRARY.PhysicalGui
 assert(math.abs(block().CFrame.Position.Y-block().Size.Y/2-.06)<.001,'not placed on ground')
-assert(surface.ToolPunchThroughDistance==100)
+assert(surface.ToolPunchThroughDistance==0 and surface.Active==false,'world GUI consumes native tool input')
 assert(TEST_SERVICES.UserInputService.MouseBehavior==Enum.MouseBehavior.LockCenter,'mount changed game camera mouse mode')
 assert(surface.ResetOnSpawn==false,'surface destroys original UI on respawn')
 assert(surface and surface.Adornee==block() and surface.Parent==TEST_SERVICES.Players.LocalPlayer:FindFirstChild('PlayerGui'))
@@ -64,8 +72,8 @@ main.BackgroundTransparency=.5 assert(main.BackgroundTransparency==0,'physical U
 assert(tab.Container:IsDescendantOf(main),'actual shader page was not moved')
 local guard=TEST_SERVICES.ContextActionService.callbacks.PrimePhysicalMenuGuard
 HIT_X=nil assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass)
-HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink,'world click was not owned by UI router')
-assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)
+HIT_X=500 HIT_Y=360 assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Pass,'UI ray dispatch swallowed native FTAP line input')
+assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Pass)
 TEST_BACK=true assert(guard(nil,Enum.UserInputState.Begin)==Enum.ContextActionResult.Sink)
 HIT_X=nil assert(guard(nil,Enum.UserInputState.End)==Enum.ContextActionResult.Sink)TEST_BACK=false
 assert(not surface:FindFirstChild('PV_MenuInputBackplane').Active)
@@ -74,6 +82,7 @@ local original=option.Value option:SetValue(original+5)
 assert(workspace.CurrentCamera.FieldOfView==original+5,'original setter stopped working')
 HIT_X=750 HIT_Y=360
 local point=TEST_LIBRARY.PointerProvider()
+assert(TEST_VIEWPORT_RAYS>0,'pointer did not use raw viewport ray')
 assert(math.abs(point.X-surface.CanvasSize.X*.75)<.001 and math.abs(point.Y-surface.CanvasSize.Y*.5)<.001)
 TEST_BACK=true assert(TEST_LIBRARY.PointerProvider().X<0,'back face accepted')TEST_BACK=false
 -- Ordinary clicks remain with the native SurfaceGui controls.

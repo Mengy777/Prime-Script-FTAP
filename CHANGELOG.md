@@ -1,3 +1,9 @@
+## 3.2.4r — 2026-11-13
+
+- Use ViewportPointToRay for raw GetMouseLocation coordinates in both hit testing and panel dragging; ScreenPointToRay reapplied the Roblox top-bar inset and shifted selection below the cursor.
+- Keep explicit source-owned UI dispatch, but pass paired ordinary LMB events through to FTAP rather than sinking them. SurfaceGui Active=false/ToolPunchThroughDistance=0 prevents the surface from suppressing the held-tool/game input path. RMB/Alt local dragging remains captured. No substitute Beam is drawn; native line rendering remains owned by FTAP.
+- Targeted regression rejects ScreenPointToRay for raw mouse input, checks viewport coordinates, LMB Begin/End pass-through and the surface tool-input policy. Native exact-once widget tests remain passing. Actual FTAP native grab-line behavior requires live verification.
+
 ## 3.2.4q — 2026-11-13
 
 - Add source-owned WorldUIInput routing for the physical panel. CAS captures paired front-face LMB and dispatches existing UI callbacks by ray/canvas hit, visibility, ancestor clipping and sibling layer order. Native delivery is suppressed only for registered controls on the world surface to prevent duplicate activation;2D signals remain unchanged.
